@@ -19,6 +19,7 @@ return new class extends Migration {
                 ->cascadeOnDelete();
             $table->decimal("total_score", 5, 2)->nullable();
             $table->timestamp("released_at")->nullable();
+            $table->timestamps();
             $table
                 ->foreignId("released_by")
                 ->nullable()

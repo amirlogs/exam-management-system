@@ -17,6 +17,7 @@ return new class extends Migration {
                 ->constrained("users")
                 ->cascadeOnDelete();
             $table->string("university_id")->unique();
+            $table->timestamps();
             $table
                 ->foreignId("section_id")
                 ->constrained("sections")
