@@ -33,6 +33,7 @@ return new class extends Migration {
             $table->string("difficulty")->nullable();
             $table->decimal("points", 5, 2);
             $table->boolean("is_active")->default(true);
+            $table->timestamps();
             $table->softDeletes();
             $table
                 ->foreignId("deleted_by")

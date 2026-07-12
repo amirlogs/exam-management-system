@@ -18,7 +18,7 @@ return new class extends Migration {
                 ->restrictOnDelete();
             $table->integer("year_level");
             $table->string("section_label");
-            $table->timestamp("created_at")->nullable();
+            $table->timestamps();
             $table->softDeletes();
             $table
                 ->foreignId("deleted_by")
