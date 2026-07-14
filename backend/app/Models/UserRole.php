@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class UserRole extends Model
 {
+    // const UPDATED_AT = null;
+    public $timestamps = false;
+    
     public function permisssion()
     {
         return $this->hasMany(UserRolePermission::class);
