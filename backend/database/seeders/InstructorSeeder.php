@@ -15,16 +15,19 @@ class InstructorSeeder extends Seeder
      */
     public function run(): void
     {
-        $instructorUser = User::where(
-            "email",
-            "instructor@test.com",
-        )->firstOrFail();
-        $cs = Department::where("name", "Computer Science")->firstOrFail();
+        $bob = User::where("email", "bob@university.edu")->first();
+        $charlie = User::where("email", "charlie@university.edu")->first();
 
         Instructor::create([
-            "user_id" => $instructorUser->id,
-            "staff_id" => "INS/001/17",
-            "home_department_id" => $cs->id,
+            "user_id" => $bob->id,
+            "staff_id" => "INS/2201/01",
+            "department_id" => 1, // CS
+        ]);
+
+        Instructor::create([
+            "user_id" => $charlie->id,
+            "staff_id" => "INS/2201/02",
+            "department_id" => 2, // Math
         ]);
     }
 }
