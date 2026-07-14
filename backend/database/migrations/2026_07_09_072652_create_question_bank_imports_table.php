@@ -28,7 +28,7 @@ return new class extends Migration {
                 ->nullOnDelete();
             $table->timestamp("confirmed_at")->nullable();
             $table
-                ->foreignId("approved_by_dept_head_id")
+                ->foreignId("approved_by")
                 ->nullable()
                 ->constrained("users")
                 ->nullOnDelete();

@@ -4,7 +4,4 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class QuestionPackageItem extends Model
-{
-    //
-}
+class QuestionGroup extends Model {}
