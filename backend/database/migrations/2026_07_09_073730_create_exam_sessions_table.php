@@ -22,8 +22,8 @@ return new class extends Migration {
                 ->constrained("sections")
                 ->restrictOnDelete();
             $table
-                ->foreignId("question_package_id")
-                ->constrained("question_packages")
+                ->foreignId("question_group_id")
+                ->constrained("question_groups")
                 ->restrictOnDelete();
             $table->string("lab_name");
             $table->timestamp("scheduled_start");

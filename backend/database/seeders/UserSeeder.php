@@ -13,15 +13,53 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        $roles = ["super_admin", "admin", "dept_head", "instructor", "student"];
-        foreach ($roles as $role) {
-            User::create([
-                "name" => ucfirst(str_replace("_", " ", $role)) . " User",
-                "email" => $role . "@test.com",
-                "password" => Hash::make("password"),
-                "role" => $role,
-                "is_first_login" => false,
-            ]);
-        }
+        User::create([
+            'name' => 'Super Admin',
+            'email' => 'superadmin@university.edu',
+            'password' => Hash::make('password'),
+            'is_first_login' => false,
+        ]);
+
+        User::create([
+            'name' => 'Admin User',
+            'email' => 'admin@university.edu',
+            'password' => Hash::make('password'),
+            'is_first_login' => false,
+        ]);
+
+        User::create([
+            'name' => 'Dr. Alice (Dept Head)',
+            'email' => 'alice@university.edu',
+            'password' => Hash::make('password'),
+            'is_first_login' => false,
+        ]);
+
+        User::create([
+            'name' => 'Dr. Bob (Lead Instructor)',
+            'email' => 'bob@university.edu',
+            'password' => Hash::make('password'),
+            'is_first_login' => false,
+        ]);
+
+        User::create([
+            'name' => 'Dr. Charlie (Instructor)',
+            'email' => 'charlie@university.edu',
+            'password' => Hash::make('password'),
+            'is_first_login' => false,
+        ]);
+
+        User::create([
+            'name' => 'Amir (Student)',
+            'email' => 'amir@university.edu',
+            'password' => Hash::make('password'),
+            'is_first_login' => true,
+        ]);
+
+        User::create([
+            'name' => 'Zara (Student)',
+            'email' => 'zara@university.edu',
+            'password' => Hash::make('password'),
+            'is_first_login' => true,
+        ]);
     }
 }

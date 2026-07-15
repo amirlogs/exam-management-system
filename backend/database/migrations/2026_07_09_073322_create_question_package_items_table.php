@@ -10,11 +10,11 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create("question_package_items", function (Blueprint $table) {
+        Schema::create("question_group_items", function (Blueprint $table) {
             $table->id();
             $table
-                ->foreignId("package_id")
-                ->constrained("question_packages")
+                ->foreignId("group_id")
+                ->constrained("question_groups")
                 ->cascadeOnDelete();
             $table
                 ->foreignId("question_id")
@@ -27,7 +27,7 @@ return new class extends Migration {
                 ->restrictOnDelete();
             $table->timestamp("added_at")->nullable();
 
-            $table->unique(["package_id", "question_id"]);
+            $table->unique(["group_id", "question_id"]);
         });
     }
 

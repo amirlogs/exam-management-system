@@ -8,20 +8,31 @@ return new class extends Migration {
     /**
      * Run the migrations.
      */
+
     public function up(): void
     {
-        Schema::create("instructors", function (Blueprint $table) {
+        Schema::create("user_roles", function (Blueprint $table) {
+            $table->id();
             $table
                 ->foreignId("user_id")
-                ->primary()
                 ->constrained("users")
                 ->cascadeOnDelete();
-            $table->string("staff_id")->unique();
-            $table->timestamps();
+            $table
+                ->foreignId("role_id")
+                ->constrained("roles")
+                ->restrictOnDelete();
             $table
                 ->foreignId("department_id")
+                ->nullable()
                 ->constrained("departments")
                 ->restrictOnDelete();
+            $table
+                ->foreignId("assigned_by")
+                ->constrained("users")
+                ->restrictOnDelete();
+            $table->timestamp("assigned_at")->nullable();
+
+            $table->unique(["user_id", "role_id", "department_id"]);
         });
     }
 
@@ -30,6 +41,6 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists("instructors");
+        Schema::dropIfExists("user_roles");
     }
 };

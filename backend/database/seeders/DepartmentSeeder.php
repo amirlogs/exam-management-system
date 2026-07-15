@@ -20,7 +20,7 @@ class DepartmentSeeder extends Seeder
 
         Department::create([
             "name" => "Mathematics",
-            "type" => "service_only",
+            "type" => "degree_granting",
         ]);
     }
 }

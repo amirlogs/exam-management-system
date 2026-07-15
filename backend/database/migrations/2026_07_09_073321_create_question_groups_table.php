@@ -10,7 +10,7 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create("question_packages", function (Blueprint $table) {
+        Schema::create("question_groups", function (Blueprint $table) {
             $table->id();
             $table
                 ->foreignId("course_id")
@@ -46,9 +46,7 @@ return new class extends Migration {
 
             $table->unique(["course_id", "label"]);
         });
-    }
-
-    /**
+    } /**
      * Reverse the migrations.
      */
     public function down(): void

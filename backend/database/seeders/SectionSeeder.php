@@ -13,12 +13,16 @@ class SectionSeeder extends Seeder
      */
     public function run(): void
     {
-        $cs = Department::where("name", "Computer Science")->firstOrFail();
-
         Section::create([
-            "home_department_id" => $cs->id,
+            "home_department_id" => 1, // CS
             "year_level" => 2,
             "section_label" => "A",
+        ]);
+
+        Section::create([
+            "home_department_id" => 2, // Math
+            "year_level" => 1,
+            "section_label" => "B",
         ]);
     }
 }

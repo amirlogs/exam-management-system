@@ -39,4 +39,20 @@ class User extends Authenticatable
     {
         return $this->hasOne(Student::class);
     }
+
+    public function roles()
+    {
+        return $this->hasMany(UserRole::class);
+    }
+
+    public function assignedRoles()
+    {
+        return $this->belongsToMany(Role::class, "user_roles")->withPivot(
+            "department_id",
+            "assigned_by",
+            "assigned_at",
+        );
+    }
+
+    
 }
