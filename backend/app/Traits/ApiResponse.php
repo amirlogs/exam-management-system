@@ -8,25 +8,26 @@ trait ApiResponse
     {
         return response()->json(
             [
-                "success" => true,
-                "message" => $message,
-                "data" => $data,
-                "errors" => null,
+                'success' => true,
+                'message' => $message,
+                'data' => $data,
+                'errors' => null,
             ],
             $code,
         );
     }
+
     public function error(
         $errors,
-        string $message = "An error occurred",
+        string $message = 'An error occurred',
         int $code = 400,
     ) {
         return response()->json(
             [
-                "success" => false,
-                "message" => $message,
-                "data" => null,
-                "errors" => $errors,
+                'success' => false,
+                'message' => $message,
+                'data' => null,
+                'errors' => $errors,
             ],
             $code,
         );
