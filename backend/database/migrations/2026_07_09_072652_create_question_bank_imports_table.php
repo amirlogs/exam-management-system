@@ -14,14 +14,18 @@ return new class extends Migration
         Schema::create('question_bank_imports', function (Blueprint $table) {
             $table->id();
             $table->foreignId('course_id')->constrained('courses')->restrictOnDelete();
-            $table->enum('status', ['pending', 'confirmed', 'approved'])->default('pending');
+            $table->enum('status', ['pending', 'processing', 'ready_for_review', 'failed', 'confirmed', 'approved'])->default('pending');
             $table->foreignId('uploaded_by')->constrained('instructors', 'user_id')->restrictOnDelete();
+            $table->string('file_path')->nullable();
+            $table->unsignedInteger('valid_count')->default(0);
+            $table->unsignedInteger('error_count')->default(0);
+            $table->text('failure_reason')->nullable();
             $table->foreignId('confirmed_by')->nullable()->constrained('instructors', 'user_id')->nullOnDelete();
             $table->timestamp('confirmed_at')->nullable();
             $table->foreignId('approved_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamp('approved_at')->nullable();
             $table->json('validated_data')->nullable();
-            $table->timestamp('created_at')->nullable();
+            $table->timestamps();
         });
     }
 

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\QuestionBankImportController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -18,7 +19,19 @@ Route::middleware('auth:sanctum')->prefix('auth')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
 });
 
-// example 1
+Route::middleware('auth:sanctum')->prefix('courses')->group(function () {
+    Route::post('/{courseId}/question-bank-imports', [QuestionBankImportController::class, 'store']);
+
+});
+
+//
+//
+//
+//
+//
+//
+//
+//
 // Route::middleware('permmision:admin')->group(function () {
 //     Route::get('/admin', Admincontroller::class, 'index');
 //     Route::get('/admin/create', Admincontroller::class, 'create');
