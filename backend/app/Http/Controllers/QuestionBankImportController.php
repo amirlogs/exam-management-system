@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreQuestionRequest;
+use App\Jobs\QuestionRowImport;
 use App\Models\Course;
 use App\Models\QuestionBankImport;
 
@@ -18,7 +19,7 @@ class QuestionBankImportController extends Controller
         }
 
         // store the file
-        $path = $validated['file']->store('question_bank');
+        $path = $request->file('file')->storeAs('imports', uniqid().'.csv');
 
         $import = QuestionBankImport::create([
             'course_id' => $courseId,
@@ -27,6 +28,10 @@ class QuestionBankImportController extends Controller
             'uploaded_by' => request()->user()->id,
         ]);
 
-        return $this->success($import, 'Question bank import created successfully');
+        // call the queue job
+
+        QuestionRowImport::dispatch($import->id);
+
+        return $this->success(['import_id' => $import->id], 'Question bank import created successfully');
     }
 }
