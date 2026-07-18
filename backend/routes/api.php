@@ -21,27 +21,8 @@ Route::middleware('auth:sanctum')->prefix('auth')->group(function () {
 
 Route::middleware('auth:sanctum')->prefix('courses')->group(function () {
     Route::post('/{courseId}/question-bank-imports', [QuestionBankImportController::class, 'store']);
-
+    Route::post('/question-bank-imports/{importId}', [QuestionBankImportController::class, 'show']);
+    Route::patch('/question-bank-imports/{importId}/questions/{rowIndex}', [QuestionBankImportController::class, 'update']);
+    Route::post('/question-bank-imports/{importId}/confirm', [QuestionBankImportController::class, 'confirm']);
+    Route::post('/question-bank-imports/{importId}/approve', [QuestionBankImportController::class, 'approve']);
 });
-
-//
-//
-//
-//
-//
-//
-//
-//
-// Route::middleware('permmision:admin')->group(function () {
-//     Route::get('/admin', Admincontroller::class, 'index');
-//     Route::get('/admin/create', Admincontroller::class, 'create');
-//     Route::post('/admin/store', Admincontroller::class, 'store');
-//     Route::get('/admin/edit/{id}', Admincontroller::class, 'edit');
-//     Route::post('/admin/update/{id}', Admincontroller::class, 'update');
-// });
-
-// Route::get('/admin', Admincontroller::class, 'index')->middleware('permmision:viewadmin');
-// Route::get('/admin/create', Admincontroller::class, 'create')->middleware('permmision:createadmin');
-// Route::post('/admin/store', Admincontroller::class, 'store')->middleware('permmision:createadmin');
-// Route::get('/admin/edit/{id}', Admincontroller::class, 'edit')->middleware('permmision:editadmin');
-// Route::post('/admin/update/{id}', Admincontroller::class, 'update')->middleware('permmision:editadmin');
