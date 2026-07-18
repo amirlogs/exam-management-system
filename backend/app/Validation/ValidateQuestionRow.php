@@ -52,6 +52,7 @@ class ValidateQuestionRow
         }
 
         // check correct answer to be in options
+        //  
         if (! empty($data['correct_answer'])) {
             $answerExists = collect($options)
                 ->map(fn ($o) => strtolower(trim((string) $o)))

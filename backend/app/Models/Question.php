@@ -14,5 +14,11 @@ class Question extends Model
             'options' => 'array',
             'is_active' => 'boolean',
         ];
+
+    }
+
+    public function instructor()
+    {
+        return $this->belongsTo(Instructor::class);
     }
 }
