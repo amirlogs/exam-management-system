@@ -4,10 +4,9 @@ namespace App\Jobs;
 
 use App\Imports\RowCollectionImport;
 use App\Models\QuestionBankImport;
+use App\Validation\ValidateQuestionRow;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rule;
 use Maatwebsite\Excel\Facades\Excel;
 use Throwable;
 
@@ -51,7 +50,7 @@ class QuestionRowImport implements ShouldQueue
                 fn ($value) => is_bool($value) ? ($value ? 'True' : 'False') : (is_null($value) ? null : (string) $value),
                 $row->toArray()
             );
-            $errors = $this->validateRow($data);
+            $errors = ValidateQuestionRow::validate($data);
             $status = $errors ? 'invalid' : 'valid';
             $errors ? $errorCount++ : $validCount++;
 
@@ -68,20 +67,6 @@ class QuestionRowImport implements ShouldQueue
             'valid_count' => $validCount,
             'error_count' => $errorCount,
         ]);
-    }
-
-    protected function validateRow(array $row): array
-    {
-        $validator = Validator::make($row, [
-            'type' => ['required', Rule::in(['mcq', 'essay', 'true_false', 'short_answer'])],
-            'text' => ['required', 'string', 'min:5'],
-            'options' => ['required_if:type,mcq', 'nullable'],
-            'correct_answer' => ['required_if:type,mcq,true_false', 'nullable', 'string'],
-            'difficulty' => ['required', Rule::in(['easy', 'medium', 'hard'])],
-            'points' => ['required', 'numeric', 'min:0.5', 'max:100'],
-        ]);
-
-        return $validator->errors()->all();
     }
 
     public function failed(?Throwable $exception): void

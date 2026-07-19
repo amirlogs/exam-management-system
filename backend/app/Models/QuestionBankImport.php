@@ -3,9 +3,18 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Override;
 
 class QuestionBankImport extends Model
 {
+    #[Override]
+    protected function casts(): array
+    {
+        return [
+            'validated_data' => 'array',
+        ];
+    }
+
     protected $fillable = [
         'course_id',
         'status',
