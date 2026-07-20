@@ -2,7 +2,7 @@ import * as authapi from '@/api/auth'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
-export const userAuthStore = defineStore('userAuth', () => {
+export const useAuthStore = defineStore('userAuth', () => {
   const user = ref({})
 
   const login = (email: string, password: string) => {
