@@ -1,21 +1,34 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 
-const useThemeStore = defineStore('theme', () => {
-  const theme = ref('light')
-  const htmlElement = document.documentElement
+export const useThemeStore = defineStore('theme', () => {
+  const theme = ref(localStorage.getItem('app-theme') || 'oxford')
+  const isDark = ref(localStorage.getItem('app-dark') === 'true')
 
-  function toggleTheme() {
-    if (htmlElement.getAttribute('data-theme') === 'dark') {
-      htmlElement.removeAttribute('data-theme')
-    } else {
-      htmlElement.setAttribute('data-theme', 'dark')
-    }
+  function apply() {
+    document.documentElement.setAttribute('data-theme', theme.value)
+    document.documentElement.classList.toggle('dark', isDark.value)
   }
-  return {
-    theme,
-    toggleTheme,
+
+  watch(theme, (val) => {
+    localStorage.setItem('app-theme', val)
+    apply()
+  })
+
+  watch(isDark, (val) => {
+    localStorage.setItem('app-dark', String(val))
+    apply()
+  })
+
+  // Actions
+  function setTheme(name) {
+    theme.value = name
   }
+  function toggleDark() {
+    isDark.value = !isDark.value
+  }
+
+  apply()
+
+  return { theme, isDark, setTheme, toggleDark }
 })
-
-export default useThemeStore

@@ -1,2 +1,62 @@
 @import 'tailwindcss';
-@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
+
+/* Map raw tokens → Tailwind utility names, using `inline` since these reference other variables */
+@theme inline {
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-text: var(--text);
+  --color-border: var(--border);
+}
+
+/* Raw theme tokens — no "color-" prefix, so no name collision with @theme */
+:root,
+[data-theme='oxford'] {
+  --accent: #7a2731;
+  --accent-hover: #661f28;
+  --bg: #f5f6f7;
+  --surface: #ffffff;
+  --text: #0f1115;
+  --border: #e2e4e7;
+}
+[data-theme='oxford'].dark {
+  --accent: #a6414c;
+  --accent-hover: #b85560;
+  --bg: #15171b;
+  --surface: #1c1e23;
+  --text: #f5f6f7;
+  --border: #2a2d33;
+}
+[data-theme='forest'] {
+  --accent: #1b3a2b;
+  --accent-hover: #16301f;
+  --bg: #faf8f3;
+  --surface: #ffffff;
+  --text: #16201a;
+  --border: #e5e1d8;
+}
+[data-theme='forest'].dark {
+  --accent: #2e5a42;
+  --accent-hover: #3d6e53;
+  --bg: #14181a;
+  --surface: #1a1f1b;
+  --text: #f0eee6;
+  --border: #2c332c;
+}
+[data-theme='slate'] {
+  --accent: #c17817;
+  --accent-hover: #a5650f;
+  --bg: #f5f6f7;
+  --surface: #ffffff;
+  --text: #1a1d22;
+  --border: #e2e4e7;
+}
+[data-theme='slate'].dark {
+  --accent: #d98f2e;
+  --accent-hover: #e5a34a;
+  --bg: #15171b;
+  --surface: #1c1e23;
+  --text: #f5f6f7;
+  --border: #2a2d33;
+}
