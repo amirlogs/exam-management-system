@@ -11,6 +11,13 @@ use Illuminate\Support\Facades\DB;
 
 class FlagQuestionController extends Controller
 {
+    public function index(int $importId)
+    {
+        // does the question exist
+
+        // get the flaged one with that  id
+    }
+
     public function store(FlagQuestionRequest $request, int $questionId)
     {
         $message = $request->validated();
@@ -68,18 +75,6 @@ class FlagQuestionController extends Controller
         });
 
         return $this->success($question, 'Question Updated Successfully');
-    }
-
-    public function index(int $importId)
-    {
-        $import = Question::where('import_id', $importId)->get();
-
-        if (! $import) {
-            $this->error('Import not found', 404);
-        }
-        // does the question exist
-
-        // get the flaged one with that  id
     }
 
     public function resolve(int $flagId)

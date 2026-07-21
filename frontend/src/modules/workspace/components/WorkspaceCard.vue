@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ArrowRight } from 'lucide-vue-next'
 import BaseButton from '@/shared/components/ui/BaseButton.vue'
-
+import { useAuthStore } from '@/stores/auth';
 defineProps<{
     title: string
     description: string
@@ -11,6 +11,10 @@ defineEmits<{
     (e: 'update:isDefault', value: boolean): void
     (e: 'enter'): void
 }>()
+
+const authStore = useAuthStore()
+console.log('authStore', authStore)
+console.log(authStore.user)
 </script>
 
 <template>

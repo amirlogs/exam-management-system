@@ -2,6 +2,7 @@ import AuthLayout from '@/app/layouts/AuthLayout.vue'
 import LoginView from '@/modules/auth/pages/LoginView.vue'
 import WorkspaceSelectView from '@/modules/workspace/pages/WorkspaceSelectView.vue'
 import NotFoundView from '@/shared/pages/NotFoundView.vue'
+import Test from '@/shared/pages/Test.vue'
 import UnauthorizedView from '@/shared/pages/UnauthorizedView.vue'
 import { createRouter, createWebHistory } from 'vue-router'
 import { authGuard } from './guards'
@@ -20,6 +21,19 @@ const routes = [
         path: 'select-workspace',
         name: 'select-workspace',
         component: WorkspaceSelectView,
+        meta: {
+          requiresAuth: true,
+        },
+      },
+      {
+        path: '/',
+        redirect: {
+          name: 'login',
+        },
+      },
+      {
+        path: '/test',
+        component: Test,
       },
     ],
   },

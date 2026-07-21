@@ -1,3 +1,56 @@
+<script setup lang="ts">
+import { ref, onMounted, onUnmounted } from 'vue'
+import { Landmark, ShieldUser, BookOpen, ClipboardList, ArrowRight, Star, MoreVertical } from 'lucide-vue-next'
+import BaseButton from '@/shared/components/ui/BaseButton.vue'
+import { useAuthStore } from '@/stores/auth'
+
+defineEmits<{ (e: 'enter-workspace', id: string): void }>()
+
+const year = new Date().getFullYear()
+const authStore = useAuthStore()
+
+const workspaces = [
+    {
+        id: 'admin',
+        title: 'Administration',
+        description: 'System oversight, user management, and institutional audit logs.',
+        icon: ShieldUser,
+        iconBg: 'bg-accent/10',
+        iconColor: 'text-accent',
+    },
+    {
+        id: 'teaching',
+        title: 'Teaching',
+        description: 'Course management, question banks, and grading workflows.',
+        icon: BookOpen,
+        iconBg: 'bg-blue-50',
+        iconColor: 'text-blue-600',
+    },
+    {
+        id: 'student',
+        title: 'My Studies',
+        description: 'Personal exam schedules, results, and academic records.',
+        icon: ClipboardList,
+        iconBg: 'bg-emerald-50',
+        iconColor: 'text-emerald-600',
+    },
+]
+
+const defaultWorkspaceId = ref<string | null>(null)
+const openMenuId = ref<string | null>(null)
+
+function setDefault(id: string) {
+    defaultWorkspaceId.value = defaultWorkspaceId.value === id ? null : id
+    openMenuId.value = null
+}
+
+// Close the open menu when clicking anywhere outside it
+function closeMenu() {
+    openMenuId.value = null
+}
+onMounted(() => document.addEventListener('click', closeMenu))
+onUnmounted(() => document.removeEventListener('click', closeMenu))
+</script>
 <template>
     <div class="w-full max-w-6xl">
         <!-- Header -->
@@ -78,55 +131,3 @@
         </div>
     </div>
 </template>
-
-<script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
-import { Landmark, ShieldUser, BookOpen, ClipboardList, ArrowRight, Star, MoreVertical } from 'lucide-vue-next'
-import BaseButton from '@/shared/components/ui/BaseButton.vue'
-
-defineEmits<{ (e: 'enter-workspace', id: string): void }>()
-
-const year = new Date().getFullYear()
-
-const workspaces = [
-    {
-        id: 'admin',
-        title: 'Administration',
-        description: 'System oversight, user management, and institutional audit logs.',
-        icon: ShieldUser,
-        iconBg: 'bg-accent/10',
-        iconColor: 'text-accent',
-    },
-    {
-        id: 'teaching',
-        title: 'Teaching',
-        description: 'Course management, question banks, and grading workflows.',
-        icon: BookOpen,
-        iconBg: 'bg-blue-50',
-        iconColor: 'text-blue-600',
-    },
-    {
-        id: 'student',
-        title: 'My Studies',
-        description: 'Personal exam schedules, results, and academic records.',
-        icon: ClipboardList,
-        iconBg: 'bg-emerald-50',
-        iconColor: 'text-emerald-600',
-    },
-]
-
-const defaultWorkspaceId = ref<string | null>(null)
-const openMenuId = ref<string | null>(null)
-
-function setDefault(id: string) {
-    defaultWorkspaceId.value = defaultWorkspaceId.value === id ? null : id
-    openMenuId.value = null
-}
-
-// Close the open menu when clicking anywhere outside it
-function closeMenu() {
-    openMenuId.value = null
-}
-onMounted(() => document.addEventListener('click', closeMenu))
-onUnmounted(() => document.removeEventListener('click', closeMenu))
-</script>

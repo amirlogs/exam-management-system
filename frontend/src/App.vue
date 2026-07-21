@@ -9,7 +9,6 @@ const uiStore = useUiStore()
 <template>
     <div id="app">
         <router-view />
-
         <ToastContainer />
         <GlobalLoadingBar v-if="uiStore.isLoading" />
     </div>

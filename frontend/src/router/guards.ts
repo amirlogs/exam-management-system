@@ -7,12 +7,13 @@ export const authGuard: NavigationGuard = (to) => {
   if (to.meta.requiresAuth && !authStore.user) {
     return { name: 'login' }
   }
+  return true
 }
 
-export const permissionGuard: NavigationGuard = (to) => {
-  // const permissionStore = usePermissionStore()
-  const required = to.meta.permission as string | undefined
-  // if (required && !permissionStore.can(required)) {
-    return { path: '/unauthorized' }
-  }
-}
+// export const permissionGuard: NavigationGuard = (to) => {
+//   const permissionStore = usePermissionStore()
+//   const required = to.meta.permission as string | undefined
+//   if (required && !permissionStore.can(required)) {
+//     return { path: '/unauthorized' }
+//   }
+// }
