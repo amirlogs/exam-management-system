@@ -8,20 +8,25 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Department extends Model
 {
-    protected $fillable = ["name", "type", "head_user_id"];
+    protected $fillable = ['name', 'type', 'head_user_id'];
 
     public function sections(): HasMany
     {
-        return $this->hasMany(Section::class, "home_department_id");
+        return $this->hasMany(Section::class, 'home_department_id');
     }
 
     public function courses(): HasMany
     {
-        return $this->hasMany(Course::class, "owning_department_id");
+        return $this->hasMany(Course::class, 'owning_department_id');
     }
 
     public function head(): BelongsTo
     {
-        return $this->belongsTo(User::class, "head_user_id");
+        return $this->belongsTo(User::class, 'head_user_id');
+    }
+
+    public function userRoles(): HasMany
+    {
+        return $this->hasMany(UserRole::class);
     }
 }

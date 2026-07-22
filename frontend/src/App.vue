@@ -12,4 +12,5 @@ const uiStore = useUiStore()
         <ToastContainer />
         <GlobalLoadingBar v-if="uiStore.isLoading" />
     </div>
+<div v-if="authStore.isInitializing" class="min-h-screen flex items-center justify-center">
 </template>
