@@ -16,7 +16,7 @@ const routes = [
         path: 'login',
         name: 'login',
         component: LoginView,
-      },
+        meta: { guestOnly: true },       },
       {
         path: 'select-workspace',
         name: 'select-workspace',
@@ -28,7 +28,7 @@ const routes = [
       {
         path: '/',
         redirect: {
-          name: 'login',
+          name: 'select-workspace',
         },
       },
       {

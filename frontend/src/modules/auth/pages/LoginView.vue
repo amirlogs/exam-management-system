@@ -7,29 +7,41 @@ import AlertBanner from '@/shared/components/ui/AlertBanner.vue'
 import { useAuthStore } from '@/stores/auth'
 import { loginSchema } from '../schemas'
 import { useRouter } from 'vue-router'
+import { usePermissionsStore } from '@/stores/permission'
 
 const authStore = useAuthStore()
+const permissionsStore = usePermissionsStore()
 const router = useRouter()
 
 const email = ref('')
 const password = ref('')
+const workspace = ref<string[]>([])
 const fieldErrors = ref<Record<string, string>>({})
 
 async function onSubmit() {
     fieldErrors.value = {}
+    authStore.error = '';
 
     const result = loginSchema.safeParse({ email: email.value, password: password.value })
 
     if (!result.success) {
+
         result.error.issues.forEach((issue) => {
             const field = issue.path.join('.')
             if (!fieldErrors.value[field]) fieldErrors.value[field] = issue.message
         })
-        return // stop here — never calls the API with invalid data
+        return
     }
 
     const success = await authStore.login(result.data.email, result.data.password)
-    if (success) router.push('/select-workspace')
+    if (success) {
+        workspace.value = permissionsStore.getVisibleWorkspaces();
+        if (workspace.value.length === 1) {
+            router.push(`/${workspace.value[0]}`)
+        } else {
+            router.push('/select-workspace')
+        }
+    }
 }
 </script>
 

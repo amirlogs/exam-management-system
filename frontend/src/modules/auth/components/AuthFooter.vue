@@ -8,7 +8,7 @@ const year = new Date().getFullYear()
 
 <template>
     <div class="w-full">
-        <hr v-if="divider" class="border-border mb-6" />
+            <hr v-if="divider" class="border-border mb-6" />
         <div class="text-center text-sm text-text/50">
             <p>{{ orgName }} © {{ year }}. All rights reserved.</p>
             <div class="flex items-center justify-center gap-2 mt-1">
