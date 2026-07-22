@@ -48,21 +48,19 @@ class ConfirmedQuestionController extends Controller
 
     public function index(int $importId)
     {
-
         $quesion = Question::where('import_id', $importId)->get();
         if ($quesion->isEmpty()) {
             return $this->error('', 'No Question Found', 404);
         }
 
         return $this->success($quesion, 'Question Fetched Successfully');
-
     }
 
     public function show(int $questionId)
     {
         $quesion = Question::where('id', $questionId)
             ->with('instructor.user:id,name')
-            ->orderByRaw("status = 'resolved'") 
+            ->orderByRaw("status = 'resolved'")
             ->latest()
             ->get();
         if (! $quesion) {
