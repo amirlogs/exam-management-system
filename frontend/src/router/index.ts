@@ -1,12 +1,13 @@
-import AuthLayout from '@/app/layouts/AuthLayout.vue'
+import AuthLayout from '@/layouts/AuthLayout.vue'
 import LoginView from '@/modules/auth/pages/LoginView.vue'
 import WorkspaceSelectView from '@/modules/workspace/pages/WorkspaceSelectView.vue'
 import NotFoundView from '@/shared/pages/NotFoundView.vue'
-import Test from '@/shared/pages/Test.vue'
+// import Test from '@/shared/pages/Test.vue'
+import TeachingLayout from '@/layouts/TeachingLayout.vue'
 import UnauthorizedView from '@/shared/pages/UnauthorizedView.vue'
 import { createRouter, createWebHistory } from 'vue-router'
 import { authGuard } from './guards'
-
+import teachingRoutes from './teaching.routes'
 const routes = [
   {
     path: '/',
@@ -16,7 +17,8 @@ const routes = [
         path: 'login',
         name: 'login',
         component: LoginView,
-        meta: { guestOnly: true },       },
+        meta: { guestOnly: true },
+      },
       {
         path: 'select-workspace',
         name: 'select-workspace',
@@ -31,11 +33,20 @@ const routes = [
           name: 'select-workspace',
         },
       },
-      {
-        path: '/test',
-        component: Test,
-      },
+      // {
+      //   path: '/test',
+      //   component: Test,
+      // },
     ],
+  },
+  {
+    path: '/teaching',
+    component: TeachingLayout,
+    meta: {
+      requiresAuth: true,
+      workspace: 'teaching',
+    },
+    children: teachingRoutes,
   },
   {
     path: '/:pathMatch(.*)*',

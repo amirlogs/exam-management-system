@@ -27,24 +27,9 @@ export const usePermissionsStore = defineStore('permissions', () => {
     'restore_deleted_data',
     'manage_enrollment_exceptions',
     'approve_question_import',
-    'add_questions_to_group',
     'approve_question_group',
     'reopen_question_group',
     'adjust_session_timing',
-    'add_questions_to_group',
-    'submit_group_for_approval',
-    'upload_question_bank',
-    'confirm_question_import',
-    'flag_questions',
-    'create_question_group',
-    'add_questions_to_group',
-    'submit_group_for_approval',
-    'create_exam',
-    'schedule_exam_session',
-    'view_grading_queue',
-    'grade_essay_questions',
-    'create_exam',
-    'schedule_exam_session',
     'revise_grades_after_window',
   ]
   const teaching = [
@@ -67,10 +52,8 @@ export const usePermissionsStore = defineStore('permissions', () => {
 
   const student = [
     'view_eligible_exams',
-    'view_grading_queue',
     'start_exam_attempt',
     'submit_exam_answers',
-    'create_exam',
     'finalize_exam_attempt',
   ]
   const getVisibleWorkspaces = () => {

@@ -117,7 +117,9 @@ onUnmounted(() => document.removeEventListener('click', closeMenu))
                 <p class="text-text/60 text-sm leading-relaxed flex-1">{{ workspaces[ws].description }}</p>
 
                 <BaseButton variant="primary" block class="mt-6" @click="$emit('enter-workspace', ws)">
-                    Enter Workspace
+                    <RouterLink :to="ws + '/dashboard'">
+                        Enter Workspace
+                    </RouterLink>
                     <template #icon>
                         <ArrowRight class="w-4 h-4" />
                     </template>

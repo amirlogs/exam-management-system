@@ -55,9 +55,7 @@ async function onSubmit() {
                         d="M12 3L1 9l11 6 9-4.91V17h2V9L12 3zm0 2.67L18.09 9 12 12.33 5.91 9 12 5.67zM5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82z" />
                 </svg>
             </div>
-            <h1 class="text-2xl font-bold text-text text-center tracking-tight">
-                University Exam Management System
-            </h1>
+            <h1 class="text-2xl font-display font-semibold text-accent">University Exam Management System</h1>
         </div>
 
         <form class="space-y-5" @submit.prevent="onSubmit">
