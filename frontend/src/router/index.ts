@@ -3,11 +3,11 @@ import LoginView from '@/modules/auth/pages/LoginView.vue'
 import WorkspaceSelectView from '@/modules/workspace/pages/WorkspaceSelectView.vue'
 import NotFoundView from '@/shared/pages/NotFoundView.vue'
 // import Test from '@/shared/pages/Test.vue'
-import TeachingLayout from '@/layouts/TeachingLayout.vue'
+import InstructorLayout from '@/layouts/InstructorLayout.vue'
 import UnauthorizedView from '@/shared/pages/UnauthorizedView.vue'
 import { createRouter, createWebHistory } from 'vue-router'
 import { authGuard } from './guards'
-import teachingRoutes from './teaching.routes'
+import teachingRoutes from './instructor.routes'
 const routes = [
   {
     path: '/',
@@ -40,8 +40,8 @@ const routes = [
     ],
   },
   {
-    path: '/teaching',
-    component: TeachingLayout,
+    path: '/instructor',
+    component: InstructorLayout,
     meta: {
       requiresAuth: true,
       workspace: 'teaching',
@@ -67,7 +67,6 @@ const router = createRouter({
 
 router.beforeEach(authGuard)
 // router.beforeEach(permissionGuard)
-
 export default router
 
 // {

@@ -1,13 +1,20 @@
+import trueCouter from '@/shared/utils/trueCounter'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
 export const usePermissionsStore = defineStore('permissions', () => {
   const permissions = ref<string[]>([])
-  const workspaces = ref<string[]>([])
-
+  const workspaces = ref({
+    admin: false,
+    instructor: false,
+    student: false,
+  })
+  const activeWorkspace = ref('instructor')
   const setPermissions = (newPermissions: string[]) => {
     permissions.value = [...newPermissions]
   }
+
+  // error.value = 'Invalid email or password. Please try again.'
   function can(permission: string) {
     return permissions.value.includes(permission)
   }
@@ -32,7 +39,7 @@ export const usePermissionsStore = defineStore('permissions', () => {
     'adjust_session_timing',
     'revise_grades_after_window',
   ]
-  const teaching = [
+  const instructor = [
     'upload_question_bank',
     'confirm_question_import',
     'flag_questions',
@@ -49,36 +56,47 @@ export const usePermissionsStore = defineStore('permissions', () => {
     'view_student_analytics',
     'view_per_question_metrics',
   ]
-
   const student = [
     'view_eligible_exams',
     'start_exam_attempt',
     'submit_exam_answers',
+    'submit_group_for_approval',
+    'create_exam',
+    'schedule_exam_session',
+    'view_grading_queue',
+    'grade_essay_questions',
+    'release_results',
     'finalize_exam_attempt',
   ]
+
   const getVisibleWorkspaces = () => {
+    workspaces.value = { admin: false, instructor: false, student: false } // reset first
+
     for (const permission of admin) {
       if (permissions.value.includes(permission)) {
-        console.log('admin')
-        workspaces.value.push('admin')
+        workspaces.value['admin'] = true
         break
       }
     }
-    for (const permission of teaching) {
+    for (const permission of instructor) {
       if (permissions.value.includes(permission)) {
-        console.log('teaching')
-        workspaces.value.push('teaching')
+        workspaces.value['instructor'] = true
         break
       }
     }
     for (const permission of student) {
       if (permissions.value.includes(permission)) {
-        console.log('student')
-        workspaces.value.push('student')
+        workspaces.value['student'] = true
         break
       }
     }
+
     return workspaces.value
+  }
+
+  const routeToWorkspace = async () => {
+    getVisibleWorkspaces()
+    return trueCouter(workspaces.value)
   }
   return {
     permissions,
@@ -86,5 +104,7 @@ export const usePermissionsStore = defineStore('permissions', () => {
     can,
     clear,
     getVisibleWorkspaces,
+    routeToWorkspace,
+    activeWorkspace,
   }
 })

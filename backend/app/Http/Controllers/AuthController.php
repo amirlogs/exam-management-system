@@ -6,7 +6,6 @@ use App\Http\Requests\ChangePasswordRequest;
 use App\Http\Requests\LoginRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
-use App\Models\UserRolePermission;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -18,6 +17,7 @@ class AuthController extends Controller
         $data = $request->validated();
         // check it the password match
         $user = User::where('email', $data['email'])->first();
+        $permissions = $user->getAllPermissions()->pluck('name');
 
         if (! $user || ! Hash::check($data['password'], $user->password)) {
             return $this->error('', 'Invalid credentials', 422);
@@ -29,6 +29,7 @@ class AuthController extends Controller
             [
                 'token' => $token,
                 'user' => new UserResource($user),
+                'permissions' => $permissions,
             ],
             'Login successful',
             200,
@@ -56,7 +57,6 @@ class AuthController extends Controller
         $user = Auth::user();
 
         $permissions = $user->getAllPermissions()->pluck('name');
-        // $user_permmsion = UserRolePermission::where('user_id', $user->id)->first();
 
         return $this->success(
             [

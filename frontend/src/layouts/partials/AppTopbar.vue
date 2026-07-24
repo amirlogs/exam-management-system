@@ -1,18 +1,27 @@
 <script setup lang="ts">
-import { Bell } from 'lucide-vue-next'
+import { Bell, Menu } from 'lucide-vue-next'
 import ThemeSwitcherDropdown from '@/shared/components/ui/ThemeSwitcherDropdown.vue'
 import UserMenuDropdown from '@/shared/components/ui/UserMenuDropdown.vue'
+import { useSidebar } from '@/shared/composables/useSidebar'
 
 defineProps<{
     userName?: string
     userRole?: string
     userAvatar?: string
 }>()
+
+const { toggleMobile } = useSidebar()
 </script>
 
 <template>
-    <header class="h-17 pr-2 pl-7 flex items-center justify-between border-b border-border bg-surface">
-        <div class="flex items-center gap-4">
+    <header
+        class="h-17 px-4  md:pl-6 md:pr-3 flex items-center justify-between border-b border-border bg-surface sticky top-0 z-20">
+            
+        <div class="flex items-center gap-3">
+            <button class="md:hidden w-9 h-9 rounded-lg flex items-center justify-center hover:bg-bg"
+                @click="toggleMobile">
+                <Menu class="w-5 h-5 text-text/70" />
+            </button>
             <slot name="left" />
         </div>
 
@@ -33,8 +42,6 @@ defineProps<{
                 <Bell class="w-4.5 h-4.5 text-text/60" />
                 <span class="absolute top-2 right-2 w-1.5 h-1.5 bg-accent rounded-full" />
             </button>
-
-            <div class="w-px h-6 bg-border" />
 
             <slot name="workspace-switcher" />
 

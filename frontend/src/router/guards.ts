@@ -15,10 +15,11 @@ export const authGuard: NavigationGuard = (to) => {
   return true
 }
 
+// import { usePermissionsStore } from '@/stores/permission' // renamed, plural now
+
 // export const permissionGuard: NavigationGuard = (to) => {
-//   const permissionStore = usePermissionStore()
-//   const required = to.meta.permission as string | undefined
-//   if (required && !permissionStore.can(required)) {
+//   const permissionsStore = usePermissionsStore()
+//   if (to.meta.permission && !permissionsStore.can(to.meta.permission)) {
 //     return { path: '/unauthorized' }
 //   }
 // }
