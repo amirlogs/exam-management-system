@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Permission extends Model
 {
@@ -10,13 +11,16 @@ class Permission extends Model
 
     public function users()
     {
-        return $this->belongsToMany(User::class, "user_role_permission");
+        return $this->belongsToMany(User::class, 'user_role_permissions');
     }
-    public function roles()
+
+    public function roles(): BelongsToMany
     {
-        return $this->belongsToMany(
-            Role::class,
-            "role_permissions",
-        )->withTimestamps();
+        return $this->belongsToMany(Role::class, 'role_permissions');
+    }
+
+    public function userRoles(): BelongsToMany
+    {
+        return $this->belongsToMany(UserRole::class, 'user_role_permissions')->withPivot(['is_granted', 'set_by', 'set_at']);
     }
 }

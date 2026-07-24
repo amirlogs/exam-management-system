@@ -6,6 +6,7 @@ use App\Http\Requests\ChangePasswordRequest;
 use App\Http\Requests\LoginRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
+use App\Models\UserRolePermission;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -54,8 +55,14 @@ class AuthController extends Controller
     {
         $user = Auth::user();
 
+        $permissions = $user->getAllPermissions()->pluck('name');
+        // $user_permmsion = UserRolePermission::where('user_id', $user->id)->first();
+
         return $this->success(
-            new UserResource($user),
+            [
+                'user' => new UserResource($user),
+                'permissions' => $permissions,
+            ],
             'User data fetched successfully',
             200,
         );

@@ -7,29 +7,41 @@ import AlertBanner from '@/shared/components/ui/AlertBanner.vue'
 import { useAuthStore } from '@/stores/auth'
 import { loginSchema } from '../schemas'
 import { useRouter } from 'vue-router'
+import { usePermissionsStore } from '@/stores/permission'
 
 const authStore = useAuthStore()
+const permissionsStore = usePermissionsStore()
 const router = useRouter()
 
 const email = ref('')
 const password = ref('')
+const workspace = ref<string[]>([])
 const fieldErrors = ref<Record<string, string>>({})
 
 async function onSubmit() {
     fieldErrors.value = {}
+    authStore.error = '';
 
     const result = loginSchema.safeParse({ email: email.value, password: password.value })
 
     if (!result.success) {
+
         result.error.issues.forEach((issue) => {
             const field = issue.path.join('.')
             if (!fieldErrors.value[field]) fieldErrors.value[field] = issue.message
         })
-        return // stop here — never calls the API with invalid data
+        return
     }
 
     const success = await authStore.login(result.data.email, result.data.password)
-    if (success) router.push('/select-workspace')
+    if (success) {
+        workspace.value = permissionsStore.getVisibleWorkspaces();
+        if (workspace.value.length === 1) {
+            router.push(`/${workspace.value[0]}`)
+        } else {
+            router.push('/select-workspace')
+        }
+    }
 }
 </script>
 
@@ -43,9 +55,7 @@ async function onSubmit() {
                         d="M12 3L1 9l11 6 9-4.91V17h2V9L12 3zm0 2.67L18.09 9 12 12.33 5.91 9 12 5.67zM5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82z" />
                 </svg>
             </div>
-            <h1 class="text-2xl font-bold text-text text-center tracking-tight">
-                University Exam Management System
-            </h1>
+            <h1 class="text-2xl font-display font-semibold text-accent">University Exam Management System</h1>
         </div>
 
         <form class="space-y-5" @submit.prevent="onSubmit">

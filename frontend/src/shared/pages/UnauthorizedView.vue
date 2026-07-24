@@ -24,7 +24,7 @@
 
             <hr class="border-border my-6" />
 
-            <div class="text-xs text-text/40 space-y-1 text-left">
+            <div class="text-xs text-text/40 font-mono space-y-1 text-left">
                 <p>Session ID: {{ sessionId }}</p>
                 <p>Timestamp: {{ timestamp }}</p>
             </div>

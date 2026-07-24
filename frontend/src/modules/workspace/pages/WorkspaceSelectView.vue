@@ -3,13 +3,26 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import { Landmark, ShieldUser, BookOpen, ClipboardList, ArrowRight, Star, MoreVertical } from 'lucide-vue-next'
 import BaseButton from '@/shared/components/ui/BaseButton.vue'
 import { useAuthStore } from '@/stores/auth'
-
+import { usePermissionsStore } from '@/stores/permission'
+import { useRouter } from 'vue-router'
+usePermissionsStore
 defineEmits<{ (e: 'enter-workspace', id: string): void }>()
 
 const year = new Date().getFullYear()
-const authStore = useAuthStore()
+const permissionsStore = usePermissionsStore()
+const router = useRouter()
+const selectedWorkspace = ref<string[]>([])
 
-const workspaces = [
+onMounted(() => {
+    selectedWorkspace.value = permissionsStore.getVisibleWorkspaces();
+    if (selectedWorkspace.value.length === 1) {
+        router.push(`/${selectedWorkspace.value[0]}`)
+    } else {
+        router.push('/select-workspace')
+    }
+})
+const workspaces = {
+    admin:
     {
         id: 'admin',
         title: 'Administration',
@@ -18,6 +31,7 @@ const workspaces = [
         iconBg: 'bg-accent/10',
         iconColor: 'text-accent',
     },
+    teaching:
     {
         id: 'teaching',
         title: 'Teaching',
@@ -26,6 +40,7 @@ const workspaces = [
         iconBg: 'bg-blue-50',
         iconColor: 'text-blue-600',
     },
+    student:
     {
         id: 'student',
         title: 'My Studies',
@@ -34,7 +49,7 @@ const workspaces = [
         iconBg: 'bg-emerald-50',
         iconColor: 'text-emerald-600',
     },
-]
+}
 
 const defaultWorkspaceId = ref<string | null>(null)
 const openMenuId = ref<string | null>(null)
@@ -52,7 +67,7 @@ onMounted(() => document.addEventListener('click', closeMenu))
 onUnmounted(() => document.removeEventListener('click', closeMenu))
 </script>
 <template>
-    <div class="w-full max-w-6xl">
+    <div class="w-full min-w-screen mx-4 md:mt-24">
         <!-- Header -->
         <div class="text-center mb-12">
             <div class="w-16 h-16 mx-auto mb-5 rounded-xl bg-accent/10 flex items-center justify-center">
@@ -65,69 +80,69 @@ onUnmounted(() => document.removeEventListener('click', closeMenu))
         </div>
 
         <!-- Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div v-for="ws in workspaces" :key="ws.id" class="group relative bg-surface border border-border rounded-2xl p-7 flex flex-col
+        <div class=" flex justify-center gap-7 flex-wrap mx-4">
+            <div v-for="ws in selectedWorkspace" :key="ws" class="max-w-100 group relative bg-surface border border-border rounded-2xl p-7 flex flex-col
                shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200">
                 <!-- Overflow menu -->
                 <div class="absolute top-5 right-5">
-                    <button type="button" @click.stop="openMenuId = openMenuId === ws.id ? null : ws.id" class="w-8 h-8 rounded-lg flex items-center justify-center text-text/40
+                    <button type="button" @click.stop="openMenuId = openMenuId === ws ? null : ws" class="w-8 h-8 rounded-lg flex items-center justify-center text-text/40
                    hover:text-text hover:bg-bg transition-colors">
                         <MoreVertical class="w-4 h-4" />
                     </button>
 
-                    <div v-if="openMenuId === ws.id"
+                    <div v-if="openMenuId === ws"
                         class="absolute right-0 mt-1 w-48 bg-surface border border-border rounded-lg shadow-lg py-1 z-10">
-                        <button type="button" @click="setDefault(ws.id)"
+                        <button type="button" @click="setDefault(ws)"
                             class="w-full flex items-center gap-2 px-3 py-2 text-sm text-text hover:bg-bg transition-colors text-left">
-                            <Star class="w-4 h-4"
-                                :class="defaultWorkspaceId === ws.id ? 'text-accent' : 'text-text/40'" />
-                            {{ defaultWorkspaceId === ws.id ? 'Remove as default' : 'Set as default' }}
+                            <Star class="w-4 h-4" :class="defaultWorkspaceId === ws ? 'text-accent' : 'text-text/40'" />
+                            {{ defaultWorkspaceId === ws ? 'Remove as default' : 'Set as default' }}
                         </button>
                     </div>
                 </div>
 
                 <!-- Icon -->
                 <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-5" :class="ws.iconBg">
-                    <component :is="ws.icon" class="w-6 h-6" :class="ws.iconColor" />
+                    <component :is="workspaces[ws].icon" class="w-6 h-6" :class="workspaces[ws].iconColor" />
                 </div>
 
                 <!-- Title + default badge -->
                 <div class="flex items-center gap-2 mb-2 pr-6">
-                    <h3 class="text-xl font-bold text-text">{{ ws.title }}</h3>
-                    <span v-if="defaultWorkspaceId === ws.id"
+                    <h3 class="text-xl font-bold text-text">{{ workspaces[ws].title }}</h3>
+                    <span v-if="defaultWorkspaceId === ws"
                         class="text-[11px] font-semibold text-accent bg-accent/10 px-2 py-0.5 rounded-full">
                         Default
                     </span>
                 </div>
 
-                <p class="text-text/60 text-sm leading-relaxed flex-1">{{ ws.description }}</p>
+                <p class="text-text/60 text-sm leading-relaxed flex-1">{{ workspaces[ws].description }}</p>
 
-                <BaseButton variant="primary" block class="mt-6" @click="$emit('enter-workspace', ws.id)">
-                    Enter Workspace
+                <BaseButton variant="primary" block class="mt-6" @click="$emit('enter-workspace', ws)">
+                    <RouterLink :to="ws + '/dashboard'">
+                        Enter Workspace
+                    </RouterLink>
                     <template #icon>
                         <ArrowRight class="w-4 h-4" />
                     </template>
                 </BaseButton>
             </div>
         </div>
-
-        <!-- Footer -->
-        <hr class="border-border my-10" />
-        <div class="text-center text-sm text-text/50">
-            <p>EduExam Systems © {{ year }}. All rights reserved.</p>
-            <div class="flex items-center justify-center gap-2 mt-1">
-                <router-link to="/privacy" class="font-semibold text-text/70 hover:text-accent transition-colors">
-                    Privacy Policy
-                </router-link>
-                <span class="w-1 h-1 rounded-full bg-text/30" />
-                <router-link to="/terms" class="font-semibold text-text/70 hover:text-accent transition-colors">
-                    Terms of Service
-                </router-link>
-                <span class="w-1 h-1 rounded-full bg-text/30" />
-                <router-link to="/support" class="font-semibold text-text/70 hover:text-accent transition-colors">
-                    Support
-                </router-link>
-            </div>
+    </div>
+    <!-- Footer -->
+    <hr class="border-border my-10 w-full flex flex-col justify-end align-bottom mt-auto" />
+    <div class="text-center text-sm text-text/50 mb-0  mb-10">
+        <p>EduExam Systems © {{ year }}. All rights reserved.</p>
+        <div class="flex items-center justify-center gap-2 mt-1">
+            <router-link to="/privacy" class="font-semibold text-text/70 hover:text-accent transition-colors">
+                Privacy Policy
+            </router-link>
+            <span class="w-1 h-1 rounded-full bg-text/30" />
+            <router-link to="/terms" class="font-semibold text-text/70 hover:text-accent transition-colors">
+                Terms of Service
+            </router-link>
+            <span class="w-1 h-1 rounded-full bg-text/30" />
+            <router-link to="/support" class="font-semibold text-text/70 hover:text-accent transition-colors">
+                Support
+            </router-link>
         </div>
     </div>
 </template>
