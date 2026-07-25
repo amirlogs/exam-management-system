@@ -10,12 +10,11 @@ const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 
+
 const navItems = [
-    { label: 'Dashboard', to: '/teaching/dashboard', icon: LayoutGrid },
-    { label: 'My Courses', to: '/teaching/courses', icon: BookOpen },
-    { label: 'Question Bank', to: '/teaching/question-bank', icon: HelpCircle },
-    { label: 'Grading Queue', to: '/teaching/grading', icon: CheckSquare },
-    { label: 'Flags', to: '/teaching/flags', icon: Flag },
+    { label: 'Dashboard', to: '/instructor/dashboard', icon: LayoutGrid },
+    { label: 'My Courses', to: '/instructor/courses', icon: BookOpen },
+    { label: 'Question Bank', to: '/instructor/question-bank', icon: HelpCircle },
 ]
 </script>
 
