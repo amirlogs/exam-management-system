@@ -23,7 +23,8 @@ Route::middleware('auth:sanctum')->prefix('auth')->group(function () {
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/courses/{courseId}/question-bank-imports', [ImportQuestionController::class, 'store']);
-    Route::post('/question-bank-imports/{importId}', [ImportQuestionController::class, 'show']);
+    Route::get('/question-bank-imports/{importId}', [ImportQuestionController::class, 'show']);
+    Route::get('/question-bank-imports', [ImportQuestionController::class, 'index']);
     Route::patch('/question-bank-imports/{importId}/questions/{rowIndex}', [ImportQuestionController::class, 'update']);
     Route::post('/question-bank-imports/{importId}/confirm', [ImportQuestionController::class, 'confirm']);
     Route::post('/question-bank-imports/{importId}/approve', [ImportQuestionController::class, 'approve']);

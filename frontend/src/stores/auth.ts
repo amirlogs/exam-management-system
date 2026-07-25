@@ -18,8 +18,10 @@ export const useAuthStore = defineStore('userAuth', () => {
       const { token: authToken, user: userData } = response.data.data
       user.value = userData
       token.value = authToken
+      console.log(response.data.data, 'response is came')
+      usePermissionsStore().setPermissions(response.data.data.permissions)
+      usePermissionsStore().getVisibleWorkspaces()
       localStorage.setItem('auth_token', authToken)
-
       return true
     } catch (err) {
       // error.value = 'Invalid email or password. Please try again.'

@@ -50,6 +50,7 @@ class FlagQuestionController extends Controller
             return $this->error($validatederror, 'Validation error', 422);
         }
         $question = Question::find($questionId);
+        return $question;
         if ($question->status !== 'confirmed') {
             return $this->error('', 'Question Should Be Confirmed First', 404);
         }

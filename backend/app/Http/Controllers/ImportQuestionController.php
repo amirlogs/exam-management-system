@@ -14,6 +14,17 @@ use Illuminate\Support\Facades\DB;
 
 class ImportQuestionController extends Controller
 {
+    public function index()
+    {
+        $import = QuestionBankImport::all()->makeHidden(['validated_data']);
+
+        if ($import->isEmpty()) {
+            return $this->error('', 'Import not found', 404);
+        }
+
+        return $this->success($import, 'Import found');
+    }
+
     public function store(string $courseId, StoreQuestionRequest $request)
     {
         $validated = $request->validated();
@@ -124,7 +135,7 @@ class ImportQuestionController extends Controller
                     'course_id' => $import->course_id,
                     'import_id' => $import->id,
                     'text' => $row['text'],
-                    'options' => $row['options'],
+                    'options' => $row['options'] ?? null,
                     'type' => $row['type'],
                     'correct_answer' => $row['correct_answer'],
                     'difficulty' => $row['difficulty'],
@@ -170,7 +181,7 @@ class ImportQuestionController extends Controller
             ])
             ->latest()
             ->get();
-            
+
         $response = [
             'import_id' => $import->id,
             'open_count' => $flags->where('status', 'open')->count(),

@@ -10,30 +10,29 @@ const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 
+
 const navItems = [
-    { label: 'Dashboard', to: '/teaching/dashboard', icon: LayoutGrid },
-    { label: 'My Courses', to: '/teaching/courses', icon: BookOpen },
-    { label: 'Question Bank', to: '/teaching/question-bank', icon: HelpCircle },
-    { label: 'Grading Queue', to: '/teaching/grading', icon: CheckSquare },
-    { label: 'Flags', to: '/teaching/flags', icon: Flag },
+    { label: 'Dashboard', to: '/instructor/dashboard', icon: LayoutGrid },
+    { label: 'My Courses', to: '/instructor/courses', icon: BookOpen },
+    { label: 'Question Bank', to: '/instructor/question-bank', icon: HelpCircle },
 ]
 </script>
 
 <template>
     <div class="flex min-h-screen bg-bg">
-        <AppSidebar brand-name="University Exam" brand-subtitle="Management Portal" :items="navItems" :active-to="route.path" />
+        <AppSidebar brand-name="University Exam" brand-subtitle="Management Portal" :items="navItems"
+            :active-to="route.path" />
 
-        <div class="flex-1 flex flex-col">
+        <div class="flex-1 flex flex-col min-w-0">
             <AppTopbar :user-name="authStore.user?.name" :user-role="authStore.user?.roleLabel"
                 :user-avatar="authStore.user?.avatar">
                 <template #workspace-switcher>
-                    <WorkspaceSwitcherDropdown active-workspace="teaching"
-                        @change="id => router.push(`/${id}/dashboard`)" />
+                    <WorkspaceSwitcherDropdown />
                 </template>
             </AppTopbar>
 
             <main class="p-8 flex-1">
-                <router-view />
+                <router-view :key="$route.fullPath" />
             </main>
         </div>
     </div>
