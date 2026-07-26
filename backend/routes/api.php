@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ConfirmedQuestionController;
 use App\Http\Controllers\FlagQuestionController;
 use App\Http\Controllers\ImportQuestionController;
+use App\Http\Controllers\QuestionController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -42,4 +43,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/questions/{questionId}', [ConfirmedQuestionController::class,  'destroy']);
     Route::get('/questions/{questionId}/flags', [ConfirmedQuestionController::class,  'show']);
     Route::get('/questions/{importId}', [ConfirmedQuestionController::class,  'index']);
+
+    // ----------------------
+    Route::get('/cources/{courseId}/available-questions', [QuestionController::class, 'index']); //not implemented
+    Route::post('/cources/{courseId}/questions', [QuestionController::class, 'store']);
+    Route::patch('/questions/{questionId}', [QuestionController::class, 'update']);
+    Route::post('/questions/{questionId}/confirm', [QuestionController::class, 'confirm']);
+
+    // ----------------------------- Grouping Questions ---------------------------//
+
 });
