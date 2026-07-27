@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class QuestionPackage extends Model
+class RolePermission extends Model
 {
-    //
+    const UPDATED_AT = null;
 }

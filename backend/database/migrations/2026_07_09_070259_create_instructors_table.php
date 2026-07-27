@@ -17,8 +17,9 @@ return new class extends Migration {
                 ->constrained("users")
                 ->cascadeOnDelete();
             $table->string("staff_id")->unique();
+            $table->timestamps();
             $table
-                ->foreignId("home_department_id")
+                ->foreignId("department_id")
                 ->constrained("departments")
                 ->restrictOnDelete();
         });
