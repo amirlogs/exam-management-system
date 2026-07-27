@@ -83,4 +83,9 @@ class User extends Authenticatable
             ->unique('id')
             ->values();
     }
+
+    public function hasPermission($permission)
+    {
+        return $this->getAllPermissions()->contains('name', $permission);
+    }
 }

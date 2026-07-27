@@ -154,17 +154,6 @@ class ImportQuestionController extends Controller
         return $this->success(['count' => count($data), 'status' => 'confirmed'], 'Question import confirmed successfully');
     }
 
-    public function approve(int $importId)
-    {
-        // get the data and it must be confirmed
-
-        // check if there is no falg
-
-        // update the status to approved
-
-        // return the success message
-    }
-
     public function flags(int $importId)
     {
         $import = QuestionBankImport::find($importId);
