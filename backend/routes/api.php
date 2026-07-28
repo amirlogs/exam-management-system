@@ -24,6 +24,7 @@ Route::middleware('auth:sanctum')->prefix('auth')->group(function () {
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/courses/{courseId}/question-bank-imports', [ImportQuestionController::class, 'store']);
+        // ->middleware('middleware:import-question-bank');
     Route::get('/question-bank-imports/{importId}', [ImportQuestionController::class, 'show']);
     Route::get('/question-bank-imports', [ImportQuestionController::class, 'index']);
     Route::patch('/question-bank-imports/{importId}/questions/{rowIndex}', [ImportQuestionController::class, 'update']);
@@ -45,7 +46,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/questions/{importId}', [ConfirmedQuestionController::class,  'index']);
 
     // ----------------------
-    Route::get('/cources/{courseId}/available-questions', [QuestionController::class, 'index']); //not implemented
+    Route::get('/cources/{courseId}/available-questions', [QuestionController::class, 'index']); // not implemented
     Route::post('/cources/{courseId}/questions', [QuestionController::class, 'store']);
     Route::patch('/questions/{questionId}', [QuestionController::class, 'update']);
     Route::post('/questions/{questionId}/confirm', [QuestionController::class, 'confirm']);

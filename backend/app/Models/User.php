@@ -2,85 +2,40 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Database\Factories\UserFactory;
-use Illuminate\Database\Eloquent\Attributes\Fillable;
-use Illuminate\Database\Eloquent\Attributes\Hidden;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Student;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens;
 
-#[Fillable(['name', 'email', 'password'])]
-#[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
-    /** @use HasFactory<UserFactory> */
-    use HasApiTokens, HasFactory, Notifiable;
+    protected $fillable = ['email', 'password', 'is_first_login'];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
-    }
+    protected $hidden = ['password'];
 
-    public function instructors()
-    {
-        return $this->hasOne(Instructor::class);
-    }
+    protected $casts = ['is_first_login' => 'boolean'];
 
-    public function student()
-    {
-        return $this->hasOne(Student::class);
-    }
-
-    public function assignedRoles()
-    {
-        return $this->belongsToMany(Role::class, 'user_roles')->withPivot(
-            'department_id',
-            'assigned_by',
-            'assigned_at',
-        );
-    }
-
-    public function userRoles()
+    public function userRoles(): HasMany
     {
         return $this->hasMany(UserRole::class);
     }
 
-    public function roles()
+    public function student(): HasOne
     {
-        return $this->belongsToMany(Role::class, 'user_roles')->withPivot('department_id');
+        return $this->hasOne(Student::class);
     }
 
-    public function getAllPermissions()
+    /** All permission names this user holds across every role assignment. */
+    public function permissionNames(): array
     {
-        $this->load([
-            'userRoles.role.permissions',
-            'userRoles.deniedPermissions',
-        ]);
-
-        return $this->userRoles
-            ->flatMap(function ($userRole) {
-
-                $rolePermissions = $userRole->role->permissions;
-
-                $denied = $userRole->deniedPermissions
-                    ->pluck('id');
-
-                return $rolePermissions->reject(function ($permission) use ($denied) {
-                    return $denied->contains($permission->id);
-                });
-
-            })
-            ->unique('id')
-            ->values();
+        return $this->userRoles()
+            ->with('role.permissions')
+            ->get()
+            ->pluck('role.permissions')
+            ->flatten()
+            ->pluck('name')
+            ->unique()
+            ->values()
+            ->all();
     }
 }

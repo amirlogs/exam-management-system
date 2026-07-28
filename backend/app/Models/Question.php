@@ -6,19 +6,28 @@ use Illuminate\Database\Eloquent\Model;
 
 class Question extends Model
 {
-    protected $guarded = [];
+    protected $fillable = [
+        'course_id', 'created_by', 'type', 'chapter',
+        'content', 'difficulty', 'status',
+    ];
 
-    protected function casts(): array
+    public function course()
     {
-        return [
-            'options' => 'array',
-            'is_active' => 'boolean',
-        ];
-
+        return $this->belongsTo(Course::class);
     }
 
-    public function instructor()
+    public function creator()
     {
-        return $this->belongsTo(Instructor::class);
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function options()
+    {
+        return $this->hasMany(QuestionOption::class);
+    }
+
+    public function approvals()
+    {
+        return $this->hasMany(QuestionApproval::class);
     }
 }

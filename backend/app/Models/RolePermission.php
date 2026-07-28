@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Models;
+namespace App;
 
 use Illuminate\Database\Eloquent\Model;
 
 class RolePermission extends Model
 {
-    const UPDATED_AT = null;
+    //
 }

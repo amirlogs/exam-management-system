@@ -3,30 +3,23 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Department extends Model
 {
-    protected $fillable = ['name', 'type', 'head_user_id'];
+    protected $fillable = ['college_id', 'name', 'type'];
 
-    public function sections(): HasMany
+    public function college()
     {
-        return $this->hasMany(Section::class, 'home_department_id');
+        return $this->belongsTo(College::class);
     }
 
-    public function courses(): HasMany
+    public function programs()
     {
-        return $this->hasMany(Course::class, 'owning_department_id');
+        return $this->hasMany(Program::class);
     }
 
-    public function head(): BelongsTo
+    public function courses()
     {
-        return $this->belongsTo(User::class, 'head_user_id');
-    }
-
-    public function userRoles(): HasMany
-    {
-        return $this->hasMany(UserRole::class);
+        return $this->hasMany(Course::class);
     }
 }
