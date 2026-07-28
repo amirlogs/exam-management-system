@@ -1,0 +1,24 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class CourseInstructor extends Model
+{
+    public $timestamps = false;
+
+    protected $fillable = ['course_offering_id', 'instructor_id', 'type', 'assigned_at'];
+
+    protected $casts = ['assigned_at' => 'datetime'];
+
+    public function courseOffering()
+    {
+        return $this->belongsTo(CourseOffering::class);
+    }
+
+    public function instructor()
+    {
+        return $this->belongsTo(User::class, 'instructor_id');
+    }
+}
