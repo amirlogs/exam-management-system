@@ -5,7 +5,7 @@ namespace App\Http\Requests;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
-class StoreCollegeRequest extends FormRequest
+class StoreCourseRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -23,10 +23,10 @@ class StoreCollegeRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'department_id' => 'required|integer',
-            'code' => 'required|string',
-            'name' => 'required|string',
-            'credit_hours' => 'required|integer',
+            'department_id' => ['required', 'integer'],
+            'code' => ['required', 'string', 'min:3', 'max:255', 'unique:courses,code'],
+            'name' => ['required', 'string', 'min:3', 'max:255', 'unique:courses,name'],
+            'credit_hours' => ['required', 'integer', 'min:1', 'max:10'],
         ];
     }
 }
