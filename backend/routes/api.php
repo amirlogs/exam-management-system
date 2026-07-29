@@ -1,10 +1,13 @@
 <?php
 
-use App\Http\Controllers\AuthController;
+use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\CollegeController;
 use App\Http\Controllers\ConfirmedQuestionController;
+use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\FlagQuestionController;
 use App\Http\Controllers\ImportQuestionController;
 use App\Http\Controllers\QuestionController;
+use App\Http\Controllers\UniversityController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -12,19 +15,42 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
-Route::post('/auth/login', [AuthController::class, 'login']);
-
-// authentication needed modules
+// ------------------ AUTH -------------------------
 
 Route::middleware('auth:sanctum')->prefix('auth')->group(function () {
-    Route::post('/change-password', [AuthController::class, 'changePassword']);
+    Route::post('/login', [AuthController::class, 'login'])->withoutMiddleware('auth:sanctum');
     Route::get('/me', [AuthController::class, 'me']);
+    Route::post('/change-password', [AuthController::class, 'changePassword']);
     Route::post('/logout', [AuthController::class, 'logout']);
 });
 
+// ------------------ University Management -------------------------
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/universities', [UniversityController::class, 'store'])->middleware('permission:university.create');
+    Route::get('/universities', [UniversityController::class, 'index']);
+    Route::get('/universities/{Id}', [UniversityController::class, 'show']);
+    Route::patch('/universities/{Id}', [UniversityController::class, 'update'])->middleware('permission:university.update');
+    Route::delete('/universities/{Id}', [UniversityController::class, 'destroy'])->middleware('permission:university.archive');
+    Route::post('/universities/{Id}/restore', [UniversityController::class, 'restore'])->middleware('permission:university.archive');
+
+    // ------------------ Collge|Department|Program|Course -------------------------
+    Route::post('/colleges', [CollegeController::class, 'store'])->middleware('permission:college.create');
+    Route::get('/colleges', [CollegeController::class, 'index']);
+    Route::patch('/colleges/{college}', [CollegeController::class, 'update'])->middleware('permission:college.update');
+    Route::delete('/colleges/{college}', [CollegeController::class, 'destroy'])->middleware('permission:college.archive');
+    Route::post('/colleges/{college}', [CollegeController::class, 'restore'])->middleware('permission:college.archive');
+
+    Route::post('/departments', [DepartmentController::class, 'store'])->middleware('permission:department.create');
+    Route::get('/departments', [DepartmentController::class, 'index']);
+    Route::patch('/departments/{department}', [DepartmentController::class, 'update'])->middleware('permission:department.update');
+    Route::delete('/departments/{department}', [DepartmentController::class, 'destroy'])->middleware('permission:department.update');
+    Route::post('/departments/{department}', [DepartmentController::class, 'restore'])->middleware('permission:department.update');
+});
+
+//
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/courses/{courseId}/question-bank-imports', [ImportQuestionController::class, 'store']);
-        // ->middleware('middleware:import-question-bank');
+    // ->middleware('middleware:import-question-bank');
     Route::get('/question-bank-imports/{importId}', [ImportQuestionController::class, 'show']);
     Route::get('/question-bank-imports', [ImportQuestionController::class, 'index']);
     Route::patch('/question-bank-imports/{importId}/questions/{rowIndex}', [ImportQuestionController::class, 'update']);
@@ -52,5 +78,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/questions/{questionId}/confirm', [QuestionController::class, 'confirm']);
 
     // ----------------------------- Grouping Questions ---------------------------//
-
 });
+
+// Usage in routes/api.php
+// Route::post('/exams/{exam}/approve', [ExamController::class, 'approve'])
+// ->middleware('permission:exam.approve');

@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('student_id')->constrained()->cascadeOnDelete();
             $table->foreignId('course_offering_id')->constrained()->cascadeOnDelete();
             $table->string('status')->default('active'); // active, dropped, completed
-            $table->foreignId('import_batch_id')->nullable()->constrained('import_history')->nullOnDelete();
+            $table->foreignId('import_batch_id')->nullable()->constrained('import_histories')->nullOnDelete();
             $table->timestamps();
 
             $table->unique(['student_id', 'course_offering_id']);
