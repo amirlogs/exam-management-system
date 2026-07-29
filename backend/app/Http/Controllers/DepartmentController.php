@@ -68,10 +68,10 @@ class DepartmentController extends Controller
 
     public function restore(string $departmentId)
     {
-        $department = Department::withTrashed()->find($departmentId);
+        $department = Department::onlyTrashed()->find($departmentId);
 
         if (! $department) {
-            return $this->error('', 'Department not found', 404);
+            return $this->error('', 'Program not found or is not in the trash', 404);
         }
 
         $department->restore();

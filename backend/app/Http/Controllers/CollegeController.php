@@ -58,10 +58,10 @@ class CollegeController extends Controller
 
     public function restore(string $collegeId)
     {
-        $college = College::withTrashed()->find($collegeId);
+        $college = College::onlyTrashed()->find($collegeId);
 
         if (! $college) {
-            return $this->error('College not found', 404);
+            return $this->error('Program not found or is not in the trash', 404);
         }
 
         $college->restore();

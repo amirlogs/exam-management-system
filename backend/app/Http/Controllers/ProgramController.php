@@ -47,7 +47,7 @@ class ProgramController extends Controller
             return $this->error('', 'Program not found', 404);
         }
         if ($request->has('department_id')) {
-            
+
             $department = Department::find($validated['department_id']);
 
             if (! $department) {
@@ -75,14 +75,14 @@ class ProgramController extends Controller
 
     public function restore(string $programId)
     {
-        $program = Program::withTrashed()->find($programId);
+        $program = Program::onlyTrashed()->find($programId);
 
         if (! $program) {
-            return $this->error('', 'Program not found', 404);
+            return $this->error('', 'Program not found or is not in the trash', 404);
         }
 
         $program->restore();
 
         return $this->success(new ProgramResource($program), 'Program restored successfully', 200);
-    } 
+    }
 }

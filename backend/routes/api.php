@@ -4,12 +4,14 @@ use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\CollegeController;
 use App\Http\Controllers\ConfirmedQuestionController;
 use App\Http\Controllers\CourseController;
+use App\Http\Controllers\CurriculumController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\FlagQuestionController;
 use App\Http\Controllers\ImportQuestionController;
 use App\Http\Controllers\ProgramController;
 use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\UniversityController;
+use App\Models\Course;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -41,21 +43,27 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/colleges', [CollegeController::class, 'index']);
     Route::patch('/colleges/{college}', [CollegeController::class, 'update'])->middleware('permission:college.update');
     Route::delete('/colleges/{college}', [CollegeController::class, 'destroy'])->middleware('permission:college.archive');
-    Route::post('/colleges/{college}', [CollegeController::class, 'restore'])->middleware('permission:college.archive');
+    Route::post('/colleges/{college}/restore', [CollegeController::class, 'restore'])->middleware('permission:college.archive');
 
     Route::post('/departments', [DepartmentController::class, 'store'])->middleware('permission:department.create');
     Route::get('/departments', [DepartmentController::class, 'index']);
     Route::patch('/departments/{department}', [DepartmentController::class, 'update'])->middleware('permission:department.update');
     Route::delete('/departments/{department}', [DepartmentController::class, 'destroy'])->middleware('permission:department.archive');
-    Route::post('/departments/{department}', [DepartmentController::class, 'restore'])->middleware('permission:department.archive');
+    Route::post('/departments/{department}/restore', [DepartmentController::class, 'restore'])->middleware('permission:department.archive');
 
     Route::post('/programs', [ProgramController::class, 'store'])->middleware('permission:program.create');
     Route::get('/programs', [ProgramController::class, 'index']);
     Route::patch('/programs/{program}', [ProgramController::class, 'update'])->middleware('permission:program.update');
     Route::delete('/programs/{program}', [ProgramController::class, 'destroy'])->middleware('permission:program.archive');
-    Route::post('/programs/{program}', [ProgramController::class, 'restore'])->middleware('permission:program.archive');
+    Route::post('/programs/{program}/restore', [ProgramController::class, 'restore'])->middleware('permission:program.archive');
 
     Route::post('/courses', [CourseController::class, 'store'])->middleware('permission:course.create');
+    Route::get('/courses', [CourseController::class, 'index']);
+    Route::patch('/courses/{course}', [CourseController::class, 'update'])->middleware('permission:course.update');
+    Route::delete('/courses/{course}', [CourseController::class, 'destroy'])->middleware('permission:course.update');
+    Route::post('/courses/{course}/restore', [CourseController::class, 'restore'])->middleware('permission:course.update');
+
+    Route::post('/curriculums', [CurriculumController::class, 'store'])->middleware('permission:curriculum.create');
 
 });
 //

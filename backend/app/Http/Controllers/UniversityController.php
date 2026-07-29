@@ -68,10 +68,10 @@ class UniversityController extends Controller
 
     public function restore(string $id)
     {
-        $university = University::withTrashed()->find($id);
+        $university = University::onlyTrashed()->find($id);
 
         if (! $university) {
-            return $this->error('', 'University not found', 404);
+            return $this->error('', 'Program not found or is not in the trash', 404);
         }
 
         $university->restore();
