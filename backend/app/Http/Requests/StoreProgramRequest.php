@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Override;
 
 class StoreProgramRequest extends FormRequest
 {
@@ -26,6 +27,15 @@ class StoreProgramRequest extends FormRequest
             'department_id' => ['required', 'integer', 'exists:departments,id'],
             'name' => ['required', 'string', 'max:255', 'min:3', 'unique:programs,name'],
             'duration_years' => ['required', 'integer', 'min:1', 'max:30'],
+        ];
+
+    }
+
+    #[Override]
+    public function messages()
+    {
+        return [
+            'department_id.exists' => 'Department not Found',
         ];
     }
 }

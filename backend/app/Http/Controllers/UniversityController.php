@@ -27,40 +27,22 @@ class UniversityController extends Controller
         return $this->success($universities, 'Universities retrieved successfully');
     }
 
-    public function show(string $id)
+    public function show(University $university)
     {
-        $university = University::find($id);
-
-        if (! $university) {
-            return $this->error('', 'University not found', 404);
-        }
-
         return $this->success($university, 'University retrieved successfully');
     }
 
-    public function update(string $id, UpdateUniversityRequest $request)
+    public function update(University $university, UpdateUniversityRequest $request)
     {
         $data = $request->validated();
-        $university = University::find($id);
-
-        if (! $university) {
-            return $this->error('', 'University not found', 404);
-        }
-
         $university->update($data);
 
         return $this->success($university, 'University updated successfully');
 
     }
 
-    public function destroy(string $id)
+    public function destroy(University $university)
     {
-        $university = University::find($id);
-
-        if (! $university) {
-            return $this->error('', 'University not found', 404);
-        }
-
         $university->delete();
 
         return $this->success('', 'University achieved successfully');

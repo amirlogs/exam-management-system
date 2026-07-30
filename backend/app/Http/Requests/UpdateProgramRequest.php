@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Override;
 
 class UpdateProgramRequest extends FormRequest
 {
@@ -23,10 +24,17 @@ class UpdateProgramRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'department_id' => ['sometimes', 'integer'],
-            'name' => ['required', 'string', 'max:255', 'unique:programs,name'],
+            'department_id' => ['sometimes', 'integer', 'esists:departments,id'],
+            'name' => ['sometimes', 'string', 'max:255', 'unique:programs,name'],
             'duration_years' => ['sometimes', 'integer', 'min:1', 'max:30'],
-            'description' => ['sometimes', 'string'],
+        ];
+    }
+
+    #[Override]
+    public function messages()
+    {
+        return [
+            'department_id.exists' => 'Department not found.',
         ];
     }
 }

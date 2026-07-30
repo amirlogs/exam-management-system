@@ -3,6 +3,7 @@
 namespace App\Exceptions;
 
 use Illuminate\Auth\AuthenticationException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -35,7 +36,13 @@ class ExceptionRegistrar
             } elseif (
                 $e instanceof NotFoundHttpException
             ) {
-                $message = 'Resource not found';
+                $previous = $e->getPrevious();
+                if ($previous instanceof ModelNotFoundException) {
+                    $model = strtolower(class_basename($previous->getModel()));
+                    $message = "{$model} not found";
+                } else {
+                    $message = 'Resource not found';
+                }
                 $statusCode = 404;
             } elseif (
                 $e instanceof AccessDeniedHttpException
@@ -53,7 +60,7 @@ class ExceptionRegistrar
                 $message = $e->getMessage();
                 $statusCode = $e->getStatusCode();
             } else {
-                $message = $e->getMessage() || 'Internal server error';
+                $message = $e->getMessage() ?: 'Internal server error';
                 $statusCode = 500;
             }
             if (config('app.debug')) {

@@ -25,7 +25,7 @@ class StoreDepartmentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'college_id' => ['required', 'integer'],
+            'college_id' => ['required', 'integer', 'exists:colleges,id'],
             'name' => ['required', 'string', 'min:3', 'max:255', 'unique:departments,name'],
             'type' => ['required', 'string', 'max:255', Rule::in(['service_only', 'degree_granting'])],
         ];

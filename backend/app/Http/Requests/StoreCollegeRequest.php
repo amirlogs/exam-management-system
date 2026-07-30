@@ -23,10 +23,15 @@ class StoreCollegeRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'department_id' => ['required', 'string'],
-            'code' => ['required', 'string', 'min:3', 'max:255', 'unique:courses,code'],
-            'name' => ['required', 'string', 'min:3', 'max:255', 'unique:courses,name'],
-            'credit_hours' => ['required', 'integer', 'min:1, max:100'],
+            'university_id' => ['required', 'integer', 'exists:universities,id'],
+            'name' => ['required', 'string', 'min:3', 'max:255'],
+        ];
+    }
+
+    public function messages()
+    {
+        return [
+            'university_id.exists' => 'University not found.',
         ];
     }
 }

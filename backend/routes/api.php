@@ -30,12 +30,13 @@ Route::middleware('auth:sanctum')->prefix('auth')->group(function () {
 
 // ------------------ University Management -------------------------
 Route::middleware('auth:sanctum')->group(function () {
+    
     Route::post('/universities', [UniversityController::class, 'store'])->middleware('permission:university.create');
     Route::get('/universities', [UniversityController::class, 'index']);
-    Route::get('/universities/{Id}', [UniversityController::class, 'show']);
-    Route::patch('/universities/{Id}', [UniversityController::class, 'update'])->middleware('permission:university.update');
-    Route::delete('/universities/{Id}', [UniversityController::class, 'destroy'])->middleware('permission:university.archive');
-    Route::post('/universities/{Id}/restore', [UniversityController::class, 'restore'])->middleware('permission:university.archive');
+    Route::get('/universities/{university}', [UniversityController::class, 'show']);
+    Route::patch('/universities/{university}', [UniversityController::class, 'update'])->middleware('permission:university.update');
+    Route::delete('/universities/{university}', [UniversityController::class, 'destroy'])->middleware('permission:university.archive');
+    Route::post('/universities/{university}/restore', [UniversityController::class, 'restore'])->middleware('permission:university.archive');
 
     // ------------------ Collge|Department|Program|Course -------------------------
 

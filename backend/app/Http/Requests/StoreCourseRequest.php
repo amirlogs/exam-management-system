@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Override;
 
 class StoreCourseRequest extends FormRequest
 {
@@ -23,10 +24,18 @@ class StoreCourseRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'department_id' => ['required', 'integer'],
+            'department_id' => ['required', 'integer', 'exists:departments,id'],
             'code' => ['required', 'string', 'min:3', 'max:255', 'unique:courses,code'],
             'name' => ['required', 'string', 'min:3', 'max:255', 'unique:courses,name'],
-            'credit_hours' => ['required', 'integer', 'min:1', 'max:10'],
+            'credit_hours' => ['required', 'integer', 'min:1', 'max:100'],
+        ];
+    }
+    
+    #[Override]
+    public function messages()
+    {
+        return [
+            'department_id.exists' => 'Department not found',
         ];
     }
 }
