@@ -13,7 +13,7 @@ class StoreUserRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -24,8 +24,10 @@ class StoreUserRequest extends FormRequest
     public function rules(): array
     {
         return [
-       'email'=> ['required', 'email', 'unique:users,email'],
-       'password'=> ['required', Password::default() ],
+            'first_name' => ['required', 'string', 'min:3', 'max:255'],
+            'last_name' => ['required', 'string', 'min:3', 'max:255'],
+            'email' => ['required', 'email', 'unique:users,email'],
+            'password' => ['required', Password::default()],
         ];
     }
 }

@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Override;
 
 class StoreCurriculumRequest extends FormRequest
 {
@@ -23,9 +24,17 @@ class StoreCurriculumRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'course_id' => ['required', 'integer', 'exists:courses,id'],
-            'year_level' => ['required', 'integer', 'min:1', 'max:10'],
-            'semester_number' => ['required', 'integer', 'min:1', 'max:2'],
+            'program_id' => ['required', 'integer', 'exists:programs,id'],
+            'version' => ['required', 'string', 'unique:curricula,version'],
+            'academic_year' => ['required', 'integer', 'min:2025', 'max:5000', 'unique:curricula,academic_year'],
+        ];
+    }
+
+    #[Override]
+    public function messages()
+    {
+        return [
+            'program_id.exists' => 'Program not exist.',
         ];
     }
 }

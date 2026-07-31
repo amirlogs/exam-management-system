@@ -2,11 +2,13 @@
 
 namespace App\Http\Requests;
 
+use App\Traits\RequiresAtLeastOneField;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateUniversityRequest extends FormRequest
 {
+    use RequiresAtLeastOneField;
     /**
      * Determine if the user is authorized to make this request.
      */

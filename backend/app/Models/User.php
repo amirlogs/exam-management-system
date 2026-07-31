@@ -12,12 +12,17 @@ use Laravel\Sanctum\HasApiTokens;
 class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
-    
-    protected $fillable = ['email', 'password', 'is_first_login'];
+
+    protected $fillable = ['first_name', 'last_name', 'email', 'password', 'is_first_login'];
 
     protected $hidden = ['password'];
 
     protected $casts = ['is_first_login' => 'boolean'];
+
+    public function getFullNameAttribute(): string
+    {
+        return trim("{$this->first_name} {$this->last_name}");
+    }
 
     public function userRoles(): HasMany
     {

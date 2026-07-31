@@ -76,6 +76,7 @@ class RolePermissionSeeder extends Seeder
             // Users
             ['user.create', 'user'], ['user.update', 'user'], ['user.disable', 'user'],
             ['user.activate', 'user'], ['user.reset_password', 'user'],
+            ['user.view', 'user'],
             // Roles
             ['role.create', 'role'], ['role.update', 'role'], ['role.archive', 'role'],
             ['role.assign', 'role'], ['role.remove', 'role'],
@@ -99,23 +100,25 @@ class RolePermissionSeeder extends Seeder
 
         $map = [
             'super_admin' => [
-                'university.create', 'university.update', 'role.create', 'role.update',
-                'role.archive', 'role.assign', 'role.remove', 'permission.create',
-                'permission.update', 'permission.archive', 'permission.assign',
+                'university.create', 'university.update', 'university.archive',
+                'role.create', 'role.update', 'role.archive', 'role.assign', 'role.remove',
             ],
             'university_admin' => [
-                'university.update', 'college.create', 'college.update',
-                'department.create', 'department.update', 'program.create', 'program.update',
-                'course.create', 'course.update', 'user.create', 'user.update',
-                'user.disable', 'user.activate', 'student.import', 'instructor.import',
-                'section.import', 'class.import', 'academic_calendar.create',
-                'academic_calendar.update', 'academic_calendar.archive',
+                'university.update',
+                'college.create', 'college.update', 'college.archive',
+                'department.create', 'department.update', 'department.archive',
+                'program.create', 'program.update', 'program.archive',
+                'course.create', 'course.update', 'course.archive',
+                'user.create', 'user.update', 'user.disable', 'user.activate',
+                'student.import', 'instructor.import', 'section.import', 'class.import',
+                'academic_calendar.create', 'academic_calendar.update', 'academic_calendar.archive',
                 'grading_system.create', 'grading_system.update', 'grading_system.archive',
-                'semester.create', 'semester.update', 'semester.open', 'semester.close',
-                'semester.archive', 'curriculum.create', 'curriculum.update', 'curriculum.archive', 'department.archive',
+                'semester.create', 'semester.update', 'semester.open', 'semester.close', 'semester.archive',
+                'curriculum.create', 'curriculum.update', 'curriculum.archive', 'user.view',
             ],
+            // college_admin, dept_head, exam_admin, lead_instructor, instructor, student — unchanged
             'college_admin' => [
-                'college.update', 'department.create', 'college.archive', 'department.update', 'course_offering.approve',
+                'college.update', 'department.create', 'department.update', 'course_offering.approve',
             ],
             'dept_head' => [
                 'department.update', 'course_offering.approve', 'course_offering.assign_instructor',
@@ -136,7 +139,6 @@ class RolePermissionSeeder extends Seeder
                 'result.view_own',
             ],
         ];
-
         foreach ($map as $roleName => $permNames) {
             $roleId = DB::table('roles')->where('name', $roleName)->value('id');
             $permIds = DB::table('permissions')->whereIn('name', $permNames)->pluck('id');

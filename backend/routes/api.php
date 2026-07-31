@@ -10,7 +10,9 @@ use App\Http\Controllers\FlagQuestionController;
 use App\Http\Controllers\ImportQuestionController;
 use App\Http\Controllers\ProgramController;
 use App\Http\Controllers\QuestionController;
+use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UniversityController;
+use App\Http\Controllers\UserController;
 use App\Models\Course;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -30,7 +32,7 @@ Route::middleware('auth:sanctum')->prefix('auth')->group(function () {
 
 // ------------------ University Management -------------------------
 Route::middleware('auth:sanctum')->group(function () {
-    
+
     Route::post('/universities', [UniversityController::class, 'store'])->middleware('permission:university.create');
     Route::get('/universities', [UniversityController::class, 'index']);
     Route::get('/universities/{university}', [UniversityController::class, 'show']);
@@ -64,10 +66,30 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/courses/{course}', [CourseController::class, 'destroy'])->middleware('permission:course.update');
     Route::post('/courses/{course}/restore', [CourseController::class, 'restore'])->middleware('permission:course.update');
 
-    Route::post('/curriculums', [CurriculumController::class, 'store'])->middleware('permission:curriculum.create');
+    // -------------------------- Role, Permission and Assignment --------------------------//
+    Route::post('/roles', [RoleController::class, 'store'])->middleware('permission:role.create');
+    Route::get('/roles', [RoleController::class, 'index']);
+    Route::patch('/roles/{role}', [RoleController::class, 'update'])->middleware('permission:role.update');
+    Route::post('/roles/{role}/permissions', [RoleController::class, 'assignPermission'])->middleware('permission:permission.assign');
+    Route::post('/roles/{role}/permissions/remove', [RoleController::class, 'removePermission'])->middleware('permission:permission.assign');
+    Route::delete('/role/{role}', [RoleController::class, 'destroy'])->middleware('permission:role.delete');
+    Route::post('/role/{role}/restore', [RoleController::class, 'restore'])->middleware('permission:role.delete');
 
+    Route::post('/users', [UserController::class, 'store'])->middleware('permission:user.create');
+    Route::get('/users', [UserController::class, 'index']);
+    Route::patch('/users/{user}', [UserController::class, 'update'])->middleware('permission:user.update');
+    Route::post('/users/{user}/roles', [UserController::class, 'assignRole'])->middleware('permission:role.assign');
+    Route::delete('/user/{user}/roles/{userRole}', [UserController::class, 'removeRole'])->middleware('permission:role.remove');
+
+    Route::post('/curriculums', [CurriculumController::class, 'store'])->middleware('permission:curriculum.create');
+    Route::get('/curriculums', [CurriculumController::class, 'index']);
+    Route::patch('/curriculums/{curriculum}', [CurriculumController::class, 'update']); // ->middleware('permission:curriculum.update');
+    Route::post('/curriculums/{curriculum}/courses', [CurriculumController::class, 'addCourse']); // ->middleware(['permission:curriculum_course.add']);
+    Route::patch('/curriculums/courses/{curriculumCourse}', [CurriculumController::class, 'updateCourse']); // ->middleware('permission:curriculum_course.update');
+
+    // prermmison get not done
 });
-//
+
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/courses/{courseId}/question-bank-imports', [ImportQuestionController::class, 'store']);
     Route::get('/question-bank-imports/{importId}', [ImportQuestionController::class, 'show']);
