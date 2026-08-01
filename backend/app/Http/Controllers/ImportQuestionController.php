@@ -45,7 +45,6 @@ class ImportQuestionController extends Controller
         ]);
 
         // call the queue job
-
         QuestionRowImport::dispatch($import->id);
 
         return $this->success(['import_id' => $import->id], 'Question bank import created successfully');

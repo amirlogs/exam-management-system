@@ -3,9 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
 
 class Semester extends Model
 {
+    use SoftDeletes;
+
     protected $fillable = ['academic_year', 'name', 'start_date', 'end_date', 'status'];
 
     protected $casts = ['start_date' => 'date', 'end_date' => 'date'];
@@ -18,5 +22,24 @@ class Semester extends Model
     public function courseOfferings()
     {
         return $this->hasMany(CourseOffering::class);
+    }
+
+    public function activate(): void
+    {
+        DB::transaction(function () {
+            static::where('status', 'active')->update(['status' => 'completed']);
+            $this->update(['status' => 'active']);
+        });
+
+    }
+
+    public function close()
+    {
+        $this->update(['status' => 'completed']);
+    }
+
+    public function state(): string
+    {
+        return $this->status;
     }
 }

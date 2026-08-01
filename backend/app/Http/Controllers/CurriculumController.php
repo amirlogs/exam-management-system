@@ -54,4 +54,32 @@ class CurriculumController extends Controller
 
         return $this->success($curriculumCourse, 'Course updated successfully', 200);
     }
+
+    public function removeCourse(CurriculumCourse $curriculumCourse)
+    {
+        $curriculumCourse->delete();
+
+        return $this->success(null, 'Course removed from curriculum successfully', 200);
+    }
+
+    public function activate(Curriculum $curriculum)
+    {
+        if ($curriculum->isActive()) {
+            return $this->error('Curriculum is already active', 400);
+        }
+
+        $curriculum->update(['status' => 'active']);
+
+        return $this->success($curriculum, 'Curriculum activated successfully', 200);
+    }
+
+    public function deactivate(Curriculum $curriculum)
+    {
+        if (! $curriculum->isActive()) {
+            return $this->error('Curriculum is already inactive', 400);
+        }
+        $curriculum->update(['status' => 'archived']);
+
+        return $this->success($curriculum, 'Curriculum deactivated successfully', 200);
+    }
 }

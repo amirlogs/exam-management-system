@@ -7,10 +7,13 @@ use App\Http\Controllers\CourseController;
 use App\Http\Controllers\CurriculumController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\FlagQuestionController;
+use App\Http\Controllers\ImportController;
 use App\Http\Controllers\ImportQuestionController;
 use App\Http\Controllers\ProgramController;
 use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\SectionController;
+use App\Http\Controllers\SemesterController;
 use App\Http\Controllers\UniversityController;
 use App\Http\Controllers\UserController;
 use App\Models\Course;
@@ -22,7 +25,6 @@ Route::get('/user', function (Request $request) {
 })->middleware('auth:sanctum');
 
 // ------------------ AUTH -------------------------
-
 Route::middleware('auth:sanctum')->prefix('auth')->group(function () {
     Route::post('/login', [AuthController::class, 'login'])->withoutMiddleware('auth:sanctum');
     Route::get('/me', [AuthController::class, 'me']);
@@ -41,7 +43,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/universities/{university}/restore', [UniversityController::class, 'restore'])->middleware('permission:university.archive');
 
     // ------------------ Collge|Department|Program|Course -------------------------
-
     Route::post('/colleges', [CollegeController::class, 'store'])->middleware('permission:college.create');
     Route::get('/colleges', [CollegeController::class, 'index']);
     Route::patch('/colleges/{college}', [CollegeController::class, 'update'])->middleware('permission:college.update');
@@ -84,10 +85,27 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/curriculums', [CurriculumController::class, 'store'])->middleware('permission:curriculum.create');
     Route::get('/curriculums', [CurriculumController::class, 'index']);
     Route::patch('/curriculums/{curriculum}', [CurriculumController::class, 'update']); // ->middleware('permission:curriculum.update');
+    Route::post('/curriculums/{curriculum}/activate', [CurriculumController::class, 'activate']); // ->middleware('permission:curriculum.activate')
+    Route::post('/curriculums/{curriculum}/deactivate', [CurriculumController::class, 'deactivate']); // ->middleware('permission:curriculum.deactivate')
     Route::post('/curriculums/{curriculum}/courses', [CurriculumController::class, 'addCourse']); // ->middleware(['permission:curriculum_course.add']);
     Route::patch('/curriculums/courses/{curriculumCourse}', [CurriculumController::class, 'updateCourse']); // ->middleware('permission:curriculum_course.update');
+    Route::delete('/curriculums/courses/{curriculumCourse}', [CurriculumController::class, 'removeCourse']); // ->middleware('permission:curriculum_course.remove');
 
-    // prermmison get not done
+    // ------------------------------------Semester and Section---------------------------------------//
+    Route::post('/semesters', [SemesterController::class, 'store']); // ->middleware('permission:semester.create');
+    Route::get('/semesters', [SemesterController::class, 'index']);
+    Route::patch('/semesters/{semester}', [SemesterController::class, 'update']); // -> middleware('permission:semester.update');
+    Route::post('/semesters/{semester}/open', [SemesterController::class, 'open']); // -> middleware('permission:semester.update');
+    Route::post('/semesters/{semester}/close', [SemesterController::class, 'close']); // -> middleware('permission:semester.update');
+    Route::delete('/semesters/{semester}/archive', [SemesterController::class, 'archive']); // -> middleware('permission:semester.archive');
+    Route::post('/semesters/{semester}/restore', [SemesterController::class, 'restore']); // -> middleware('permission:semester.archive');
+
+    Route::post('/sections', [SectionController::class, 'store']); // ->middleware('permission:section.create')
+    Route::get('/sections', [SectionController::class, 'index']);
+
+    // ------------------------ IMPORT student|instructor|section|classes ------------------------
+    Route::post('/imports/students', [ImportController::class, 'importStudents'])->middleware('permission:student.create');
+
 });
 
 Route::middleware('auth:sanctum')->group(function () {
@@ -120,7 +138,3 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // ----------------------------- Grouping Questions ---------------------------//
 });
-
-// Usage in routes/api.php
-// Route::post('/exams/{exam}/approve', [ExamController::class, 'approve'])
-// ->middleware('permission:exam.approve');

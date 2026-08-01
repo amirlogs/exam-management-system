@@ -2,15 +2,11 @@
 
 namespace App\Http\Requests;
 
-use App\Traits\RequiresAtLeastOneField;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
-class UpdateCurriculumRequest extends FormRequest
+class StoreSemesterRequest extends FormRequest
 {
-    use RequiresAtLeastOneField;
-
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -27,9 +23,10 @@ class UpdateCurriculumRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'program_id' => ['sometimes', 'integer', 'exists:programs,id'],
-            'version' => ['sometimes', 'string', Rule::unique('curricula', 'version')->ignore($this->curriculum->id)],
-            'academic_year' => ['sometimes', 'integer', 'min:2016', 'max:2030'],
+            'academic_year' => ['required', 'integer', 'min:2016', 'max:2030'],
+            'name' => ['required', 'in:1,2'],
+            'start_date' => ['required', 'date'],
+            'end_date' => ['required', 'date', 'after:start_date'],
         ];
     }
 }

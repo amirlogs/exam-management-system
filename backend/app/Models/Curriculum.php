@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class Curriculum extends Model
 {
@@ -17,4 +18,20 @@ class Curriculum extends Model
     {
         return $this->hasMany(CurriculumCourse::class);
     }
+
+    public function isActive()
+    {
+        return $this->status === 'active';
+    }
+    
+    public function activate(): void
+    {
+    DB::transaction(function () {
+            static::where('program_id', $this->program_id)
+                ->where('status', 'active')
+                ->update(['status' => 'archived']);
+            $this->update(['status' => 'active']);
+        });
+    }
 }
+    

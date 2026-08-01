@@ -26,7 +26,7 @@ class StoreCurriculumRequest extends FormRequest
         return [
             'program_id' => ['required', 'integer', 'exists:programs,id'],
             'version' => ['required', 'string', 'unique:curricula,version'],
-            'academic_year' => ['required', 'integer', 'min:2025', 'max:5000', 'unique:curricula,academic_year'],
+            'academic_year' => ['required', 'integer', 'min:2016', 'max:2030', 'unique:curricula,academic_year'],
         ];
     }
 

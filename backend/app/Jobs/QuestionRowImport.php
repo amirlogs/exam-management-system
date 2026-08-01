@@ -33,7 +33,6 @@ class QuestionRowImport implements ShouldQueue
         $import = QuestionBankImport::find($this->importId);
         if (! $import) {
             log()->error('Import not found', ['import_id' => $this->importId]);
-
             return;
         }
 
