@@ -17,7 +17,7 @@ return new class extends Migration
         // Scoped singleton — only one active curriculum PER PROGRAM
         DB::statement("
             CREATE UNIQUE INDEX one_active_curriculum_per_program
-            ON curriculums (program_id)
+            ON curricula (program_id)
             WHERE status = 'active'
         ");
     }

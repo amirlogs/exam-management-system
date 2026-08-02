@@ -104,7 +104,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/sections', [SectionController::class, 'index']);
 
     // ------------------------ IMPORT student|instructor|section|classes ------------------------
-    Route::post('/imports/students', [ImportController::class, 'importStudents'])->middleware('permission:student.create');
+    Route::post('/imports/students', [ImportController::class, 'store'])->middleware('permission:student.import');
 
 });
 

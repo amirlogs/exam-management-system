@@ -6,22 +6,20 @@ use Illuminate\Database\Eloquent\Model;
 
 class ImportHistory extends Model
 {
-    protected $table = 'import_history';
+    protected $table = 'import_histories';
 
     protected $fillable = [
-        'uploaded_by', 'type', 'total_rows',
-        'success_count', 'failure_count', 'status', 'errors',
+        'uploaded_by', 'type', 'file_path', 'context',
+        'total_rows', 'valid_count', 'error_count', 'validated_data', 'status',
     ];
 
-    protected $casts = ['errors' => 'array'];
+    protected $casts = [
+        'context' => 'array',
+        'validated_data' => 'array',
+    ];
 
     public function uploader()
     {
         return $this->belongsTo(User::class, 'uploaded_by');
-    }
-
-    public function enrollments()
-    {
-        return $this->hasMany(Enrollment::class, 'import_batch_id');
     }
 }
