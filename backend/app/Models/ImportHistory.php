@@ -22,4 +22,8 @@ class ImportHistory extends Model
     {
         return $this->belongsTo(User::class, 'uploaded_by');
     }
+
+    public function updateRow(){
+        
+    }
 }

@@ -105,6 +105,11 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // ------------------------ IMPORT student|instructor|section|classes ------------------------
     Route::post('/imports/students', [ImportController::class, 'store'])->middleware('permission:student.import');
+    Route::post('/imports/instructors', [ImportController::class, 'store'])->middleware('permission:student.import');
+
+    Route::get('/imports/{importHistory}', [ImportController::class, 'show']); // ->middleware('permission:student.import');
+    Route::patch('/imports/{importHistory}/rows/{rowIndex}', [ImportController::class, 'update']); // ->middleware('permission:student.import');
+    Route::post('/imports/{importHistory}/confirm', [ImportController::class, 'confirm']); // ->middleware('permission:student.import')
 
 });
 
