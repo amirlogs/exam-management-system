@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('programs', function (Blueprint $table) {
             $table->id();
+            $table->string('code')->unique();
             $table->foreignId('department_id')->constrained()->cascadeOnDelete();
             $table->string('name');
             $table->unsignedTinyInteger('duration_years');

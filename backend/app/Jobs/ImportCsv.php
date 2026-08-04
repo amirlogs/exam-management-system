@@ -4,7 +4,7 @@ namespace App\Jobs;
 
 use App\Imports\RowCollectionImport;
 use App\Models\ImportHistory;
-use App\Validation\StudentValidator;
+use App\Services\ImportValidatorFactory;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Storage;
@@ -25,6 +25,14 @@ class ImportCsv implements ShouldQueue
      */
     public function handle(): void
     {
+        $validatorClass = ImportValidatorFactory::create($this->importHistory->type);
+
+        if (! $validatorClass) {
+            $this->importHistory->update(['status' => 'failed']);
+            return;
+        }
+
+        $context = $this->importHistory->context ?? [];
         $sheets = Excel::toCollection(new RowCollectionImport, $this->importHistory->file_path)->first();
         $rows = $sheets->first();
 
@@ -37,7 +45,7 @@ class ImportCsv implements ShouldQueue
                 fn ($value) => is_bool($value) ? ($value ? 'True' : 'False') : (is_null($value) ? null : (string) $value),
                 $row->toArray()
             );
-            $errors = StudentValidator::validate($data);
+            $errors = $validatorClass::validate($data, $context);
             $status = $errors ? 'invalid' : 'valid';
             $errors ? $errorCount++ : $validCount++;
 

@@ -11,13 +11,12 @@ class SemesterController extends Controller
     public function store(StoreSemesterRequest $request)
     {
         $validated = $request->validated();
-        $semester = Semester::create($validated);
 
-        // check to prevent duplicated semester and acadamic year
-
-        if (Semester::where('name', $semester->name)->where('academic_year', $semester->academic_year)->exists()) {
+        if (Semester::where('name', $validated['name'])->where('academic_year', $validated['academic_year'])->exists()) {
             return $this->error(null, 'Semester already exists', 409);
         }
+
+        $semester = Semester::create($validated);
 
         return response()->json($semester, 201);
     }

@@ -16,7 +16,6 @@ use App\Http\Controllers\SectionController;
 use App\Http\Controllers\SemesterController;
 use App\Http\Controllers\UniversityController;
 use App\Http\Controllers\UserController;
-use App\Models\Course;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -104,13 +103,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/sections', [SectionController::class, 'index']);
 
     // ------------------------ IMPORT student|instructor|section|classes ------------------------
-    Route::post('/imports/students', [ImportController::class, 'store'])->middleware('permission:student.import');
-    Route::post('/imports/instructors', [ImportController::class, 'store'])->middleware('permission:student.import');
 
-    Route::get('/imports/{importHistory}', [ImportController::class, 'show']); // ->middleware('permission:student.import');
-    Route::patch('/imports/{importHistory}/rows/{rowIndex}', [ImportController::class, 'update']); // ->middleware('permission:student.import');
-    Route::post('/imports/{importHistory}/confirm', [ImportController::class, 'confirm']); // ->middleware('permission:student.import')
-
+    Route::post('/imports/{type}', [ImportController::class, 'store']); // ->middleware('permission:import.create');
+    Route::get('/imports/{importHistory}', [ImportController::class, 'show']); // ->middleware('permission:import.show');
+    Route::patch('/imports/{importHistory}/rows/{rowIndex}', [ImportController::class, 'update']); // ->middleware('permission:import.update');
+    Route::post('/imports/{importHistory}/confirm', [ImportController::class, 'confirm']); // ->middleware('permission:import.confirm')
 });
 
 Route::middleware('auth:sanctum')->group(function () {

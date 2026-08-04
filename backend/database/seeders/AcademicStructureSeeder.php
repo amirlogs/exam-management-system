@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\College;
 use App\Models\Course;
+use App\Models\Curriculum;
 use App\Models\Department;
 use App\Models\Program;
 use App\Models\University;
@@ -49,20 +50,20 @@ class AcademicStructureSeeder extends Seeder
             ['type' => 'degree_granting']
         );
 
-        // ---------------- Programs ----------------
-        Program::updateOrCreate(
-            ['department_id' => $software->id, 'name' => 'Software Engineering'],
-            ['duration_years' => 5]
+        // ---------------- Programs (now with `code` — required by StudentValidator / SectionValidator) ----------------
+        $se = Program::updateOrCreate(
+            ['code' => 'SE'],
+            ['department_id' => $software->id, 'name' => 'Software Engineering', 'duration_years' => 5]
         );
 
-        Program::updateOrCreate(
-            ['department_id' => $electrical->id, 'name' => 'Electrical Engineering'],
-            ['duration_years' => 5]
+        $ee = Program::updateOrCreate(
+            ['code' => 'EE'],
+            ['department_id' => $electrical->id, 'name' => 'Electrical Engineering', 'duration_years' => 5]
         );
 
-        Program::updateOrCreate(
-            ['department_id' => $chemistry->id, 'name' => 'Applied Chemistry'],
-            ['duration_years' => 4]
+        $chem = Program::updateOrCreate(
+            ['code' => 'CHEM'],
+            ['department_id' => $chemistry->id, 'name' => 'Applied Chemistry', 'duration_years' => 4]
         );
 
         // ---------------- Courses (kept small — just enough to visualize ownership) ----------------
@@ -84,6 +85,22 @@ class AcademicStructureSeeder extends Seeder
         Course::updateOrCreate(
             ['code' => 'CHEM101'],
             ['department_id' => $chemistry->id, 'name' => 'General Chemistry', 'credit_hours' => 3]
+        );
+
+        // ---------------- Curriculums (required — StudentValidator now rejects any program with no active curriculum) ----------------
+        Curriculum::updateOrCreate(
+            ['program_id' => $se->id, 'version' => '2025'],
+            ['academic_year' => '2025/2026', 'status' => 'active']
+        );
+
+        Curriculum::updateOrCreate(
+            ['program_id' => $ee->id, 'version' => '2025'],
+            ['academic_year' => '2025/2026', 'status' => 'active']
+        );
+
+        Curriculum::updateOrCreate(
+            ['program_id' => $chem->id, 'version' => '2025'],
+            ['academic_year' => '2025/2026', 'status' => 'active']
         );
     }
 }
