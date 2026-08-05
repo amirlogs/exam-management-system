@@ -29,10 +29,8 @@ class StoreImportRequest extends FormRequest
      */
     public function rules(): array
     {
-
-        // type varchar [note: "students | instructors | sections | questions | enrollments"]
         return [
-            'file' => ['required', 'file', 'mimes:csv,xlsx,xl', 'max:2048'],
+            'file' => ['required', 'file', 'mimes:csv', 'max:2048'],
             'type' => ['required', 'string', 'in:students,instructors,sections,questions,enrollments'],
             'context' => ['required', 'json'],
         ];

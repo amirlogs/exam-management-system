@@ -4,10 +4,13 @@ namespace App\Validation;
 
 use App\Models\Program;
 use App\Models\Section;
+use App\Traits\RequiresAtLeastOneField;
 use Illuminate\Support\Facades\Validator;
 
 class StudentValidator
 {
+    use RequiresAtLeastOneField;
+
     private static array $rules = [
         'student_number' => ['required', 'string', 'min:8', 'max:20'],
         'first_name' => ['required', 'string', 'min:3', 'max:255'],
@@ -16,6 +19,16 @@ class StudentValidator
         'program_code' => ['required', 'string', 'exists:programs,code'],
         'section_name' => ['required', 'string', 'min:1', 'max:255'],
         'entry_year' => ['required', 'integer', 'min:2020'],
+    ];
+
+    private static array $updateRules = [
+        'student_number' => ['sometimes', 'string', 'min:8', 'max:20'],
+        'first_name' => ['sometimes', 'string', 'min:3', 'max:255'],
+        'last_name' => ['sometimes', 'string', 'min:3', 'max:255'],
+        'email' => ['sometimes', 'string', 'email', 'max:255', 'unique:users,email'],
+        'program_code' => ['sometimes', 'string', 'exists:programs,code'],
+        'section_name' => ['sometimes', 'string', 'min:1', 'max:255'],
+        'entry_year' => ['sometimes', 'integer', 'min:2020'],
     ];
 
     protected static array $messages = [
@@ -38,6 +51,24 @@ class StudentValidator
         'section_name.min' => 'The section name must be at least 1 characters.',
         'section_name.max' => 'The section name may not be greater than 255 characters.',
         'entry_year.required' => 'The entry year field is required.',
+        'entry_year.integer' => 'The entry year must be an integer.',
+        'entry_year.min' => 'The entry year must be at least 2020.',
+    ];
+
+    protected static array $updateMessages = [
+        'student_number.required' => 'The student number field is required.',
+        'student_number.min' => 'The student number must be at least 8 characters.',
+        'student_number.max' => 'The student number may not be greater than 20.',
+        'first_name.min' => 'The first name must be at least 3 characters.',
+        'first_name.max' => 'The first name may not be greater than 255 characters.',
+        'last_name.min' => 'The last name must be at least 3 characters.',
+        'last_name.max' => 'The last name may not be greater than 255 characters.',
+        'email.email' => 'The email must be a valid email address.',
+        'email.max' => 'The email may not be greater than 255 characters.',
+        'email.unique' => 'you have setten this email before update or remove it.',
+        'program_code.exists' => 'The selected program code is invalid.',
+        'section_name.min' => 'The section name must be at least 1 characters.',
+        'section_name.max' => 'The section name may not be greater than 255 characters.',
         'entry_year.integer' => 'The entry year must be an integer.',
         'entry_year.min' => 'The entry year must be at least 2020.',
     ];
@@ -79,6 +110,24 @@ class StudentValidator
                 }
             }
         }
+
+        return $errors;
+    }
+
+    public static function UpdateValidation(array $data, array $context = [])
+    {
+
+        $validator = Validator::make($data, self::$updateRules, self::$updateMessages);
+
+        $validator->after(function ($validator) use ($data) {
+            if (empty($data)) {
+                $validator->errors()->add(
+                    'field',
+                    'At least one field must be provided.'
+                );
+            }
+        });
+        $errors = $validator->errors()->all();
 
         return $errors;
     }

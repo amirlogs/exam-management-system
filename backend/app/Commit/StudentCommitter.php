@@ -20,7 +20,7 @@ class StudentCommitter
             ->where('year_level', $context['year_level'])
             ->where('name', $data['section_name'])
             ->first();
-            
+
         $user = User::create([
             'first_name' => $data['first_name'],
             'last_name' => $data['last_name'],
@@ -28,14 +28,12 @@ class StudentCommitter
             'password' => Hash::make(Str::random(12)),
             'is_first_login' => true,
         ]);
-
-        info('User created: '.$section);
-
+        
         Student::create([
             'user_id' => $user->id,
             'student_number' => $data['student_number'],
             'program_id' => $program->id,
-            'semester_id' => $section->id,
+            'section_id' => $section->id,
             'curriculum_id' => $curriculum->id,
             'entry_year' => $data['entry_year'],
             'status' => 'active',

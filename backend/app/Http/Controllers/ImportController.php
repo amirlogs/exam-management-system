@@ -32,6 +32,7 @@ class ImportController extends Controller
             'type' => $validated['type'],
             'status' => 'pending',
         ]);
+
         // dispatch the job
         ImportCsv::dispatch($import);
 
@@ -45,7 +46,7 @@ class ImportController extends Controller
 
     public function update(ImportHistory $importHistory, string $rowIndex, Request $request)
     {
-        $errors = StudentValidator::validate($request->all());
+        $errors = StudentValidator::UpdateValidation($request->all());
 
         if ($errors) {
             return $this->error($errors, 'Validation error', 422);
@@ -54,11 +55,15 @@ class ImportController extends Controller
         if ($importHistory->status !== 'ready_for_review') {
             return $this->error([], "Import history is in {$importHistory->status} state, cannot update row$", 400);
         }
+
+        // / loop and update only the comming rows
         $rows = $importHistory['validated_data'];
         $status = $rows[$rowIndex]['status'];
+        // merge the comming with the old one and prioritize the comming one
+        $updatedData = array_merge($rows[$rowIndex]['data'], $request->all());
         $data = [
             'row' => $rowIndex,
-            'data' => $request->all(),
+            'data' => $updatedData,
             'status' => 'valid',
             'errors' => [],
         ];
@@ -85,7 +90,7 @@ class ImportController extends Controller
     {
         $validatorClass = ImportValidatorFactory::create($importHistory->type);
         foreach ($importHistory->validated_data as $row) {
-            $errors = $validatorClass::validate($row['data']);
+            $errors = $validatorClass::validate($row['data'], $importHistory->context);
 
             if ($errors) {
                 return $this->error($errors, 'All rows must be valid before confirming', 422);
@@ -97,7 +102,7 @@ class ImportController extends Controller
 
         DB::transaction(function () use ($importHistory, $committerClass) {
             foreach ($importHistory->validated_data as $row) {
-                $committerClass::commit($row['data']);
+                $committerClass::commit($row['data'], $importHistory->context);
             }
 
             $importHistory->update(['status' => 'confirmed']);
