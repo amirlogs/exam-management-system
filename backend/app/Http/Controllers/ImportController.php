@@ -110,4 +110,31 @@ class ImportController extends Controller
 
         return $this->success($importHistory->fresh(), 'Import confirmed successfully');
     }
+
+    public function destroy(ImportHistory $importHistory, string $rowIndex, Request $request)
+    {
+        if ($importHistory->status !== 'ready_for_review') {
+            return $this->error([], "Import history is in {$importHistory->status} state, cannot delete row$", 400);
+        }
+
+        $data = $importHistory->validated_data;
+        $status = $data[$rowIndex]['status'];
+        unset($data[$rowIndex]);
+
+        if ($status === 'invalid') {
+            $errorCount = $importHistory->error_count - 1;
+            $validCount = $importHistory->valid_count;
+        } else {
+            $validCount = $importHistory->valid_count + 1;
+            $errorCount = $importHistory->error_count;
+        }
+
+        $importHistory->update([
+            'validated_data' => $data,
+            'valid_count' => $validCount,
+            'error_count' => $errorCount,
+        ]);
+
+        return $this->success($importHistory, 'Row deleted successfully');
+    }
 }

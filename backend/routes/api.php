@@ -107,6 +107,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/imports/{type}', [ImportController::class, 'store']); // ->middleware('permission:import.create');
     Route::get('/imports/{importHistory}', [ImportController::class, 'show']); // ->middleware('permission:import.show');
     Route::patch('/imports/{importHistory}/rows/{rowIndex}', [ImportController::class, 'update']); // ->middleware('permission:import.update');
+    Route::delete('imports/{importHistory}/rows/{rowIndex}', [ImportController::class, 'destroy']); // ->middleware('permission:import.delete');
     Route::post('/imports/{importHistory}/confirm', [ImportController::class, 'confirm']); // ->middleware('permission:import.confirm')
 });
 
