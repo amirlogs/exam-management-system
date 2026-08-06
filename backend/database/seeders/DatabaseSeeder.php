@@ -15,6 +15,7 @@ class DatabaseSeeder extends Seeder
             RolePermissionSeeder::class,
             UserSeeder::class,
             AcademicStructureSeeder::class,
+            CurriculumCourseSeeder::class,
             SemesterSectionSeeder::class,
         ]);
     }

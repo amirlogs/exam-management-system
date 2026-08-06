@@ -10,7 +10,7 @@ class Semester extends Model
 {
     use SoftDeletes;
 
-    protected $fillable = ['academic_year', 'name', 'start_date', 'end_date', 'status'];
+    protected $fillable = ['academic_year', 'name', 'term_number', 'start_date', 'end_date', 'status'];
 
     protected $casts = ['start_date' => 'date', 'end_date' => 'date'];
 

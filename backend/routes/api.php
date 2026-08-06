@@ -4,8 +4,10 @@ use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\CollegeController;
 use App\Http\Controllers\ConfirmedQuestionController;
 use App\Http\Controllers\CourseController;
+use App\Http\Controllers\CourseOfferingController;
 use App\Http\Controllers\CurriculumController;
 use App\Http\Controllers\DepartmentController;
+use App\Http\Controllers\EnrollmentController;
 use App\Http\Controllers\FlagQuestionController;
 use App\Http\Controllers\ImportController;
 use App\Http\Controllers\ImportQuestionController;
@@ -109,8 +111,30 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/imports/{importHistory}/rows/{rowIndex}', [ImportController::class, 'update']); // ->middleware('permission:import.update');
     Route::delete('imports/{importHistory}/rows/{rowIndex}', [ImportController::class, 'destroy']); // ->middleware('permission:import.delete');
     Route::post('/imports/{importHistory}/confirm', [ImportController::class, 'confirm']); // ->middleware('permission:import.confirm')
+
+    // -------------------------------- course-offering | suggestion | generate --------------------------------
+
+    //************* Testing Needs *******
+    Route::post('/course-offerings/suggestions/generate', [CourseOfferingController::class, 'generateSuggestions']); // ->middleware('permission:course_offering.create');
+    Route::post('/course-offerings', [CourseOfferingController::class, 'store']); // ->middleware('permission:course_offering.create');
+    Route::post('/course-offerings/{courseOffering}/sections', [CourseOfferingController::class, 'attachSections']); // ->middleware('permission:course_offering.create');
+    Route::post('/course-offerings/{courseOffering}/instructors', [CourseOfferingController::class, 'attachInstructors']); // ->middleware('permission:course_offering.create')
+    Route::get('/course-offerings ', [CourseOfferingController::class, 'index']);
+    Route::patch('/course-offerings/{courseOffering}', [CourseOfferingController::class, 'update']); // ->middleware('permission:course_offering.update');
+    Route::patch('/course-offerings/{courseOffering}/instructors/{instructorId}', [CourseOfferingController::class, 'changeInstructor'])->middleware('permission:course_offering.change_instructor');
+    Route::post('/course-offerings/{courseOffering}/approve', [CourseOfferingController::class, 'approve'])->middleware('permission:course_offering.approve');
+    Route::post('/course-offerings/{courseOffering}/reject', [CourseOfferingController::class, 'reject'])->middleware('permission:course_offering.reject');
+    Route::post('/course-offerings/{courseOffering}/cancel', [CourseOfferingController::class, 'cancel'])->middleware('permission:course_offering.cancel');
+    Route::delete('/course-offerings/{courseOffering}', [CourseOfferingController::class, 'destroy'])->middleware('permission:course_offering.archive');
+
+    Route::post('/course-offerings/{courseOffering}/enroll', [CourseOfferingController::class, 'enrollSection']); // ->middleware('permission:course_offering.update'); // reuses this — enrollment here is a side effect of offering setup, not its own permission yet
+    Route::get('/enrollments', [EnrollmentController::class, 'index']);
+    Route::patch('/enrollments/{enrollment}', [EnrollmentController::class, 'update']);
+   //*************  
+   
 });
 
+// ------------------------ IMPORT question ------------------------
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/courses/{courseId}/question-bank-imports', [ImportQuestionController::class, 'store']);
     Route::get('/question-bank-imports/{importId}', [ImportQuestionController::class, 'show']);

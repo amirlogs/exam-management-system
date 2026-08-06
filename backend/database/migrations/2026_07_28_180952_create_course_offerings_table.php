@@ -17,6 +17,7 @@ return new class extends Migration
             $table->foreignId('semester_id')->constrained()->cascadeOnDelete();
             $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->string('status')->default('draft'); // draft, approved, cancelled
+            $table->text('rejection_reason')->nullable();
             $table->timestamps();
         });
     }

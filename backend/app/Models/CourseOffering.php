@@ -3,10 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class CourseOffering extends Model
 {
-    protected $fillable = ['course_id', 'semester_id', 'created_by', 'status'];
+    use SoftDeletes;
+
+    protected $fillable = ['course_id', 'semester_id', 'created_by', 'status', 'rejection_reason'];
 
     public function course()
     {
@@ -34,13 +37,18 @@ class CourseOffering extends Model
             ->withPivot('type', 'assigned_at');
     }
 
-    public function enrollments()
+    public function approve(): void
     {
-        return $this->hasMany(Enrollment::class);
+        $this->update(['status' => 'approved']);
     }
 
-    public function exams()
+    public function reject(string $reason): void
     {
-        return $this->hasMany(Exam::class);
+        $this->update(['status' => 'rejected', 'rejection_reason' => $reason]);
+    }
+
+    public function cancel(): void
+    {
+        $this->update(['status' => 'cancelled']);
     }
 }

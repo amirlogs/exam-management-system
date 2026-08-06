@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\DB;
 
 class Curriculum extends Model
 {
+    protected $table = 'curricula';
+
     protected $fillable = ['program_id', 'version', 'academic_year', 'status'];
 
     public function program()
@@ -23,10 +25,10 @@ class Curriculum extends Model
     {
         return $this->status === 'active';
     }
-    
+
     public function activate(): void
     {
-    DB::transaction(function () {
+        DB::transaction(function () {
             static::where('program_id', $this->program_id)
                 ->where('status', 'active')
                 ->update(['status' => 'archived']);
@@ -34,4 +36,3 @@ class Curriculum extends Model
         });
     }
 }
-    

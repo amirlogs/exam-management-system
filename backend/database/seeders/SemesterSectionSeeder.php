@@ -14,12 +14,12 @@ class SemesterSectionSeeder extends Seeder
         // ---------------- Semesters ----------------
         $current = Semester::updateOrCreate(
             ['academic_year' => '2026', 'name' => 'Semester 1'],
-            ['start_date' => '2026-09-01', 'end_date' => '2027-01-15', 'status' => 'active']
+            ['term_number' => 1, 'start_date' => '2026-09-01', 'end_date' => '2027-01-15', 'status' => 'active']
         );
 
         $past = Semester::updateOrCreate(
             ['academic_year' => '2025', 'name' => 'Semester 2'],
-            ['start_date' => '2025-02-01', 'end_date' => '2025-06-15', 'status' => 'completed']
+            ['term_number' => 2, 'start_date' => '2025-02-01', 'end_date' => '2025-06-15', 'status' => 'completed']
         );
 
         // ---------------- Sections — multiple years, matching StudentValidator's
