@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Validation\InstructorValidator;
+use App\Validation\QuestionValidator;
 use App\Validation\SectionValidator;
 use App\Validation\StudentValidator;
 use App\Validation\UserValidator;
@@ -14,6 +15,7 @@ class ImportValidatorFactory
         'students' => StudentValidator::class,
         'instructors' => InstructorValidator::class,
         'sections' => SectionValidator::class,
+        'questions' => QuestionValidator::class,
         'users' => UserValidator::class,
     ];
 

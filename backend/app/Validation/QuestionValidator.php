@@ -4,24 +4,23 @@ namespace App\Validation;
 
 use Illuminate\Support\Facades\Validator;
 
-class ValidateQuestionRow
+class QuestionValidator
 {
-    public static function validate(array $data): array
+    public static function validate(array $data, array $context = []): array
     {
         $validator = Validator::make($data, [
-            'type' => 'required|in:mcq,essay,true_false,short_answer',
-            'text' => 'required|string|min:5',
-            'options' => 'required_if:type,mcq,true_false|nullable',
-            'correct_answer' => 'required_if:type,mcq,true_false|nullable|string',
+            'type' => 'required|in:MCQ,ESSAY,TRUE_FALSE,SHORT_ANSWER',
+            'content' => 'required|string|min:5',
+            'chapter' => 'nullable|string|max:255',
+            'options' => 'required_if:type,MCQ,TRUE_FALSE|nullable',
+            'correct_answer' => 'required_if:type,MCQ,TRUE_FALSE|nullable|string',
             'difficulty' => 'required|in:easy,medium,hard',
-            'points' => 'required|numeric|min:0.5|max:100',
         ]);
 
         $errors = $validator->errors()->all();
         $type = $data['type'] ?? null;
 
-        // check the above rules only
-        if (! in_array($type, ['mcq', 'true_false']) || empty($data['options'])) {
+        if (! in_array($type, ['MCQ', 'TRUE_FALSE']) || empty($data['options'])) {
             return $errors;
         }
 
@@ -31,12 +30,10 @@ class ValidateQuestionRow
 
         if (! is_array($options) || json_last_error() !== JSON_ERROR_NONE) {
             $errors[] = 'Options must be a valid list.';
-
             return $errors;
         }
 
-        // check true false options
-        if ($type === 'true_false') {
+        if ($type === 'TRUE_FALSE') {
             $normalized = array_map('strtolower', $options);
             sort($normalized);
             if ($normalized !== ['false', 'true']) {
@@ -44,14 +41,13 @@ class ValidateQuestionRow
             }
         }
 
-        if ($type === 'mcq') {
+        if ($type === 'MCQ') {
             $clean = array_filter(array_unique($options), fn ($o) => trim((string) $o) !== '');
             if (count($clean) < 2) {
                 $errors[] = 'MCQ questions must have at least 2 distinct options.';
             }
         }
 
-        // check correct answer to be in options
         if (! empty($data['correct_answer'])) {
             $answerExists = collect($options)
                 ->map(fn ($o) => strtolower(trim((string) $o)))

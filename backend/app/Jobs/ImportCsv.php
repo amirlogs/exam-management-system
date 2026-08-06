@@ -50,7 +50,6 @@ class ImportCsv implements ShouldQueue
             $errors ? $errorCount++ : $validCount++;
 
             $result[$index + 2] = [
-                'row' => $index + 2,
                 'data' => $data,
                 'status' => $status,
                 'errors' => $errors,

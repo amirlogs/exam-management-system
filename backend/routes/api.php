@@ -1,18 +1,17 @@
 <?php
 
+use App\Http\Controllers\Api\QuestionController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\CollegeController;
-use App\Http\Controllers\ConfirmedQuestionController;
 use App\Http\Controllers\CourseController;
 use App\Http\Controllers\CourseOfferingController;
 use App\Http\Controllers\CurriculumController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\EnrollmentController;
-use App\Http\Controllers\FlagQuestionController;
 use App\Http\Controllers\ImportController;
-use App\Http\Controllers\ImportQuestionController;
 use App\Http\Controllers\ProgramController;
-use App\Http\Controllers\QuestionController;
+use App\Http\Controllers\QuestionFlagController;
+use App\Http\Controllers\QuestionImportController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SectionController;
 use App\Http\Controllers\SemesterController;
@@ -114,7 +113,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // -------------------------------- course-offering | suggestion | generate --------------------------------
 
-    //************* Testing Needs *******
+    // ************* Testing Needs *******
     Route::post('/course-offerings/suggestions/generate', [CourseOfferingController::class, 'generateSuggestions']); // ->middleware('permission:course_offering.create');
     Route::post('/course-offerings', [CourseOfferingController::class, 'store']); // ->middleware('permission:course_offering.create');
     Route::post('/course-offerings/{courseOffering}/sections', [CourseOfferingController::class, 'attachSections']); // ->middleware('permission:course_offering.create');
@@ -130,38 +129,29 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/course-offerings/{courseOffering}/enroll', [CourseOfferingController::class, 'enrollSection']); // ->middleware('permission:course_offering.update'); // reuses this — enrollment here is a side effect of offering setup, not its own permission yet
     Route::get('/enrollments', [EnrollmentController::class, 'index']);
     Route::patch('/enrollments/{enrollment}', [EnrollmentController::class, 'update']);
-   //*************  
-   
+    // *************
+
 });
 
 // ------------------------ IMPORT question ------------------------
 Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/courses/{courseId}/question-bank-imports', [ImportQuestionController::class, 'store']);
-    Route::get('/question-bank-imports/{importId}', [ImportQuestionController::class, 'show']);
-    Route::get('/question-bank-imports', [ImportQuestionController::class, 'index']);
-    Route::patch('/question-bank-imports/{importId}/questions/{rowIndex}', [ImportQuestionController::class, 'update']);
-    Route::post('/question-bank-imports/{importId}/confirm', [ImportQuestionController::class, 'confirm']);
-    Route::post('/question-bank-imports/{importId}/approve', [ImportQuestionController::class, 'approve']);
-    Route::get('/question-bank-imports/{importId}/falg', [ImportQuestionController::class, 'flags']);
 
-    // --------------------------Flag Question ------------------------------ //
-    Route::post('/questions/{questionId}/flags', [FlagQuestionController::class,  'store']);
-    Route::get('/question-bank-imports/{importId}/flags', [FlagQuestionController::class,  'index']);
-    Route::get('/questions/{questionId}/flags', [FlagQuestionController::class,  'index']);
-    Route::patch('/questions/{questionId}/flags/{flagId?}', [FlagQuestionController::class,  'update']);
-    Route::patch('/question-flags/{flagId}/resolve', [FlagQuestionController::class,  'resolve']);
+    // ---------------- Questions — CRUD + approval ----------------
+    Route::post('/courses/{courseId}/questions', [QuestionController::class, 'store'])->middleware('permission:question.create');
+    Route::get('/questions', [QuestionController::class, 'index']);
+    Route::get('/questions/{question}', [QuestionController::class, 'show']);
+    Route::patch('/questions/{question}', [QuestionController::class, 'update'])->middleware('permission:question.update');
+    Route::post('/questions/{question}/submit-approval', [QuestionController::class, 'submitApproval'])->middleware('permission:question.update');
+    Route::post('/questions/{question}/approve', [QuestionController::class, 'approve'])->middleware('permission:question.approve');
+    Route::post('/questions/{question}/reject', [QuestionController::class, 'reject'])->middleware('permission:question.reject');
+    Route::delete('/questions/{question}', [QuestionController::class, 'destroy'])->middleware('permission:question.archive');
 
-    // --------------------------   Questions crud ------------------------------ //
-    Route::patch('/questions/{questionId}', [ConfirmedQuestionController::class,  'update']);
-    Route::delete('/questions/{questionId}', [ConfirmedQuestionController::class,  'destroy']);
-    Route::get('/questions/{questionId}/flags', [ConfirmedQuestionController::class,  'show']);
-    Route::get('/questions/{importId}', [ConfirmedQuestionController::class,  'index']);
+    // ---------------- Question Imports --------------------------------
+    Route::post('/courses/{courseId}/question-bank-imports', [QuestionImportController::class, 'store']); // ->middleware('permission:question.import');
+    
+    // ---------------- Question flags ----------------
+    Route::post('/questions/{question}/flags', [QuestionFlagController::class, 'store']);
+    Route::get('/questions/{question}/flags', [QuestionFlagController::class, 'index']);
+    Route::patch('/question-flags/{flag}/resolve', [QuestionFlagController::class, 'resolve'])->middleware('permission:question.update');
 
-    // ----------------------
-    Route::get('/cources/{courseId}/available-questions', [QuestionController::class, 'index']); // not implemented
-    Route::post('/cources/{courseId}/questions', [QuestionController::class, 'store']);
-    Route::patch('/questions/{questionId}', [QuestionController::class, 'update']);
-    Route::post('/questions/{questionId}/confirm', [QuestionController::class, 'confirm']);
-
-    // ----------------------------- Grouping Questions ---------------------------//
 });

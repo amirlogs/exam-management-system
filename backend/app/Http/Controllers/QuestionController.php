@@ -1,102 +1,154 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Controller;
 use App\Http\Resources\QuestionResource;
 use App\Models\Course;
 use App\Models\Question;
-use App\Validation\ValidateQuestionRow;
+use App\Validation\QuestionValidator;
 use Illuminate\Http\Request;
 
 class QuestionController extends Controller
 {
-    public function index() {}
-
-    public function store(Request $request, string $courseId)
+    public function index(Request $request)
     {
-        $course = Course::find($courseId);
+        $questions = Question::when($request->course_id, fn ($q, $id) => $q->where('course_id', $id))
+            ->when($request->status, fn ($q, $s) => $q->where('status', $s))
+            ->when($request->chapter, fn ($q, $c) => $q->where('chapter', $c))
+            ->get();
 
-        if (! $course) {
-            return $this->error('', 'Course not found', 404);
+        return $this->success(QuestionResource::collection($questions), 'Questions fetched successfully');
+    }
+
+    public function show(Question $question)
+    {
+        return $this->success(new QuestionResource($question->load('options', 'approvals')), 'Question fetched successfully');
+    }
+
+    public function store(int $courseId, Request $request)
+    {
+        if (! Course::find($courseId)) {
+            return $this->error(null, 'Course not found', 404);
         }
-        $validatederror = ValidateQuestionRow::validate($request->all());
 
-        if (! empty($validatederror)) {
-            return $this->error($validatederror, 'Validation error', 422);
+        $errors = QuestionValidator::validate($request->all());
+
+        if ($errors) {
+            return $this->error($errors, 'Validation failed', 422);
         }
 
         $question = Question::create([
             'course_id' => $courseId,
-            'text' => $request->text,
-            'options' => $request->options ?? null,
+            'created_by' => $request->user()->id,
             'type' => $request->type,
-            'correct_answer' => $request->correct_answer,
+            'chapter' => $request->chapter,
+            'content' => $request->content,
             'difficulty' => $request->difficulty,
-            'points' => $request->points,
             'status' => 'draft',
-            'is_active' => false,
         ]);
 
-        return $this->success($question, 'Question created successfully');
+        if (in_array($request->type, ['MCQ', 'TRUE_FALSE']) && $request->options) {
+            $correctAnswer = strtolower(trim((string) $request->correct_answer));
+            foreach ($request->options as $optionText) {
+                $question->options()->create([
+                    'option_text' => $optionText,
+                    'is_correct' => strtolower(trim((string) $optionText)) === $correctAnswer,
+                ]);
+            }
+        }
+
+        return $this->success(new QuestionResource($question->load('options')), 'Question created successfully', 201);
     }
 
-    public function update(string $questionId, Request $request)
+    public function update(Question $question, Request $request)
     {
-        $question = Question::find($questionId);
-        if (! $question) {
-            return $this->error('', 'Question not found', 404);
-        }
-        if ($question->status == 'confirmed') {
-            return $this->error('', 'Question already confirmed', 422);
-        }
-        $validatederror = ValidateQuestionRow::validate($request->all());
-
-        if (! empty($validatederror)) {
-            return $this->error($validatederror, 'Validation error', 422);
+        if (in_array($question->status, ['approved', 'archived'])) {
+            return $this->error('Approved or archived questions cannot be edited directly — ask an admin.', null, 409);
         }
 
-        // $question = Question::where('id', $questionId)->update([
-        //     'course_id' => $question->course_id,
-        //     'text' => $request->text,
-        //     'options' => $request->options ?? null,
-        //     'type' => $request->type,
-        //     'correct_answer' => $request->correct_answer,
-        //     'difficulty' => $request->difficulty,
-        //     'points' => $request->points,
-        //     'status' => 'draft',
-        //     'is_active' => false,
-        // ])->fresh();
-
-        $question->update([
-            'course_id' => $question->course_id,
-            'text' => $request->text,
-            'options' => $request->options ?? null,
-            'type' => $request->type,
-            'correct_answer' => $request->correct_answer,
-            'difficulty' => $request->difficulty,
-            'points' => $request->points,
-            'status' => 'draft',
-            'is_active' => false,
-        ]);
-
-        return $this->success(new QuestionResource($question), 'Question confirmed successfully');
-    }
-
-    public function confirm(Request $request, string $questionId)
-    {
-        $question = Question::find($questionId);
-        if (! $question) {
-            return $this->error('', 'Question not found', 404);
-        }
-        if ($question->status == 'confirmed') {
-            return $this->error('', 'Question already confirmed', 422);
+        $errors = QuestionValidator::validate($request->all());
+        if ($errors) {
+            return $this->error('Validation error', $errors, 422);
         }
 
         $question->update([
-            'status' => 'confirmed',
-            'is_active' => true,
+            'type' => $request->type,
+            'chapter' => $request->chapter,
+            'content' => $request->content,
+            'difficulty' => $request->difficulty,
         ]);
 
-        return $this->success($question, 'Question confirmed successfully');
+        if (in_array($request->type, ['MCQ', 'TRUE_FALSE']) && $request->options) {
+            $question->options()->delete(); // replace wholesale — simpler than diffing
+
+            $correctAnswer = strtolower(trim((string) $request->correct_answer));
+            foreach ($request->options as $optionText) {
+                $question->options()->create([
+                    'option_text' => $optionText,
+                    'is_correct' => strtolower(trim((string) $optionText)) === $correctAnswer,
+                ]);
+            }
+        }
+
+        return $this->success(new QuestionResource($question->fresh('options')), 'Question updated successfully');
+    }
+
+    public function submitApproval(Question $question)
+    {
+        if ($question->status !== 'draft') {
+            return $this->error('Only draft questions can be submitted for approval', null, 409);
+        }
+
+        $question->update(['status' => 'pending_approval']);
+
+        return $this->success(new QuestionResource($question), 'Question submitted for approval successfully');
+    }
+
+    public function approve(Question $question, Request $request)
+    {
+        if ($question->status !== 'pending_approval') {
+            return $this->error('Only questions pending approval can be approved', null, 409);
+        }
+
+        $question->update(['status' => 'approved']);
+        $question->approvals()->create([
+            'approved_by' => $request->user()->id,
+            'status' => 'approved',
+            'comment' => $request->comment,
+            'approved_at' => now(),
+        ]);
+
+        return $this->success(new QuestionResource($question), 'Question approved successfully');
+    }
+
+    public function reject(Question $question, Request $request)
+    {
+        $request->validate(['comment' => 'required|string']);
+
+        if ($question->status !== 'pending_approval') {
+            return $this->error('Only questions pending approval can be rejected', null, 409);
+        }
+
+        $question->update(['status' => 'rejected']);
+        $question->approvals()->create([
+            'approved_by' => $request->user()->id,
+            'status' => 'rejected',
+            'comment' => $request->comment,
+            'approved_at' => now(),
+        ]);
+
+        return $this->success(new QuestionResource($question), 'Question rejected successfully');
+    }
+
+    public function destroy(Question $question)
+    {
+        if ($question->status === 'approved') {
+            return $this->error('Approved questions cannot be deleted — archive instead if no longer needed.', null, 409);
+        }
+
+        $question->delete();
+
+        return $this->success(null, 'Question archived successfully');
     }
 }
