@@ -1,8 +1,11 @@
 import CollegesView from '@/modules/admin/colleges/pages/CollegesView.vue'
 import CoursesView from '@/modules/admin/courses/pages/CoursesView.vue'
+import CurriculumPlannerView from '@/modules/admin/curriculum/pages/CurriculumPlannerView.vue'
 import DepartmentsView from '@/modules/admin/departments/pages/DepartmentsView.vue'
 import DashboardView from '@/modules/admin/pages/DashboardView.vue'
 import ProgramsView from '@/modules/admin/programs/pages/ProgramsView.vue'
+import SectionsView from '@/modules/admin/sections/pages/SectionsView.vue'
+import SemestersView from '@/modules/admin/semesters/pages/SemestersView.vue'
 import UniversitiesView from '@/modules/admin/universities/pages/UniversitiesView.vue'
 
 export default [
@@ -36,32 +39,13 @@ export default [
   {
     path: 'courses',
     name: 'admin.courses.list',
-    component: CoursesView
+    component: CoursesView,
   },
 
   // // ---------------- Curriculum ----------------
-  // {
-  //   path: 'curriculum',
-  //   name: 'admin.curriculum.list',
-  //   component: () => import('@/modules/admin/pages/curriculum/CurriculumListView.vue'),
-  // },
-  // {
-  //   path: 'curriculum/:curriculumId',
-  //   name: 'admin.curriculum.detail',
-  //   component: () => import('@/modules/admin/pages/curriculum/CurriculumDetailView.vue'),
-  // },
-
-  // // ---------------- Semesters & Sections ----------------
-  // {
-  //   path: 'semesters',
-  //   name: 'admin.semesters.list',
-  //   component: () => import('@/modules/admin/pages/semesters/SemestersView.vue'),
-  // },
-  // {
-  //   path: 'sections',
-  //   name: 'admin.sections.list',
-  //   component: () => import('@/modules/admin/pages/semesters/SectionsView.vue'),
-  // },
+  { path: 'curriculum', name: 'admin-curriculum', component: CurriculumPlannerView },
+  { path: 'semesters', name: 'admin-semesters', component: SemestersView },
+  { path: 'sections', name: 'admin-sections', component: SectionsView },
 
   // // ---------------- Data Import ----------------
   // {
