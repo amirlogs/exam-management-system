@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Override;
 
 class StoreSectionRequest extends FormRequest
 {
@@ -24,7 +25,7 @@ class StoreSectionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'semester_id' => ['required', 'integer', 'exists:semesters,id'],
+            'semester_id' => ['required', 'integer', Rule::exists('semesters','id')->withoutTrashed()],
             'program_id' => ['required', 'integer', 'exists:programs,id'],
             'year_level' => ['required', 'integer', 'min:1', 'max:10'],
             'name' => ['required', 'integer', 'min:1', 'max:100',
@@ -34,6 +35,18 @@ class StoreSectionRequest extends FormRequest
                         ->where('year_level', $this->year_level)
                     ),
             ],
+        ];
+    }
+
+
+    #[Override]
+    function messages()
+    {
+        return [
+            'semester_id.required' => 'Semester is required',
+            'semester_id.exists' => 'Semester is invalid',
+            'program_id.required' => 'Program is required',
+            'program_id.exists' => 'Program is invalid'
         ];
     }
 }

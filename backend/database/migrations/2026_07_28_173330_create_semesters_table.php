@@ -18,7 +18,7 @@ return new class extends Migration
             $table->unsignedTinyInteger('term_number')->default(1);
             $table->date('start_date')->nullable();
             $table->date('end_date')->nullable();
-            $table->string('status')->default('upcoming');
+            $table->string('status')->default('upcoming'); // upcoming, active, completed
             $table->timestamps();
         });
     }

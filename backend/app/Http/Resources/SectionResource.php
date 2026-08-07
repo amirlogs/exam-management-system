@@ -5,7 +5,7 @@ namespace App\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class SemesterResource extends JsonResource
+class SectionResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -17,13 +17,11 @@ class SemesterResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
-            'start_date' => $this->start_date?->format('M d, Y'),
-            'end_date' => $this->end_date?->format('M d, Y'),
-            'academic_year' => $this->academic_year,
-            'status' => $this->status,
+            'year_level' => $this->year_level,
+            'program_id' => $this->program_id,
+            'semester_id' => $this->semester_id,
             'created_at' => $this->created_at?->format('M d, Y'),
             'updated_at' => $this->updated_at?->format('M d, Y'),
-            'courses' => CourseResource::collection($this->whenLoaded('courses')), // Include courses if loaded
         ];
     }
 }
