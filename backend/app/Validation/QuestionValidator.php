@@ -30,6 +30,7 @@ class QuestionValidator
 
         if (! is_array($options) || json_last_error() !== JSON_ERROR_NONE) {
             $errors[] = 'Options must be a valid list.';
+
             return $errors;
         }
 
@@ -60,4 +61,20 @@ class QuestionValidator
 
         return $errors;
     }
+
+    public static function buildOptions(string $type, array|string $options, ?string $correctAnswer): array
+    {
+        if (! in_array($type, ['MCQ', 'TRUE_FALSE'])) {
+            return [];
+        }
+
+        $options = is_array($options) ? $options : json_decode($options, true);
+        $normalizedAnswer = strtolower(trim((string) $correctAnswer));
+
+        return array_map(fn ($optionText) => [
+            'option_text' => $optionText,
+            'is_correct' => strtolower(trim((string) $optionText)) === $normalizedAnswer,
+        ], $options);
+    }
 }
+

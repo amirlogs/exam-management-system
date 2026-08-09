@@ -11,8 +11,9 @@ use Illuminate\Support\Str;
 
 class StudentCommitter
 {
-    public static function commit(array $data, array $context = []): void
+    public static function commit(array $data, array $importHistory): void
     {
+        $context = $importHistory['context'] ?? [];
         $program = Program::where('code', $data['program_code'])->first();
         $curriculum = $program->curriculums()->where('status', 'active')->first();
         $section = Section::where('program_id', $program->id)
@@ -28,7 +29,7 @@ class StudentCommitter
             'password' => Hash::make(Str::random(12)),
             'is_first_login' => true,
         ]);
-        
+
         Student::create([
             'user_id' => $user->id,
             'student_number' => $data['student_number'],

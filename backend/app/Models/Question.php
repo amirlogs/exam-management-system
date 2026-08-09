@@ -3,12 +3,15 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Question extends Model
 {
+    use SoftDeletes;
+
     protected $fillable = [
         'course_id', 'created_by', 'type', 'chapter',
-        'content', 'difficulty', 'status',
+        'content', 'difficulty', 'status','import_history_id'
     ];
 
     public function course()
@@ -29,5 +32,10 @@ class Question extends Model
     public function approvals()
     {
         return $this->hasMany(QuestionApproval::class);
+    }
+
+    public function importHistory()
+    {
+        return $this->belongsTo(ImportHistory::class);
     }
 }

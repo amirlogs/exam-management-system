@@ -3,31 +3,26 @@
 namespace App\Commit;
 
 use App\Models\Question;
+use App\Validation\QuestionValidator;
 
 class QuestionCommitter
 {
-    public static function commit(array $data, array $context = []): void
+    public static function commit(array $data, $importHistory): void
     {
+        $context = $importHistory['context'] ?? [];
         $question = Question::create([
             'course_id' => $context['course_id'],
             'created_by' => $context['uploaded_by'],
+            'import_history_id' => $importHistory->id,
             'type' => $data['type'],
             'chapter' => $data['chapter'] ?? null,
             'content' => $data['content'],
             'difficulty' => $data['difficulty'],
-            'status' => 'draft',
+            'status' => 'active',
         ]);
 
-        if (in_array($data['type'], ['MCQ', 'TRUE_FALSE']) && ! empty($data['options'])) {
-            $options = is_array($data['options']) ? $data['options'] : json_decode($data['options'], true);
-            $correctAnswer = strtolower(trim((string) ($data['correct_answer'] ?? '')));
-
-            foreach ($options as $optionText) {
-                $question->options()->create([
-                    'option_text' => $optionText,
-                    'is_correct' => strtolower(trim((string) $optionText)) === $correctAnswer,
-                ]);
-            }
+        foreach (QuestionValidator::buildOptions($data['type'], $data['options'] ?? [], $data['correct_answer'] ?? null) as $option) {
+            $question->options()->create($option);
         }
     }
 }

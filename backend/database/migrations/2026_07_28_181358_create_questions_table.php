@@ -15,11 +15,12 @@ return new class extends Migration
             $table->id();
             $table->foreignId('course_id')->constrained()->cascadeOnDelete();
             $table->foreignId('created_by')->constrained('users');
+            $table->foreignId('import_history_id')->nullable()->constrained('import_histories')->nullOnDelete();
             $table->enum('type', ['MCQ', 'TRUE_FALSE', 'ESSAY', 'SHORT_ANSWER']);
             $table->string('chapter')->nullable();
             $table->text('content');
             $table->string('difficulty')->nullable();
-            $table->string('status')->default('draft'); // draft, pending_approval, approved, rejected, archived
+            $table->string('status')->default('active'); // / draft | active| archived
             $table->timestamps();
         });
     }

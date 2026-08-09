@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Commit\ExamQuestionCommitter;
 use App\Http\Requests\StoreImportRequest;
 use App\Jobs\ImportCsv;
+use App\Models\Exam;
 use App\Models\ImportHistory;
+use App\Models\Question;
 use App\Services\ImportCommitterFactory;
 use App\Services\ImportValidatorFactory;
 use App\Validation\StudentValidator;
@@ -17,14 +20,16 @@ class ImportController extends Controller
     public function store(StoreImportRequest $request, string $type)
     {
         $validated = $request->validated();
-        $path = $validated['file']->storeAs('imports', uniqid().'.csv');
         $context = json_decode($validated['context'], true);
+        $context['uploaded_by'] = $request->user()->id;
 
         $errors = ValidateImportContext::validate($validated['type'], $context);
+
         if ($errors) {
             return $this->error($errors, 'Invalid context for this import type', 422);
         }
 
+        $path = $validated['file']->storeAs('imports', uniqid().'.csv');
         $import = ImportHistory::create([
             'uploaded_by' => $request->user()->id,
             'context' => $context,
@@ -99,13 +104,23 @@ class ImportController extends Controller
 
         // transaction update and map the data
         $committerClass = ImportCommitterFactory::create($importHistory->type);
+        // $examId = $context['exam_id'] ?? null;
+        $examId = $importHistory->context['exam_id'] ?? null;
+        $exam = $examId ? Exam::find($examId) : null;
 
-        DB::transaction(function () use ($importHistory, $committerClass) {
+        DB::transaction(function () use ($importHistory, $committerClass, $exam) {
             foreach ($importHistory->validated_data as $row) {
-                $committerClass::commit($row['data'], $importHistory->context);
+                $committerClass::commit($row['data'], $importHistory);
             }
 
             $importHistory->update(['status' => 'confirmed']);
+
+            if ($exam) {
+                $questions = Question::where('import_history_id', $importHistory->id)->get();
+                foreach ($questions as $question) {
+                    ExamQuestionCommitter::commit($question, $exam);
+                }
+            }
         });
 
         return $this->success($importHistory->fresh(), 'Import confirmed successfully');

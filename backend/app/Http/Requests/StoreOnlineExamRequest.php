@@ -5,7 +5,7 @@ namespace App\Http\Requests;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
-class StoreQuestionRequest extends FormRequest
+class StoreOnlineExamRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -22,9 +22,15 @@ class StoreQuestionRequest extends FormRequest
      */
     public function rules(): array
     {
+        // "MCQ": { "marks_each": 1 },
+        //    "TRUE_FALSE": {"marks_each": 2 }
+
         return [
-            'file' => ['required', 'file', 'mimes:csv,xlsx,xl', 'max:2048'],
-            'context' => ['json', 'present'],
+            'title' => ['required', 'string', 'max:255'],
+            'type' => ['required', 'in:MIDTERM,FINAL'],
+            'duration_minutes' => ['required', 'integer', 'min:1'],
+            'composition' => ['required', 'array'],
+            'composition.*.marks_each' => ['nullable', 'numeric', 'min:0.5'],
         ];
     }
 }

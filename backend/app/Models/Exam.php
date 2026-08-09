@@ -6,14 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class Exam extends Model
 {
-    protected $fillable = [
-        'course_offering_id', 'title', 'type', 'duration_minutes', 'status',
-        'created_by', 'approved_by', 'scheduled_start', 'scheduled_end',
-    ];
-    protected $casts = [
-        'scheduled_start' => 'datetime',
-        'scheduled_end' => 'datetime',
-    ];
+    protected $fillable = ['course_offering_id', 'title', 'type', 'duration_minutes', 'composition', 'status', 'created_by', 'approved_by', 'scheduled_start', 'scheduled_end'];
+
+    protected $casts = ['composition' => 'array', 'scheduled_start' => 'datetime', 'scheduled_end' => 'datetime'];
 
     public function courseOffering()
     {
@@ -35,8 +30,18 @@ class Exam extends Model
         return $this->hasMany(ExamQuestion::class);
     }
 
+    public function questions()
+    {
+        return $this->belongsToMany(Question::class, 'exam_questions')->withPivot('order_number', 'marks');
+    }
+
     public function attempts()
     {
         return $this->hasMany(ExamAttempt::class);
+    }
+
+    public function approvals()
+    {
+        return $this->hasMany(ExamApproval::class);
     }
 }

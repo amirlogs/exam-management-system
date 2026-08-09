@@ -10,7 +10,7 @@ use Illuminate\Support\Str;
 
 class InstructorCommitter
 {
-    public static function commit(array $data, array $context = []): void
+    public static function commit(array $data, $importHistory): void
     {
         $user = User::create([
             'first_name' => $data['first_name'],

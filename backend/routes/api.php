@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\Api\QuestionController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\CollegeController;
 use App\Http\Controllers\CourseController;
@@ -9,7 +8,9 @@ use App\Http\Controllers\CurriculumController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\EnrollmentController;
 use App\Http\Controllers\ImportController;
+use App\Http\Controllers\OnlineExamController;
 use App\Http\Controllers\ProgramController;
+use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\QuestionFlagController;
 use App\Http\Controllers\QuestionImportController;
 use App\Http\Controllers\RoleController;
@@ -135,23 +136,38 @@ Route::middleware('auth:sanctum')->group(function () {
 
 // ------------------------ IMPORT question ------------------------
 Route::middleware('auth:sanctum')->group(function () {
-
-    // ---------------- Questions — CRUD + approval ----------------
-    Route::post('/courses/{courseId}/questions', [QuestionController::class, 'store'])->middleware('permission:question.create');
+    Route::post('/courses/{courseId}/questions', [QuestionController::class, 'store']); // ->middleware('permission:question.create');
     Route::get('/questions', [QuestionController::class, 'index']);
     Route::get('/questions/{question}', [QuestionController::class, 'show']);
-    Route::patch('/questions/{question}', [QuestionController::class, 'update'])->middleware('permission:question.update');
-    Route::post('/questions/{question}/submit-approval', [QuestionController::class, 'submitApproval'])->middleware('permission:question.update');
-    Route::post('/questions/{question}/approve', [QuestionController::class, 'approve'])->middleware('permission:question.approve');
-    Route::post('/questions/{question}/reject', [QuestionController::class, 'reject'])->middleware('permission:question.reject');
-    Route::delete('/questions/{question}', [QuestionController::class, 'destroy'])->middleware('permission:question.archive');
+    // Route::post('/questions/{question}/activate', [QuestionController::class, 'activate']); // ->middleware('permission:question.update');
+    Route::patch('/questions/{question}', [QuestionController::class, 'update']); // ->middleware('permission:question.update');
+    Route::delete('/questions/{question}', [QuestionController::class, 'destroy']); // ->middleware('permission:question.archive');
+    Route::post('/questions/{question}/restore', [QuestionController::class, 'restore']); // ->middleware('permission:question.restore');
 
     // ---------------- Question Imports --------------------------------
-    Route::post('/courses/{courseId}/question-bank-imports', [QuestionImportController::class, 'store']); // ->middleware('permission:question.import');
-    
+    // Route::post('/courses/{courseId}/question-bank-imports', [QuestionImportController::class, 'store']); // ->middleware('permission:question.import');
+    // Route::post('/question-bank-imports/{importHistory}/activate', [QuestionImportController::class, 'activateImport']); // ->middleware('permission:question.update')
+
     // ---------------- Question flags ----------------
+
     Route::post('/questions/{question}/flags', [QuestionFlagController::class, 'store']);
     Route::get('/questions/{question}/flags', [QuestionFlagController::class, 'index']);
     Route::patch('/question-flags/{flag}/resolve', [QuestionFlagController::class, 'resolve'])->middleware('permission:question.update');
+
+    // ---------------------------- Online Exam -------------------------------------
+
+    Route::post('/course-offerings/{courseOffering}/exams', [OnlineExamController::class, 'store']);
+    Route::post('/exams/{exam}/composition', [OnlineExamController::class, 'composition']);
+    Route::post('/exams/{exam}/questions', [OnlineExamController::class, 'addQuestions']);
+    // Route::post('/imports/{type}//students', [ImportController::class, 'store']); // ->middleware('permission:import.create');
+
+    Route::post('/exams/{exam}/questions-imports/{importHistory}/confirm', [OnlineExamController::class, 'confirmImportQuestions']);
+    Route::delete('exam/{exam}/questions/{examQuestion}', [OnlineExamController::class, 'removeQuestion']);
+    Route::get('/exams/{exam}/questions', [OnlineExamController::class, 'questions']);
+    Route::post('/exams/{exam}/submit-approval', [OnlineExamController::class, 'submitForApproval']);
+    Route::post('/exams/{exam}/draft', [OnlineExamController::class, 'chnageToDraft']);//->middleware('permission:exam.update')
+    Route::post('/exams/{exam}/approve', [OnlineExamController::class, 'approve']);
+    Route::post('/exams/{exam}/reject', [OnlineExamController::class, 'reject']);
+    
 
 });

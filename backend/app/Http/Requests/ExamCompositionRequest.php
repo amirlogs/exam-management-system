@@ -5,7 +5,7 @@ namespace App\Http\Requests;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
-class StoreQuestionRequest extends FormRequest
+class ExamCompositionRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -23,8 +23,8 @@ class StoreQuestionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'file' => ['required', 'file', 'mimes:csv,xlsx,xl', 'max:2048'],
-            'context' => ['json', 'present'],
+            'composition' => ['required', 'array'],
+            'composition.*.marks_each' => ['nullable', 'numeric', 'min:0.5'],
         ];
     }
 }

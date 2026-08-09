@@ -17,9 +17,11 @@ return new class extends Migration
             $table->string('title');
             $table->enum('type', ['MIDTERM', 'FINAL']);
             $table->unsignedSmallInteger('duration_minutes');
-            $table->string('status')->default('draft'); // draft, pending_approval, approved, scheduled, active, completed, published, cancelled
+            $table->json('composition')->nullable();
+            $table->string('status')->default('draft'); // draft pending_approval approved scheduled active completed published cancelled
+            $table->unsignedInteger('review_cycle')->default(0);
+            $table->foreignId('current_review_id')->nullable();
             $table->foreignId('created_by')->constrained('users');
-            $table->foreignId('approved_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamp('scheduled_start')->nullable();
             $table->timestamp('scheduled_end')->nullable();
             $table->timestamps();
