@@ -11,12 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('exam_reviews', function (Blueprint $table) {
+        Schema::create('exam_approvals', function (Blueprint $table) {
             $table->id();
             $table->foreignId('exam_id')->constrained()->cascadeOnDelete();
             $table->unsignedInteger('cycle');
             $table->foreignId('reviewed_by')->constrained('users');
-            $table->string('decision'); //'approved' | 'rejected'
+            $table->string('decision'); // 'approved' | 'rejected'
             $table->text('reason')->nullable();
             $table->timestamps();
 

@@ -165,9 +165,18 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('exam/{exam}/questions/{examQuestion}', [OnlineExamController::class, 'removeQuestion']);
     Route::get('/exams/{exam}/questions', [OnlineExamController::class, 'questions']);
     Route::post('/exams/{exam}/submit-approval', [OnlineExamController::class, 'submitForApproval']);
-    Route::post('/exams/{exam}/draft', [OnlineExamController::class, 'chnageToDraft']);//->middleware('permission:exam.update')
+    Route::post('/exams/{exam}/draft', [OnlineExamController::class, 'chnageToDraft']); // ->middleware('permission:exam.update')
     Route::post('/exams/{exam}/approve', [OnlineExamController::class, 'approve']);
     Route::post('/exams/{exam}/reject', [OnlineExamController::class, 'reject']);
-    
+    Route::post('/exams/{exam}/schedule', [OnlineExamController::class, 'schedule']);
+    Route::patch('/exams/{exam}/schedule', [OnlineExamController::class, 'updateSchedule']);
+    Route::post('/exams/{exam}/extend-time', [OnlineExamController::class, 'extendTime']);
+    Route::post('/exams/{exam}/publish', [OnlineExamController::class, 'publish']);
+    Route::post('/exams/{exam}/close', [OnlineExamController::class, 'close']);
+    Route::post('/exams/{exam}/archive', [OnlineExamController::class, 'archive']);
 
+    // ---------------------------- Online Exam (Studetns workflow ) ----------------------------
+    Route::prefix('/students')->group(function () {
+        Route::post('/exams/{exam}/start', [OnlineExamController::class, 'start']);
+    });
 });

@@ -3,12 +3,23 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Exam extends Model
 {
-    protected $fillable = ['course_offering_id', 'title', 'type', 'duration_minutes', 'composition', 'status', 'created_by', 'approved_by', 'scheduled_start', 'scheduled_end'];
+    use SoftDeletes;
+    protected $fillable = [
+        'course_offering_id', 'title', 'type', 'duration_minutes',
+        'composition', 'status', 'review_cycle', 'current_review_id',
+        'created_by', 'submitted_at', 'scheduled_start', 'scheduled_end',
+    ];
 
-    protected $casts = ['composition' => 'array', 'scheduled_start' => 'datetime', 'scheduled_end' => 'datetime'];
+    protected $casts = [
+        'composition' => 'array',
+        'submitted_at' => 'datetime',
+        'scheduled_start' => 'datetime',
+        'scheduled_end' => 'datetime',
+    ];
 
     public function courseOffering()
     {
@@ -44,4 +55,5 @@ class Exam extends Model
     {
         return $this->hasMany(ExamApproval::class);
     }
+
 }

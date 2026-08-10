@@ -16,6 +16,7 @@ use App\Models\ImportHistory;
 use App\Models\Question;
 use App\Services\ImportCommitterFactory;
 use App\Services\ImportValidatorFactory;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -122,20 +123,12 @@ class OnlineExamController extends Controller
             return $this->error(null, 'Exam must be in draft or rejected state to be submitted for approval', 422);
         }
 
-        $exam->update(['status' => 'pending_approval']);
+        $exam->update([
+            'status' => 'pending_approval',
+            'review_cycle' => $exam->review_cycle + 1,
+        ]);
 
         return $this->success($exam->fresh(), 'Exam submitted for approval successfully');
-    }
-
-    public function chnageToDraft(Exam $exam)
-    {
-        if ($exam->status !== 'pending_approval') {
-            return $this->error(null, 'Exam must be in pending approval state to be changed to draft', 422);
-        }
-
-        $exam->update(['status' => 'draft']);
-
-        return $this->success($exam->fresh(), 'Exam changed to draft successfully');
     }
 
     public function approve(Exam $exam, Request $request)
@@ -145,11 +138,14 @@ class OnlineExamController extends Controller
         }
 
         DB::transaction(function () use ($exam, $request) {
-            $exam->update(['status' => 'approved']);
-            $exam->approvals()->create([
-                'approved_by' => $request->user()->id,
+            $review = $exam->approvals()->create([
+                'cycle' => $exam->review_cycle,
+                'reviewed_by' => $request->user()->id,
+                'decision' => 'approved',
+            ]);
+            $exam->update([
                 'status' => 'approved',
-                'approved_at' => now(),
+                'current_review_id' => $review->id,
             ]);
         });
 
@@ -163,20 +159,136 @@ class OnlineExamController extends Controller
         }
 
         $request->validate([
-            'reason' => 'required|string|min:10|max:255',
+            'reason' => 'required|string',
         ]);
 
         DB::transaction(function () use ($exam, $request) {
-            $exam->update(['status' => 'draft']);
-            $exam->approvals()->create([
-                'approved_by' => $request->user()->id,
-                'status' => 'rejected',
+            $review = $exam->approvals()->create([
+                'cycle' => $exam->review_cycle,
+                'reviewed_by' => $request->user()->id,
+                'decision' => 'rejected',
                 'reason' => $request->input('reason'),
-                'approved_at' => now(),
+            ]);
+
+            $exam->update([
+                'status' => 'rejected',
+                'current_review_id' => $review->id,
             ]);
         });
 
         return $this->success($exam->fresh(), 'Exam rejected successfully');
+    }
+
+    public function chnageToDraft(Exam $exam)
+    {
+        if ($exam->status !== 'pending_approval') {
+            return $this->error(null, 'Exam must be in pending approval state to be changed to draft', 422);
+        }
+
+        $exam->update(['status' => 'draft']);
+
+        return $this->success($exam->fresh(), 'Exam changed to draft successfully');
+    }
+
+    public function schedule(Exam $exam, Request $request)
+    {
+        if ($exam->status !== 'approved') {
+            return $this->error(null, 'Exam must be approved to be scheduled', 422);
+        }
+
+        $request->validate([
+            'scheduled_start' => 'required|date',
+        ]);
+
+        $localDateTime = Carbon::parse($request->scheduled_start_time)->setTimezone('UTC');
+        $scheduleEnd = $localDateTime->copy()->addMinutes($exam->duration_minutes);
+
+        $exam->update([
+            'status' => 'scheduled',
+            'scheduled_start' => $localDateTime,
+            'scheduled_end' => $scheduleEnd,
+        ]);
+
+        return $this->success($exam->fresh(), 'Exam scheduled successfully');
+    }
+
+    public function updateSchedule(Exam $exam, Request $request)
+    {
+        if ($exam->status !== 'scheduled') {
+            return $this->error(null, 'Exam must be scheduled to be updated', 422);
+        }
+        $request->validate([
+            'scheduled_start' => ['sometimes', 'date'],
+            'duration_minutes' => ['sometimes', 'integer', 'min:30'],
+
+        ]);
+        if ($request->scheduled_start_time) {
+            $localDateTime = Carbon::parse($request->scheduled_start_time)->setTimezone('UTC');
+            $scheduleEnd = $localDateTime->copy()->addMinutes($exam->duration_minutes);
+        }
+        $exam->update([
+            'scheduled_start' => $localDateTime ?? $exam->scheduled_start,
+            'scheduled_end' => $scheduleEnd ?? $exam->scheduled_end,
+            'duration_minutes' => $request->duration_minutes ?? $exam->duration_minutes,
+        ]);
+
+        return $this->success($exam->fresh(), 'Exam schedule updated successfully');
+    }
+
+    public function extendTime(Exam $exam, Request $request)
+    {
+        if ($exam->status !== 'active') {
+            return $this->error(null, 'Exam must be ongoing to be extended', 422);
+        }
+        $request->validate([
+            'duration_minutes' => ['required', 'integer', 'min:1'],
+        ]);
+        $newEndTime = Carbon::parse($exam->scheduled_end)->addMinutes($request->duration_minutes);
+
+        $exam->update([
+            'scheduled_end' => $newEndTime,
+        ]);
+
+        return $this->success($exam->fresh(), 'Exam time extended successfully');
+    }
+
+    public function publish(Exam $exam)
+    {
+        if ($exam->status !== 'scheduled') {
+            return $this->error(null, 'Exam must be scheduled to be published', 422);
+        }
+
+        $exam->update([
+            'status' => 'active',
+        ]);
+
+        return $this->success($exam->fresh(), 'Exam published successfully');
+    }
+
+    public function close(Exam $exam)
+    {
+        if ($exam->status !== 'active') {
+            return $this->error(null, 'Exam must be active to be closed', 422);
+        }
+
+        $exam->update([
+            'status' => 'closed',
+        ]);
+
+        return $this->success($exam->fresh(), 'Exam closed successfully');
+    }
+
+    public function archive(Exam $exam)
+    {
+        if ($exam->status !== 'closed') {
+            return $this->error(null, 'Exam must be closed to be archived', 422);
+        }
+
+        $exam->update([
+            'status' => 'archived',
+        ]);
+
+        return $this->success($exam->fresh(), 'Exam archived successfully');
     }
 }
 
