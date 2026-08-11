@@ -43,7 +43,7 @@ class Exam extends Model
 
     public function questions()
     {
-        return $this->belongsToMany(Question::class, 'exam_questions')->withPivot('order_number', 'marks');
+        return $this->belongsToMany(Question::class, 'exam_questions')->withPivot('order_number', 'marks', 'id');
     }
 
     public function attempts()

@@ -7,7 +7,7 @@ use App\Models\Section;
 
 class SectionCommitter
 {
-    public static function commit(array $data, array $importHistory): void
+    public static function commit(array $data, $importHistory): void
     {
         $context = $importHistory['context'] ?? [];
         $program = Program::where('code', $data['program_code'])->first();

@@ -11,7 +11,7 @@ use Illuminate\Support\Str;
 
 class StudentCommitter
 {
-    public static function commit(array $data, array $importHistory): void
+    public static function commit(array $data, $importHistory): void
     {
         $context = $importHistory['context'] ?? [];
         $program = Program::where('code', $data['program_code'])->first();
@@ -22,11 +22,13 @@ class StudentCommitter
             ->where('name', $data['section_name'])
             ->first();
 
+        // email randomly generated and sent to email using the studetn email
         $user = User::create([
             'first_name' => $data['first_name'],
             'last_name' => $data['last_name'],
             'email' => $data['email'],
-            'password' => Hash::make(Str::random(12)),
+            // 'password' => Hash::make(Str::random(12)),
+            'password' => Hash::make('password'),
             'is_first_login' => true,
         ]);
 

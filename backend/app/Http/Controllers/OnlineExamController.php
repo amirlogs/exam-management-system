@@ -11,6 +11,7 @@ use App\Jobs\ImportCsv;
 use App\Models\Course;
 use App\Models\CourseOffering;
 use App\Models\Exam;
+use App\Models\ExamAttempt;
 use App\Models\ExamQuestion;
 use App\Models\ImportHistory;
 use App\Models\Question;
@@ -260,22 +261,26 @@ class OnlineExamController extends Controller
 
         $exam->update([
             'status' => 'active',
+            // 'activated_at' => now(),
         ]);
 
         return $this->success($exam->fresh(), 'Exam published successfully');
     }
 
-    public function close(Exam $exam)
+    public function complete(Exam $exam)
     {
         if ($exam->status !== 'active') {
-            return $this->error(null, 'Exam must be active to be closed', 422);
+            return $this->error(null, 'Exam must be active to be completed', 422);
         }
 
-        $exam->update([
-            'status' => 'closed',
-        ]);
+        DB::transaction(function () use ($exam) {
+            ExamAttempt::where('exam_id', $exam->id)->update(['status' => 'auto_submitted']);
+            $exam->update([
+                'status' => 'completed',
+            ]);
+        });
 
-        return $this->success($exam->fresh(), 'Exam closed successfully');
+        return $this->success($exam->fresh(), 'Exam completed successfully');
     }
 
     public function archive(Exam $exam)

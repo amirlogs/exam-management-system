@@ -16,6 +16,7 @@ use App\Http\Controllers\QuestionImportController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SectionController;
 use App\Http\Controllers\SemesterController;
+use App\Http\Controllers\StudentExamController;
 use App\Http\Controllers\UniversityController;
 use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
@@ -128,6 +129,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/course-offerings/{courseOffering}', [CourseOfferingController::class, 'destroy'])->middleware('permission:course_offering.archive');
 
     Route::post('/course-offerings/{courseOffering}/enroll', [CourseOfferingController::class, 'enrollSection']); // ->middleware('permission:course_offering.update'); // reuses this — enrollment here is a side effect of offering setup, not its own permission yet
+    Route::post('/enrollments', [EnrollmentController::class, 'store']);
     Route::get('/enrollments', [EnrollmentController::class, 'index']);
     Route::patch('/enrollments/{enrollment}', [EnrollmentController::class, 'update']);
     // *************
@@ -170,13 +172,21 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/exams/{exam}/reject', [OnlineExamController::class, 'reject']);
     Route::post('/exams/{exam}/schedule', [OnlineExamController::class, 'schedule']);
     Route::patch('/exams/{exam}/schedule', [OnlineExamController::class, 'updateSchedule']);
+
     Route::post('/exams/{exam}/extend-time', [OnlineExamController::class, 'extendTime']);
     Route::post('/exams/{exam}/publish', [OnlineExamController::class, 'publish']);
-    Route::post('/exams/{exam}/close', [OnlineExamController::class, 'close']);
+    // Route::post('/exams/{exam}/close', [OnlineExamController::class, 'close']);
+    Route::post('/exams/{exam}/complete', [OnlineExamController::class, 'complete']);
     Route::post('/exams/{exam}/archive', [OnlineExamController::class, 'archive']);
 
     // ---------------------------- Online Exam (Studetns workflow ) ----------------------------
     Route::prefix('/students')->group(function () {
-        Route::post('/exams/{exam}/start', [OnlineExamController::class, 'start']);
+        // Route::post('/exams/{exam}/start', [StudentExamController::class, 'start']);
+        Route::get('/exams/{exam}', [StudentExamController::class, 'show']);
+        Route::post('/exams/{exam}/questions', [StudentExamController::class, 'questions']);
+        Route::post('/exams/{exam}/start', [StudentExamController::class, 'start']);
+
+        Route::post('/attempts/{examAttempt}/questions/{question}/answer', [StudentExamController::class, 'answer']);
+        Route::post('/attempts/{examAttempt}/submit', [StudentExamController::class, 'submit']);
     });
 });

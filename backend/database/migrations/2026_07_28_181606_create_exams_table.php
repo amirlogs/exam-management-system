@@ -24,6 +24,8 @@ return new class extends Migration
             $table->foreignId('created_by')->constrained('users');
             $table->timestamp('scheduled_start')->nullable();
             $table->timestamp('scheduled_end')->nullable();
+            $table->timestamp('activated_at')->nullable();
+            $table->timestamp('ended_at')->nullable();
             $table->timestamps();
         });
     }

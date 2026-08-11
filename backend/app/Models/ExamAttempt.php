@@ -22,8 +22,9 @@ class ExamAttempt extends Model
         return $this->belongsTo(Student::class);
     }
 
-    public function answers()
+    public function studentAnswers()
     {
         return $this->hasMany(Answer::class);
     }
+    
 }

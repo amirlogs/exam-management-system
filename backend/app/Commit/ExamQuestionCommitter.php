@@ -6,9 +6,9 @@ use App\Models\ExamQuestion;
 
 class ExamQuestionCommitter
 {
-    public static function commit($question, $exam):void
+    public static function commit($question, $exam): void
     {
-        
+
         $typeConfig = $exam->composition[$question['type']] ?? null;
 
         if (in_array($question->type, ['MCQ', 'TRUE_FALSE'])) {

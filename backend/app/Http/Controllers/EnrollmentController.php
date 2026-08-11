@@ -2,11 +2,24 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreEnrollmentRequest;
 use App\Models\Enrollment;
 use Illuminate\Http\Request;
 
 class EnrollmentController extends Controller
 {
+    public function store(StoreEnrollmentRequest $request)
+    {
+        $validated = $request->validated();
+
+        $enrollment = Enrollment::create([
+            ...$validated,
+            'status' => 'active',
+        ]);
+
+        return $this->success($enrollment, 'Enrollment created successfully');
+    }
+
     public function index(Request $request)
     {
         $enrollments = Enrollment::with('student.user', 'courseOffering.course')
