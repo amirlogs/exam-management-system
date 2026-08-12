@@ -7,6 +7,7 @@ use App\Http\Resources\ExamQuestionResource;
 use App\Http\Resources\ExamResource;
 use App\Models\Exam;
 use App\Models\ExamAttempt;
+use App\Models\ExamQuestion;
 use App\Models\Question;
 use App\Services\SubmitAnswerFactory;
 use Illuminate\Http\Request;
@@ -61,23 +62,33 @@ class StudentExamController extends Controller
             return $this->error(null, 'Questions are not visible yet — waiting for the exam to be started.', 403);
         }
 
-        $user = $request->user();
-        $studentId = $user->student->id;
-
+        $studentId = $request->user()->student->id;
         $questions = $exam->questions()->with('options')->get();
-        // $question = $exam->attempts()->where('student_id', $studentId)->get();
+        $attemptsAnswers = $exam->attempts()->where('student_id', $studentId)->first()->answers->keyBy('question_id');
 
-        // return $question;
+        $data = $questions->map(function ($question) use ($attemptsAnswers) {
+            $attemptAnswer = $attemptsAnswers->get($question->id);
 
-        return $this->success(ExamQuestionResource::collection($questions), 'Exam fetched successfully');
+            return [
+                'id' => $question->id,
+                'question' => new ExamQuestionResource($question),
+                'type' => $question->type,
+                'selected_answer_id' => $attemptAnswer?->selected_option_id,
+                'answer_text' => $attemptAnswer?->answer_text,
+            ];
+        });
+
+        return $this->success($data, 'Exam fetched successfully');
 
     }
-
-    public function answer(ExamAttempt $examAttempt, Question $question, Request $request)
+    
+    public function answer(ExamAttempt $examAttempt, Request $request)
     {
         // authrorize the user is the student of the exam attempt
         $this->authorize('canSubmitAnswer', $examAttempt);
         $exam = $examAttempt->exam;
+
+        $question = ExamQuestion::find($request->exam_question_id)->question;
 
         // validation
         $validatorClass = SubmitAnswerFactory::create($question->type);
@@ -98,11 +109,12 @@ class StudentExamController extends Controller
         }
 
         // submit the answere
-        $examAttempt->studentAnswers()->create(
+        $examAttempt->answers()->create(
             [
+                'question_id' => $question->id,
                 'exam_question_id' => $request->exam_question_id,
-                'answer_text' => $request->answer_text ?? null,
                 'selected_option_id' => $request->selected_option_id ?? null,
+                'answer_text' => $request->answer_text ?? null,
             ]
         );
 

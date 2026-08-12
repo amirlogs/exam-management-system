@@ -12,7 +12,6 @@ use App\Http\Controllers\OnlineExamController;
 use App\Http\Controllers\ProgramController;
 use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\QuestionFlagController;
-use App\Http\Controllers\QuestionImportController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SectionController;
 use App\Http\Controllers\SemesterController;
@@ -175,6 +174,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/exams/{exam}/extend-time', [OnlineExamController::class, 'extendTime']);
     Route::post('/exams/{exam}/publish', [OnlineExamController::class, 'publish']);
+    Route::post('/exams/{exam}/questions', [OnlineExamController::class, 'questions']);
     // Route::post('/exams/{exam}/close', [OnlineExamController::class, 'close']);
     Route::post('/exams/{exam}/complete', [OnlineExamController::class, 'complete']);
     Route::post('/exams/{exam}/archive', [OnlineExamController::class, 'archive']);
@@ -186,7 +186,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/exams/{exam}/questions', [StudentExamController::class, 'questions']);
         Route::post('/exams/{exam}/start', [StudentExamController::class, 'start']);
 
-        Route::post('/attempts/{examAttempt}/questions/{question}/answer', [StudentExamController::class, 'answer']);
+        Route::post('/attempts/{examAttempt}/answer', [StudentExamController::class, 'answer']);
         Route::post('/attempts/{examAttempt}/submit', [StudentExamController::class, 'submit']);
     });
 });
