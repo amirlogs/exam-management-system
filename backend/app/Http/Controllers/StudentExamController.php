@@ -8,7 +8,6 @@ use App\Http\Resources\ExamResource;
 use App\Models\Exam;
 use App\Models\ExamAttempt;
 use App\Models\ExamQuestion;
-use App\Models\Question;
 use App\Services\SubmitAnswerFactory;
 use Illuminate\Http\Request;
 
@@ -58,6 +57,10 @@ class StudentExamController extends Controller
 
         $this->authorize('viewAsStudent', $exam);
 
+        if ($exam->status === 'completed') {
+            return $this->error(null, 'Exam has already been completed.', 403);
+        }
+
         if ($exam->status !== 'active') {
             return $this->error(null, 'Questions are not visible yet — waiting for the exam to be started.', 403);
         }
@@ -81,7 +84,7 @@ class StudentExamController extends Controller
         return $this->success($data, 'Exam fetched successfully');
 
     }
-    
+
     public function answer(ExamAttempt $examAttempt, Request $request)
     {
         // authrorize the user is the student of the exam attempt
@@ -123,10 +126,12 @@ class StudentExamController extends Controller
 
     public function submit(ExamAttempt $examAttempt)
     {
+        $this->authorize('canSubmitAnswer', $examAttempt);
 
         if ($examAttempt->status !== 'in_progress') {
             return $this->error(null, 'Exam attempt is already submitted', 403);
         }
+
         $examAttempt->update([
             'status' => 'completed',
             'submitted_at' => now(),

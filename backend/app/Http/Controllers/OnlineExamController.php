@@ -100,7 +100,7 @@ class OnlineExamController extends Controller
 
     public function questions(Exam $exam)
     {
-        $questions = $exam->questions()->get();
+        $questions = $exam->questions()->with('options')->get();
 
         $totalMarks = $questions->sum(function ($question) {
             return $question->pivot->marks;

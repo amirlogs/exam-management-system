@@ -7,6 +7,7 @@ use App\Http\Controllers\CourseOfferingController;
 use App\Http\Controllers\CurriculumController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\EnrollmentController;
+use App\Http\Controllers\GradingController;
 use App\Http\Controllers\ImportController;
 use App\Http\Controllers\OnlineExamController;
 use App\Http\Controllers\ProgramController;
@@ -20,6 +21,7 @@ use App\Http\Controllers\UniversityController;
 use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use Laravel\Mcp\Enums\Role;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -189,4 +191,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/attempts/{examAttempt}/answer', [StudentExamController::class, 'answer']);
         Route::post('/attempts/{examAttempt}/submit', [StudentExamController::class, 'submit']);
     });
+
+    // ---------------------------------- Grading -----------------------------------------
+    Route::post('/exams/{exam}/auto-grade', [GradingController::class, 'autoGrade']);
 });

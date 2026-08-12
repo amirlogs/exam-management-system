@@ -27,10 +27,3 @@ class ExamPolicy
     }
 
 }
-
-// public function manageAsInstructor(User $user, Exam $exam): bool
-// {
-//     return CourseInstructor::where('course_offering_id', $exam->course_offering_id)
-//         ->where('instructor_id', $user->id)
-//         ->exists();
-// }

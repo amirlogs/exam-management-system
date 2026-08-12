@@ -55,5 +55,4 @@ class Exam extends Model
     {
         return $this->hasMany(ExamApproval::class);
     }
-
 }
