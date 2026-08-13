@@ -4,33 +4,32 @@ import { Landmark, ShieldUser, BookOpen, ClipboardList, ArrowRight, Star, MoreVe
 import BaseButton from '@/shared/components/ui/BaseButton.vue'
 import { usePermissionsStore } from '@/stores/permission'
 import { useRouter } from 'vue-router'
+import type { WorkspaceState } from '@/modules/instructor/pages/question-bank/types'
 
 defineEmits<{ (e: 'enter-workspace', id: string): void }>()
 
-const year = new Date().getFullYear()
-const permissionsStore = usePermissionsStore()
-const router = useRouter()
-
-type WorkspaceState = {
-    admin: boolean
-    instructor: boolean
-    student: boolean
-}
-
-const selectedWorkspace = ref<WorkspaceState>({
+const currentWorkspace = ref<WorkspaceState>({
     admin: false,
     instructor: false,
     student: false
 })
 
+const year = new Date().getFullYear()
+const permissionsStore = usePermissionsStore()
+const router = useRouter()
+
+
 onMounted(async () => {
-    const routeToWorkspace = await permissionsStore.routeToWorkspace()
-    if (typeof routeToWorkspace === 'string') {
-        permissionsStore.activeWorkspace = routeToWorkspace
-        router.push(routeToWorkspace)
-    } else if (routeToWorkspace) {
-        selectedWorkspace.value = routeToWorkspace
+    const state = window.history.state
+    if (state && state.workspace) {
+        currentWorkspace.value = state.workspace
+    } else {
+        await permissionsStore.routeToWorkspace(router)
+        if (permissionsStore.workspaces) {
+            currentWorkspace.value = permissionsStore.workspaces
+        }
     }
+    console.log(currentWorkspace.value)
 })
 
 const roles: (keyof WorkspaceState)[] = ['admin', 'instructor', 'student']
@@ -94,7 +93,7 @@ onUnmounted(() => document.removeEventListener('click', closeMenu))
         <!-- Cards -->
         <div class="flex justify-center gap-7 flex-wrap mx-4">
             <template v-for="role in roles" :key="role">
-                <div v-if="selectedWorkspace[role]" class="max-w-100 group relative bg-surface border border-border rounded-2xl p-7 flex flex-col
+                <div v-if="currentWorkspace[role]" class="max-w-100 group relative bg-surface border border-border rounded-2xl p-7 flex flex-col
                     shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200">
 
                     <!-- Overflow menu -->
@@ -129,7 +128,6 @@ onUnmounted(() => document.removeEventListener('click', closeMenu))
                             Default
                         </span>
                     </div>
-
                     <p class="text-text/60 text-sm leading-relaxed flex-1">{{ workspaces[role].description }}</p>
 
                     <BaseButton variant="primary" block class="mt-6" @click="$emit('enter-workspace', role)">

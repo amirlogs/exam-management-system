@@ -6,7 +6,6 @@ import { useSidebar } from '@/shared/composables/useSidebar'
 
 defineProps<{
     userName?: string
-    userRole?: string
     userAvatar?: string
 }>()
 
@@ -16,7 +15,7 @@ const { toggleMobile } = useSidebar()
 <template>
     <header
         class="h-17 px-4  md:pl-6 md:pr-3 flex items-center justify-between border-b border-border bg-surface sticky top-0 z-20">
-            
+
         <div class="flex items-center gap-3">
             <button class="md:hidden w-9 h-9 rounded-lg flex items-center justify-center hover:bg-bg"
                 @click="toggleMobile">
@@ -26,6 +25,7 @@ const { toggleMobile } = useSidebar()
         </div>
 
         <div class="flex items-center gap-2">
+            
             <!-- AI Grading toggle — disabled for now, will re-enable later -->
             <!--
       <div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-bg border border-border">
@@ -47,7 +47,7 @@ const { toggleMobile } = useSidebar()
 
             <div class="w-px h-6 bg-border" />
 
-            <UserMenuDropdown :user-name="userName" :user-role="userRole" :user-avatar="userAvatar" />
+             <UserMenuDropdown :user-name="userName" :user-avatar="userAvatar" /> 
         </div>
     </header>
 </template>

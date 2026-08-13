@@ -6,6 +6,7 @@ import { usePermissionsStore } from './permission'
 export const useAuthStore = defineStore('userAuth', () => {
   const user = ref<Record<string, any> | null>(null)
   const token = ref<string | null>(localStorage.getItem('auth_token'))
+
   const error = ref('')
   const loading = ref(false)
   const isInitializing = ref(true)
@@ -20,7 +21,7 @@ export const useAuthStore = defineStore('userAuth', () => {
       token.value = authToken
       console.log(response.data.data, 'response is came')
       usePermissionsStore().setPermissions(response.data.data.permissions)
-      usePermissionsStore().getVisibleWorkspaces()
+      usePermissionsStore().setWorkspaces(response.data.data.workspaces)
       localStorage.setItem('auth_token', authToken)
       return true
     } catch (err) {
@@ -43,6 +44,7 @@ export const useAuthStore = defineStore('userAuth', () => {
       const response = await authapi.fetchCurrentUser()
       user.value = response.data.data.user
       usePermissionsStore().setPermissions(response.data.data.permissions)
+      usePermissionsStore().setWorkspaces(response.data.data.workspaces)
     } catch (err) {
       user.value = null
       token.value = null

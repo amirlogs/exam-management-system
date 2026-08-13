@@ -14,10 +14,10 @@ const authStore = useAuthStore()
             <span class="text-text/50 text-sm">Loading…</span>
         </div>
 
-        <template v-else>
+        <div v-else>
             <router-view />
             <ToastContainer />
             <GlobalLoadingBar v-if="uiStore.isLoading" />
-        </template>
+        </div>
     </div>
 </template>

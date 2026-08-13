@@ -61,3 +61,9 @@ export interface ImportFlagsSummary {
   resolved_count: number
   flags: (QuestionFlag & { instructor: any })[]
 }
+
+export type WorkspaceState = {
+  admin: boolean
+  instructor: boolean
+  student: boolean
+}

@@ -6,7 +6,6 @@ import { useAuthStore } from '@/stores/auth'
 
 defineProps<{
     userName?: string
-    userRole?: string
     userAvatar?: string
 }>()
 
@@ -39,7 +38,6 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
             class="flex items-center gap-3 hover:bg-bg rounded-lg px-2 py-1.5 transition-colors">
             <div class="text-sm text-right leading-tight hidden sm:block">
                 <div class="font-semibold text-text">{{ userName || 'User' }}</div>
-                <div class="text-xs text-text/50">{{ userRole || '' }}</div>
             </div>
 
             <img v-if="userAvatar" :src="userAvatar" class="w-9 h-9 rounded-full object-cover border border-border" />
@@ -55,7 +53,6 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
             class="absolute right-0 mt-2 w-52 bg-surface border border-border rounded-lg shadow-lg py-1 z-20">
             <div class="px-3 py-2.5 border-b border-border">
                 <div class="text-sm font-semibold text-text">{{ userName || 'User' }}</div>
-                <div class="text-xs text-text/50">{{ userRole || '' }}</div>
             </div>
             <router-link to="/profile"
                 class="flex items-center gap-2 px-3 py-2.5 text-sm text-text hover:bg-bg transition-colors">

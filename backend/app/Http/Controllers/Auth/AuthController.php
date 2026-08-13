@@ -31,22 +31,23 @@ class AuthController extends Controller
                 'token' => $token,
                 'user' => new UserResource($user),
                 'permissions' => $permissions,
+                'workspaces' => $user->workspaces(),
             ],
             'Login successful',
             200,
         );
     }
 
-    public function me()
+    public function me(Request $request)
     {
-        $user = Auth::user();
-
+        $user = $request->user();
         $permissions = $user->permissionNames();
 
         return $this->success(
             [
                 'user' => new UserResource($user),
                 'permissions' => $permissions,
+                'workspaces' => $user->workspaces(),
             ],
             'User data fetched successfully',
             200,

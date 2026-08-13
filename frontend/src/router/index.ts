@@ -1,12 +1,17 @@
+import AdminLayout from '@/layouts/AdminLayout.vue'
 import AuthLayout from '@/layouts/AuthLayout.vue'
 import InstructorLayout from '@/layouts/InstructorLayout.vue'
+import StudentLayout from '@/layouts/StudentLayout.vue'
 import LoginView from '@/modules/auth/pages/LoginView.vue'
+import NoAccessView from '@/modules/workspace/pages/NoAccessView.vue'
 import WorkspaceSelectView from '@/modules/workspace/pages/WorkspaceSelectView.vue'
 import NotFoundView from '@/shared/pages/NotFoundView.vue'
 import UnauthorizedView from '@/shared/pages/UnauthorizedView.vue'
 import { createRouter, createWebHistory } from 'vue-router'
+import adminRoutes from './admin.routes'
 import { authGuard } from './guards'
 import teachingRoutes from './instructor.routes'
+import studentRoutes from './student.routes'
 const routes = [
   {
     path: '/',
@@ -27,6 +32,14 @@ const routes = [
         },
       },
       {
+        path: 'no-access',
+        name: 'no-access',
+        component: NoAccessView,
+        meta: {
+          requiresAuth: true,
+        },
+      },
+      {
         path: '/',
         redirect: {
           name: 'select-workspace',
@@ -39,9 +52,27 @@ const routes = [
     component: InstructorLayout,
     meta: {
       requiresAuth: true,
-      workspace: 'teaching',
+      workspace: 'instructor',
     },
     children: teachingRoutes,
+  },
+  {
+    path: '/admin',
+    component: AdminLayout,
+    meta: {
+      requiresAuth: true,
+      workspace: 'admin',
+    },
+    children: adminRoutes,
+  },
+  {
+    path: '/student',
+    component: StudentLayout,
+    meta: {
+      requiresAuth: true,
+      workspace: 'student',
+    },
+    children: studentRoutes,
   },
   {
     path: '/:pathMatch(.*)*',
@@ -60,7 +91,6 @@ const router = createRouter({
   routes,
 })
 
-
-router.beforeEach(authGuard)
+// router.beforeEach(authGuard)
 // router.beforeEach(permissionGuard)
 export default router
