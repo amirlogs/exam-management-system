@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreUniversityRequest;
 use App\Http\Requests\UpdateUniversityRequest;
+use App\Http\Resources\UniversityResource;
 use App\Models\University;
+use Illuminate\Http\Request;
 
 class UniversityController extends Controller
 {
@@ -20,16 +22,26 @@ class UniversityController extends Controller
         return $this->success($university, 'University created successfully', 201);
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $universities = University::all();
+        $perPage = min($request->integer('per_page', 10), 25);
+        $universities = University::paginate($perPage);
 
-        return $this->success($universities, 'Universities retrieved successfully');
+        return $this->success(
+            [
+                'data' => UniversityResource::collection($universities->items()),
+                'current_page' => $universities->currentPage(),
+                'last_page' => $universities->lastPage(),
+                'per_page' => $universities->perPage(),
+                'total' => $universities->total(),
+                'from' => $universities->firstItem(),
+                'to' => $universities->lastItem(),
+            ], 'Universities retrieved successfully');
     }
 
     public function show(University $university)
     {
-        return $this->success($university, 'University retrieved successfully');
+        return $this->success(new UniversityResource($university), 'University retrieved successfully');
     }
 
     public function update(University $university, UpdateUniversityRequest $request)
@@ -59,5 +71,23 @@ class UniversityController extends Controller
         $university->restore();
 
         return $this->success($university, 'University restored successfully');
+    }
+
+    public function archived(Request $request)
+    {
+        $perPage = min($request->integer('per_page', 10), 25);
+        $universities = University::onlyTrashed()->paginate($perPage);
+
+        return $this->success(
+            [
+                'data' => UniversityResource::collection($universities->items()),
+                'current_page' => $universities->currentPage(),
+                'last_page' => $universities->lastPage(),
+                'per_page' => $universities->perPage(),
+                'total' => $universities->total(),
+                'from' => $universities->firstItem(),
+                'to' => $universities->lastItem(),
+            ],
+            'Archived university retrieved successfully');
     }
 }

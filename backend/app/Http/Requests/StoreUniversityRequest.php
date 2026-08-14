@@ -23,8 +23,8 @@ class StoreUniversityRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'min:3', 'max:255'],
-            'code' => ['required', 'string', 'min:2', 'max:255'],
+            'name' => ['required', 'string', 'min:3', 'max:255', 'unique:universities,name'],
+            'code' => ['required', 'string', 'min:2', 'max:255', 'unique:universities,code'],
             'address' => ['required', 'string', 'min:3', 'max:255'],
         ];
     }

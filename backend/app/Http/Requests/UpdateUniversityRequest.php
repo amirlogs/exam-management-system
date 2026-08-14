@@ -5,10 +5,12 @@ namespace App\Http\Requests;
 use App\Traits\RequiresAtLeastOneField;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateUniversityRequest extends FormRequest
 {
     use RequiresAtLeastOneField;
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -24,11 +26,11 @@ class UpdateUniversityRequest extends FormRequest
      */
     public function rules(): array
     {
+        // name and code must be unique in the universities table except for the current university
         return [
-            'name' => ['string', 'min:3', 'max:255', 'unique:App\Models\University,name', 'sometimes'],
-            'code' => ['string', 'min:2', 'max:255,unique:App\Models\University,code', 'sometimes'],
+            'name' => ['string', 'min:3', 'max:255', 'sometimes', Rule::unique('universities')->ignore($this->university)],
+            'code' => ['string', 'min:2', 'max:255',  'sometimes', Rule::unique('universities')->ignore($this->university)],
             'address' => ['string', 'min:3', 'max:255', 'sometimes'],
         ];
     }
-    
 }

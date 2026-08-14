@@ -34,6 +34,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // ============ UNIVERSITY STRUCTURE ============
     Route::post('/universities', [UniversityController::class, 'store'])->middleware('permission:university.create');
     Route::get('/universities', [UniversityController::class, 'index']);
+    Route::get('/universities/archived', [UniversityController::class, 'archived']);
     Route::get('/universities/{university}', [UniversityController::class, 'show']);
     Route::patch('/universities/{university}', [UniversityController::class, 'update'])->middleware('permission:university.update');
     Route::delete('/universities/{university}', [UniversityController::class, 'destroy'])->middleware('permission:university.archive');
