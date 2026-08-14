@@ -1,4 +1,5 @@
 import DashboardView from "@/modules/admin/pages/DashboardView.vue";
+import UniversitiesView from "@/modules/admin/universities/pages/UniversitiesView.vue";
 
 export default [
   {
@@ -8,11 +9,11 @@ export default [
   },
 
   // // ---------------- Academic Structure ----------------
-  // {
-  //   path: 'universities',
-  //   name: 'admin.universities.list',
-  //   component: () => import('@/modules/admin/pages/academic-structure/UniversitiesView.vue'),
-  // },
+  {
+    path: 'universities',
+    name: 'admin.universities.list',
+    component: UniversitiesView
+  },
   // {
   //   path: 'colleges',
   //   name: 'admin.colleges.list',

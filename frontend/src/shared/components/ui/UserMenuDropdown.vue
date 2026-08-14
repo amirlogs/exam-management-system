@@ -63,7 +63,7 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
                 <Settings class="w-4 h-4 text-text/50" /> Settings
             </router-link>
             <button @click="handleLogout"
-                class="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors">
+                class="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-error hover:bg-error/10 transition-colors">
                 <LogOut class="w-4 h-4" /> Log out
             </button>
         </div>

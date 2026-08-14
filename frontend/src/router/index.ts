@@ -91,6 +91,6 @@ const router = createRouter({
   routes,
 })
 
-// router.beforeEach(authGuard)
+router.beforeEach(authGuard)
 // router.beforeEach(permissionGuard)
 export default router

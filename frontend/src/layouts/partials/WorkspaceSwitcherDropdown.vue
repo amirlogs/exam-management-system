@@ -3,7 +3,7 @@ import { computed, ref } from 'vue'
 import { ChevronDown, Check } from 'lucide-vue-next'
 import { useRoute, useRouter } from 'vue-router'
 import { usePermissionsStore } from '@/stores/permission'
-import type { WorkspaceState } from '@/modules/workspace/types'
+import type { WorkspaceState } from '@/modules/instructor/pages/question-bank/types'
 
 const route = useRoute()
 const router = useRouter()

@@ -18,6 +18,7 @@ const navItems = [
 ]
 </script>
 
+
 <template>
     <div class="flex min-h-screen bg-bg">
         <AppSidebar brand-name="University Exam" brand-subtitle="Management Portal" :items="navItems"
