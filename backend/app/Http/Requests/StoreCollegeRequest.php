@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreCollegeRequest extends FormRequest
 {
@@ -23,15 +24,16 @@ class StoreCollegeRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'university_id' => ['required', 'integer', 'exists:universities,id'],
-            'name' => ['required', 'string', 'min:3', 'max:255'],
+            // 'university_id' => ['required', 'integer', 'exists:universities,id'],
+            'name' => ['required', 'string', 'min:3', 'max:255', Rule::unique('colleges', 'name')->ignore($this->college)],
         ];
     }
 
     public function messages()
     {
         return [
-            'university_id.exists' => 'University not found.',
+            // 'university_id.exists' => 'University not found.',
+            'name.unique' => 'The college name has already been taken.'
         ];
     }
 }

@@ -7,6 +7,7 @@ use App\Http\Requests\UpdateDepartmentRequest;
 use App\Http\Resources\DepartmentResource;
 use App\Models\College;
 use App\Models\Department;
+use Illuminate\Http\Request;
 
 class DepartmentController extends Controller
 {
@@ -15,14 +16,36 @@ class DepartmentController extends Controller
         $validated = $request->validated();
         $department = Department::create($validated);
 
-        return $this->success($department, 'Department created successfully', 201);
+        return $this->success(new DepartmentResource($department), 'Department created successfully', 201);
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $departments = Department::all();
+        $request->validate([
+            'per_page' => ['nullable', 'integer', 'min:1'],
+        ]);
 
-        return $this->success(DepartmentResource::collection($departments), 'Departments fetched successfully', 200);
+        $per_page = min($request->per_page ?? 12, 100);
+        $departments = Department::with('college')->paginate($per_page);
+
+        return $this->paginate($departments, DepartmentResource::class, 'Departments retrieved successfully');
+    }
+
+    public function archived(Request $request)
+    {
+        $request->validate([
+            'per_page' => ['nullable', 'integer', 'min:1'],
+        ]);
+
+        $per_page = min($request->per_page ?? 12, 100);
+        $departments = Department::onlyTrashed()->with('college')->paginate($per_page);
+
+        return $this->paginate($departments, DepartmentResource::class, 'Archived Departments retrieved successfully');
+    }
+
+    public function show(Department $department)
+    {
+        return $this->success(new DepartmentResource($department->load('college')), 'Department retrieved successfully', 200);
     }
 
     public function update(UpdateDepartmentRequest $request, Department $department)

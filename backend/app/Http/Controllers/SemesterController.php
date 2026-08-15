@@ -4,7 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreSemesterRequest;
 use App\Http\Requests\UpdateSemesterRequest;
+use App\Http\Resources\SemesterResource;
 use App\Models\Semester;
+use App\Validation\GetRequestsValidator;
+use Illuminate\Http\Request;
 
 class SemesterController extends Controller
 {
@@ -16,16 +19,18 @@ class SemesterController extends Controller
             return $this->error(null, 'Semester already exists', 409);
         }
 
-        $semester = Semester::create($validated);
+        $semester = Semester::with('courses')->create($validated);
 
-        return response()->json($semester, 201);
+        // return response()->json($semester, 201);
+        return $this->success(new SemesterResource($semester), 'Semester created successfully', 201);
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $semesters = Semester::all();
+        $perPage = GetRequestsValidator::validate($request);
+        $semesters = Semester::paginate($perPage);
 
-        return $this->success($semesters, 'Semesters retrieved successfully');
+        return $this->paginate($semesters, SemesterResource::class, 'Semesters retrieved successfully');
     }
 
     public function update(Semester $semester, UpdateSemesterRequest $request)
@@ -41,23 +46,32 @@ class SemesterController extends Controller
 
         $semester->update($validated);
 
-        return $this->success($semester, 'Semester updated successfully');
+        return $this->success(new SemesterResource($semester), 'Semester updated successfully');
     }
 
-    // complted others and make this activate
     public function open(Semester $semester)
     {
+        if ($semester->state() === 'active') {
+            return $this->error(null, 'Semester is already active', 409);
+        }
+        if (Semester::where('status', 'active')->exists()) {
+            return $this->error(null, 'Another semester is already active please update it first', 409);
+        }
         $semester->activate();
 
-        return $this->success($semester->refresh(), 'Semester opened successfully');
+        return $this->success(new SemesterResource($semester->refresh()), 'Semester opened successfully');
 
     }
 
     public function close(Semester $semester)
     {
+        if ($semester->state() === 'completed') {
+            return $this->error(null, 'Semester is already closed', 409);
+        }
+
         $semester->close();
 
-        return $this->success($semester->refresh(), 'Semester closed successfully');
+        return $this->success(new SemesterResource($semester->refresh()), 'Semester closed successfully');
     }
 
     public function archive(Semester $semester)
@@ -67,7 +81,7 @@ class SemesterController extends Controller
         }
         $semester->delete();
 
-        return $this->success(null, 'Semester archived successfully');
+        return $this->success(new SemesterResource($semester), 'Semester archived successfully');
     }
 
     public function restore(string $semesterId)
@@ -78,6 +92,15 @@ class SemesterController extends Controller
         }
         $semester->restore();
 
-        return $this->success($semester, 'Semester restored successfully');
+        return $this->success(new SemesterResource($semester), 'Semester restored successfully');
     }
+
+    public function archived(Request $request)
+    {
+        $per_page = GetRequestsValidator::validate($request);
+        $semesters = Semester::onlyTrashed()->paginate($per_page);
+
+        return $this->paginate($semesters, SemesterResource::class, 'Semesters retrieved successfully');
+    }
+    
 }

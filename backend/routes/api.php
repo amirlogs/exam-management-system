@@ -42,24 +42,31 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/colleges', [CollegeController::class, 'store'])->middleware('permission:college.create');
     Route::get('/colleges', [CollegeController::class, 'index']);
+    Route::get('/colleges/archived', [CollegeController::class, 'archived']);
+    Route::get('/colleges/{college}', [CollegeController::class, 'show']);
     Route::patch('/colleges/{college}', [CollegeController::class, 'update'])->middleware('permission:college.update');
     Route::delete('/colleges/{college}', [CollegeController::class, 'destroy'])->middleware('permission:college.archive');
     Route::post('/colleges/{college}/restore', [CollegeController::class, 'restore'])->middleware('permission:college.archive');
 
     Route::post('/departments', [DepartmentController::class, 'store'])->middleware('permission:department.create');
     Route::get('/departments', [DepartmentController::class, 'index']);
+    Route::get('/departments/archived', [DepartmentController::class, 'archived'])->middleware('permission:department.archive');
+    Route::get('/departments/{department}', [DepartmentController::class, 'show']);
     Route::patch('/departments/{department}', [DepartmentController::class, 'update'])->middleware('permission:department.update');
     Route::delete('/departments/{department}', [DepartmentController::class, 'destroy'])->middleware('permission:department.archive');
     Route::post('/departments/{department}/restore', [DepartmentController::class, 'restore'])->middleware('permission:department.archive');
 
     Route::post('/programs', [ProgramController::class, 'store'])->middleware('permission:program.create');
     Route::get('/programs', [ProgramController::class, 'index']);
+    Route::get('/programs/archived', [ProgramController::class, 'archived']);
     Route::patch('/programs/{program}', [ProgramController::class, 'update'])->middleware('permission:program.update');
     Route::delete('/programs/{program}', [ProgramController::class, 'destroy'])->middleware('permission:program.archive');
     Route::post('/programs/{program}/restore', [ProgramController::class, 'restore'])->middleware('permission:program.archive');
 
     Route::post('/courses', [CourseController::class, 'store'])->middleware('permission:course.create');
     Route::get('/courses', [CourseController::class, 'index']);
+    Route::get('/courses/archived', [CourseController::class, 'archived']);
+    Route::get('/courses/{course}', [CourseController::class, 'show']);
     Route::patch('/courses/{course}', [CourseController::class, 'update'])->middleware('permission:course.update');
     Route::delete('/courses/{course}', [CourseController::class, 'destroy'])->middleware('permission:course.archive');
     Route::post('/courses/{course}/restore', [CourseController::class, 'restore'])->middleware('permission:course.archive');
@@ -94,13 +101,14 @@ Route::middleware('auth:sanctum')->group(function () {
     // ==================== SEMESTERS | SECTIONS ====================
     Route::post('/semesters', [SemesterController::class, 'store'])->middleware('permission:semester.create');
     Route::get('/semesters', [SemesterController::class, 'index']);
+    Route::get('/semesters/archived', [SemesterController::class, 'archived'])->middleware('permission:semester.archive');
     Route::patch('/semesters/{semester}', [SemesterController::class, 'update'])->middleware('permission:semester.update');
     Route::post('/semesters/{semester}/open', [SemesterController::class, 'open'])->middleware('permission:semester.open');
     Route::post('/semesters/{semester}/close', [SemesterController::class, 'close'])->middleware('permission:semester.close');
     Route::delete('/semesters/{semester}', [SemesterController::class, 'archive'])->middleware('permission:semester.archive');
     Route::post('/semesters/{semester}/restore', [SemesterController::class, 'restore'])->middleware('permission:semester.archive');
 
-    Route::post('/sections', [SectionController::class, 'store'])->middleware('permission:section.import'); // matches existing decision: manual create shares the import permission
+    Route::post('/sections', [SectionController::class, 'store'])->middleware('permission:section.import');
     Route::get('/sections', [SectionController::class, 'index']);
 
     // ===================== IMPORT (students, sections, instructors, users, questions)

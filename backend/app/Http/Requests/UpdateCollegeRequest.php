@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use App\Traits\RequiresAtLeastOneField;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateCollegeRequest extends FormRequest
 {
@@ -26,15 +27,15 @@ class UpdateCollegeRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'university_id' => ['sometimes', 'integer', 'exists:universities,id'],
-            'name' => ['sometimes', 'string', 'min:3', 'max:255'],
+            // 'university_id' => ['sometimes', 'integer', 'exists:universities,id'],
+            'name' => ['sometimes', 'string', 'min:3', 'max:255', Rule::unique('colleges')->ignore($this->college)],
         ];
     }
 
     public function messages()
     {
         return [
-            'university_id.exists' => 'University not found.',
+            // 'university_id.exists' => 'University not found.',
         ];
     }
 }

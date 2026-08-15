@@ -74,10 +74,25 @@ class RolePermissionSeeder extends Seeder
         }
 
         $map = [
+            // 'super_admin' => [
+            //     'university.create', 'university.update', 'university.archive',
+            //     'role.create', 'role.update', 'role.archive', 'role.assign', 'role.remove',
+            //     'permission.assign',
+            // ],
+            // super admin all the permmsions
             'super_admin' => [
                 'university.create', 'university.update', 'university.archive',
                 'role.create', 'role.update', 'role.archive', 'role.assign', 'role.remove',
                 'permission.assign',
+                'college.create', 'college.update', 'college.archive',
+                'department.create', 'department.update', 'department.archive',
+                'program.create', 'program.update', 'program.archive',
+                'course.create', 'course.update', 'course.archive',
+                'user.create', 'user.update', 'user.view', 'user.disable', 'user.activate',
+                'student.import', 'instructor.import', 'section.import', 'class.import',
+                'semester.create', 'semester.update', 'semester.open', 'semester.close', 'semester.archive',
+                'curriculum.create', 'curriculum.update', 'curriculum.archive', 'curriculum_version.activate',
+                'curriculum_course.add', 'curriculum_course.remove', 'curriculum_course.update',
             ],
             'university_admin' => [
                 'university.update',

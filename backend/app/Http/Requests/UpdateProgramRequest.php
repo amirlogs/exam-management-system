@@ -5,11 +5,13 @@ namespace App\Http\Requests;
 use App\Traits\RequiresAtLeastOneField;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use Override;
 
 class UpdateProgramRequest extends FormRequest
 {
     use RequiresAtLeastOneField;
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -27,8 +29,9 @@ class UpdateProgramRequest extends FormRequest
     {
         return [
             'department_id' => ['sometimes', 'integer', 'esists:departments,id'],
-            'name' => ['sometimes', 'string', 'max:255', 'unique:programs,name'],
-            'duration_years' => ['sometimes', 'integer', 'min:1', 'max:30'],
+            'code' => ['sometimes', 'string', 'max:255', 'min:2', Rule::unique('programs')->ignore($this->program)],
+            'name' => ['sometimes', 'string', 'max:255', Rule::unique('programs')->ignore($this->program)],
+            'duration_years' => ['sometimes', 'integer', 'min:1', 'max:10'],
         ];
     }
 

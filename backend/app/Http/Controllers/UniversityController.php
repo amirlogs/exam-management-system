@@ -27,16 +27,7 @@ class UniversityController extends Controller
         $perPage = min($request->integer('per_page', 10), 25);
         $universities = University::paginate($perPage);
 
-        return $this->success(
-            [
-                'data' => UniversityResource::collection($universities->items()),
-                'current_page' => $universities->currentPage(),
-                'last_page' => $universities->lastPage(),
-                'per_page' => $universities->perPage(),
-                'total' => $universities->total(),
-                'from' => $universities->firstItem(),
-                'to' => $universities->lastItem(),
-            ], 'Universities retrieved successfully');
+        return $this->paginate($universities, UniversityResource::class, 'Universities retrieved successfully');
     }
 
     public function show(University $university)
@@ -78,16 +69,6 @@ class UniversityController extends Controller
         $perPage = min($request->integer('per_page', 10), 25);
         $universities = University::onlyTrashed()->paginate($perPage);
 
-        return $this->success(
-            [
-                'data' => UniversityResource::collection($universities->items()),
-                'current_page' => $universities->currentPage(),
-                'last_page' => $universities->lastPage(),
-                'per_page' => $universities->perPage(),
-                'total' => $universities->total(),
-                'from' => $universities->firstItem(),
-                'to' => $universities->lastItem(),
-            ],
-            'Archived university retrieved successfully');
+        return $this->paginate($universities, UniversityResource::class, 'Archived university retrieved successfully');
     }
 }

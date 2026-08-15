@@ -10,6 +10,7 @@ use Illuminate\Validation\Rule;
 class UpdateDepartmentRequest extends FormRequest
 {
     use RequiresAtLeastOneField;
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -27,7 +28,7 @@ class UpdateDepartmentRequest extends FormRequest
     {
         return [
             'college_id' => ['sometimes', 'integer'],
-            'name' => ['sometimes', 'string', 'min:3', 'max:255', 'unique:departments,name'],
+            'name' => ['sometimes', 'string', 'min:3', 'max:255', Rule::unique('departments')->ignore($this->department)],
             'type' => ['sometimes', 'string', 'max:255', Rule::in(['service_only', 'degree_granting'])],
         ];
     }

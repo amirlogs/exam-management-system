@@ -25,8 +25,9 @@ class StoreProgramRequest extends FormRequest
     {
         return [
             'department_id' => ['required', 'integer', 'exists:departments,id'],
+            'code' => ['required', 'string', 'max:255', 'min:2', 'unique:programs,code'],
             'name' => ['required', 'string', 'max:255', 'min:3', 'unique:programs,name'],
-            'duration_years' => ['required', 'integer', 'min:1', 'max:30'],
+            'duration_years' => ['required', 'integer', 'min:1', 'max:10'],
         ];
 
     }

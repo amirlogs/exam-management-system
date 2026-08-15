@@ -7,22 +7,32 @@ use App\Http\Requests\UpdateCourseRequest;
 use App\Http\Resources\CourseResource;
 use App\Models\Course;
 use App\Models\Department;
+use Illuminate\Http\Request;
 
 class CourseController extends Controller
 {
     public function store(StoreCourseRequest $request)
     {
         $validated = $request->validated();
-        $course = Course::create($validated);
+        $course = Course::create($validated)->load('department');
 
-        return $this->success($course, 'Course created successfully');
+        return $this->success(new CourseResource($course), 'Course created successfully');
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $courses = Course::all();
+        $request->validate([
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:25'],
+        ]);
+        $per_page = $request->per_page ?? 10;
+        $courses = Course::with('department')->paginate($per_page);
 
-        return $this->success(CourseResource::collection($courses), 'Courses retrieved successfully');
+        return $this->paginate($courses, CourseResource::class, 'Courses retrieved successfully');
+    }
+
+    public function show(Course $course)
+    {
+        return $this->success(new CourseResource($course->load('department')), 'Course retrieved successfully');
     }
 
     public function update(UpdateCourseRequest $request, Course $course)
@@ -42,7 +52,7 @@ class CourseController extends Controller
 
         $course->update($validated);
 
-        return $this->success($course, 'Course updated successfully');
+        return $this->success(new CourseResource($course), 'Course updated successfully');
     }
 
     public function destroy(Course $course)
@@ -61,5 +71,16 @@ class CourseController extends Controller
         $course->restore();
 
         return $this->success(new CourseResource($course), 'Course restored successfully');
+    }
+
+    public function archived(Request $request)
+    {
+        $request->validate([
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:25'],
+        ]);
+        $per_page = $request->per_page ?? 10;
+        $courses = Course::onlyTrashed()->paginate($per_page);
+
+        return $this->paginate($courses, CourseResource::class, 'Archived courses retrieved successfully');
     }
 }

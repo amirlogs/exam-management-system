@@ -29,7 +29,6 @@ class UpdateCurriculumRequest extends FormRequest
         return [
             'program_id' => ['sometimes', 'integer', 'exists:programs,id'],
             'version' => ['sometimes', 'string', Rule::unique('curricula', 'version')->ignore($this->curriculum->id)],
-            'academic_year' => ['sometimes', 'integer', 'min:2016', 'max:2030'],
         ];
     }
 }

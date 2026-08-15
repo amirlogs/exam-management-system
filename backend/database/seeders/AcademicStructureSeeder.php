@@ -90,17 +90,17 @@ class AcademicStructureSeeder extends Seeder
         // ---------------- Curriculums (required — StudentValidator now rejects any program with no active curriculum) ----------------
         Curriculum::updateOrCreate(
             ['program_id' => $se->id, 'version' => '2025'],
-            ['academic_year' => '2025/2026', 'status' => 'active']
+            ['status' => 'active']
         );
 
         Curriculum::updateOrCreate(
             ['program_id' => $ee->id, 'version' => '2025'],
-            ['academic_year' => '2025/2026', 'status' => 'active']
+            ['status' => 'active']
         );
 
         Curriculum::updateOrCreate(
             ['program_id' => $chem->id, 'version' => '2025'],
-            ['academic_year' => '2025/2026', 'status' => 'active']
+            ['status' => 'active']
         );
     }
 }

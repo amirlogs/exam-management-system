@@ -27,11 +27,7 @@ class StoreSectionRequest extends FormRequest
             'semester_id' => ['required', 'integer', 'exists:semesters,id'],
             'program_id' => ['required', 'integer', 'exists:programs,id'],
             'year_level' => ['required', 'integer', 'min:1', 'max:10'],
-            'name' => [
-                'required',
-                'integer',
-                'min:1',
-                'max:100',
+            'name' => ['required', 'integer', 'min:1', 'max:100',
                 Rule::unique('sections')
                     ->where(fn ($query) => $query
                         ->where('program_id', $this->program_id)

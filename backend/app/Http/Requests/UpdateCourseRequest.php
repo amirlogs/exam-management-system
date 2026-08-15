@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use App\Traits\RequiresAtLeastOneField;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use Override;
 
 class UpdateCourseRequest extends FormRequest
@@ -28,8 +29,8 @@ class UpdateCourseRequest extends FormRequest
     {
         return [
             'department_id' => ['sometimes', 'integer', 'exists:departments,id'],
-            'code' => ['sometimes', 'string', 'min:3', 'max:255', 'unique:courses,code'],
-            'name' => ['sometimes', 'string', 'min:3', 'max:255', 'unique:courses,name'],
+            'code' => ['sometimes', 'string', 'min:3', 'max:255', Rule::unique('courses')->ignore($this->course)],
+            'name' => ['sometimes', 'string', 'min:3', 'max:255', Rule::unique('courses')->ignore($this->course)],
             'credit_hours' => ['sometimes', 'integer', 'min:1', 'max:100'],
         ];
     }

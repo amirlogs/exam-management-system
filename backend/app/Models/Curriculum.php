@@ -21,6 +21,11 @@ class Curriculum extends Model
         return $this->hasMany(CurriculumCourse::class);
     }
 
+    public function courses()
+    {
+        return $this->belongsToMany(Course::class, 'curriculum_courses');
+    }
+
     public function isActive()
     {
         return $this->status === 'active';

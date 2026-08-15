@@ -19,8 +19,9 @@ class CourseResource extends JsonResource
             'code' => $this->code,
             'name' => $this->name,
             'credit_hours' => $this->credit_hours,
-            'created_at' => $this->created_at,
-            'updated_at' => $this->updated_at,
+            'created_at' => $this->created_at?->format('M d, Y'),
+            'updated_at' => $this->updated_at?->format('M d, Y'),
+            'department' => new DepartmentResource($this->whenLoaded('department')),
         ];
     }
 }

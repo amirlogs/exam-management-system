@@ -18,14 +18,15 @@ class ProgramResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'duration_years' => $this->duration_years,
+            'code' => $this->code,
             'department' => [
                 'id' => $this->department->id,
                 'name' => $this->department->name,
                 'college' => $this->department->college->name,
                 'college_id' => $this->department->college->id,
             ],
-            'created_at' => $this->created_at,
-            'updated_at' => $this->updated_at,
+            'created_at' => $this->created_at?->format('M d, Y '),
+            'updated_at' => $this->updated_at?->format('M d, Y '),
         ];
     }
 }

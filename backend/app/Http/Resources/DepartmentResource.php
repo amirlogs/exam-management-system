@@ -19,8 +19,9 @@ class DepartmentResource extends JsonResource
             'college_id' => $this->college_id,
             'name' => $this->name,
             'type' => $this->type,
-            'updated_at' => $this->updated_at,
-            'college' => new CollegeResource($this->college),
+            'updated_at' => $this->updated_at?->format('M d , Y'),
+            'created_at' => $this->created_at?->format('M d , Y'),
+            'college' => new CollegeResource($this->whenLoaded('college')),
         ];
     }
 }

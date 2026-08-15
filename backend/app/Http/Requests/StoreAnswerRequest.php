@@ -22,10 +22,6 @@ class StoreAnswerRequest extends FormRequest
      */
     public function rules(): array
     {
-        // {
-        //   "exam_question_id": 5,
-        //   "answer_text": "Structured Query Language"
-        // }
         return [
             'exam_question_id' => 'required|integer',
             'answer_text' => 'required|string',

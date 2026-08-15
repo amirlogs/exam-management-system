@@ -6,6 +6,7 @@ use App\Http\Requests\StoreProgramRequest;
 use App\Http\Requests\UpdateProgramRequest;
 use App\Http\Resources\ProgramResource;
 use App\Models\Program;
+use Illuminate\Http\Request;
 
 class ProgramController extends Controller
 {
@@ -17,11 +18,16 @@ class ProgramController extends Controller
         return $this->success(new ProgramResource($program), 'Program created successfully', 201);
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $programs = Program::all();
+        $request->validate([
+            'per_page' => ['nullable', 'integer', 'min:1'],
+        ]);
 
-        return $this->success(ProgramResource::collection($programs), 'Program created successfully', 201);
+        $per_page = min($request->per_page ?? 12, 100);
+        $programs = Program::paginate($per_page);
+
+        return $this->paginate($programs, ProgramResource::class, 'Programs retrieved successfully');
     }
 
     public function update(UpdateProgramRequest $request, Program $program)
@@ -36,7 +42,7 @@ class ProgramController extends Controller
     {
         $program->delete();
 
-        return $this->success('', 'Program deleted successfully', 200);
+        return $this->success('', 'Program archived successfully', 200);
     }
 
     public function restore(string $programId)
@@ -48,5 +54,17 @@ class ProgramController extends Controller
         $program->restore();
 
         return $this->success(new ProgramResource($program), 'Program restored successfully', 200);
+    }
+
+    public function archived(Request $request)
+    {
+        $request->validate([
+            'per_page' => ['nullable', 'integer', 'min:1'],
+        ]);
+
+        $per_page = min($request->per_page ?? 12, 100);
+        $programs = Program::onlyTrashed()->paginate($per_page);
+
+        return $this->paginate($programs, ProgramResource::class, 'Archived programs retrieved successfully');
     }
 }
