@@ -27,15 +27,15 @@ const inputType = computed(() => {
         </label>
         <div class="relative">
             <input :type="inputType" :value="modelValue" :placeholder="placeholder"
-                @input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)" class="w-full px-4 py-3 rounded-md border bg-bg text-text placeholder:text-text/40
-               focus:outline-none focus:border-accent transition-colors"
+                @input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)"
+                class="w-full px-4 py-3 rounded-md border bg-bg text-text placeholder:text-text/40 focus:outline-none focus:border-accent transition-colors"
                 :class="[error ? 'border-error' : 'border-border', isPasswordField ? 'pr-11' : '']" />
-
             <button v-if="isPasswordField" type="button" tabindex="-1" @click="showPassword = !showPassword"
                 class="absolute right-3 top-1/2 -translate-y-1/2 text-text/40 hover:text-text/70 transition-colors">
                 <EyeOff v-if="showPassword" class="w-4 h-4" />
                 <Eye v-else class="w-4 h-4" />
             </button>
         </div>
+        <p v-if="error" class="mt-1.5 text-xs text-error">{{ error }}</p>
     </div>
 </template>

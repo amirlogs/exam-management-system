@@ -16,6 +16,13 @@ class SectionController extends Controller
         }
 
         $validated = $request->validated();
+        $semister = Semester::find($validated['semester_id']);
+
+        return $semister;
+        
+        if ($semister->status === 'completed') {
+            return $this->error(null, 'section cannot be created for a semester that is completed', 400);
+        }
         $section = Section::create($validated);
 
         return $this->success($section, 'Section created successfully', 201);

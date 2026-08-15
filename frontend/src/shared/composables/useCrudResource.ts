@@ -1,0 +1,104 @@
+import { useUiStore } from '@/stores/ui'
+import { ref } from 'vue'
+
+export interface Pagination {
+  current_page: number
+  last_page: number
+  per_page: number
+  total: number
+  from: number | null
+  to: number | null
+}
+
+interface CrudApi<T> {
+  list: (page: number) => Promise<{ data: T[]; pagination: Pagination }>
+  listArchived: (page: number) => Promise<{ data: T[]; pagination: Pagination }>
+  remove: (id: number) => Promise<void>
+  restore: (id: number) => Promise<T>
+}
+
+export function useCrudResource<T extends { id: number }>(api: CrudApi<T>, labelKey: keyof T) {
+  const uiStore = useUiStore()
+
+  const items = ref<T[]>([])
+  const archivedItems = ref<T[]>([])
+  const activeTab = ref<'active' | 'archived'>('active')
+  const loading = ref(false)
+  const error = ref<string | null>(null)
+
+  const emptyPagination = (): Pagination => ({
+    current_page: 1,
+    last_page: 1,
+    per_page: 10,
+    total: 0,
+    from: null,
+    to: null,
+  })
+  const activePagination = ref<Pagination>(emptyPagination())
+  const archivedPagination = ref<Pagination>(emptyPagination())
+
+  const currentPagination = () =>
+    activeTab.value === 'active' ? activePagination.value : archivedPagination.value
+  const currentList = () => (activeTab.value === 'active' ? items.value : archivedItems.value)
+
+  async function load(page = 1) {
+    loading.value = true
+    error.value = null
+    try {
+      const response =
+        activeTab.value === 'active' ? await api.list(page) : await api.listArchived(page)
+      if (activeTab.value === 'active') {
+        items.value = response.data
+        activePagination.value = response.pagination
+      } else {
+        archivedItems.value = response.data
+        archivedPagination.value = response.pagination
+      }
+    } catch (err: any) {
+      error.value =
+        err?.response?.status === 401 || err?.response?.status === 403
+          ? 'You are not authorized to view this resource.'
+          : 'Failed to load data. Please try again.'
+    } finally {
+      loading.value = false
+    }
+  }
+
+  function changeTab(tab: 'active' | 'archived') {
+    if (activeTab.value === tab) return
+    activeTab.value = tab
+    load(1)
+  }
+
+  async function archive(item: T) {
+    await api.remove(item.id)
+    items.value = items.value.filter((i) => i.id !== item.id)
+    activePagination.value.total -= 1
+    archivedPagination.value.total += 1
+    uiStore.showToast(`${String(item[labelKey])} archived.`, 'success')
+  }
+
+  async function restore(item: T) {
+    await api.restore(item.id)
+    archivedItems.value = archivedItems.value.filter((i) => i.id !== item.id)
+    archivedPagination.value.total -= 1
+    activePagination.value.total += 1
+    uiStore.showToast(`${String(item[labelKey])} restored.`, 'success')
+  }
+
+  return {
+    items,
+    archivedItems,
+    activeTab,
+    loading,
+    error,
+    activePagination,
+    archivedPagination,
+    currentPagination,
+    currentList,
+    load,
+    changeTab,
+    archive,
+    restore,
+  }
+}

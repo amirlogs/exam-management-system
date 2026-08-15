@@ -1,39 +1,43 @@
-import DashboardView from "@/modules/admin/pages/DashboardView.vue";
-import UniversitiesView from "@/modules/admin/universities/pages/UniversitiesView.vue";
+import CollegesView from '@/modules/admin/colleges/pages/CollegesView.vue'
+import CoursesView from '@/modules/admin/courses/pages/CoursesView.vue'
+import DepartmentsView from '@/modules/admin/departments/pages/DepartmentsView.vue'
+import DashboardView from '@/modules/admin/pages/DashboardView.vue'
+import ProgramsView from '@/modules/admin/programs/pages/ProgramsView.vue'
+import UniversitiesView from '@/modules/admin/universities/pages/UniversitiesView.vue'
 
 export default [
   {
     path: 'dashboard',
     name: 'admin.dashboard',
-    component: DashboardView
+    component: DashboardView,
   },
 
   // // ---------------- Academic Structure ----------------
   {
     path: 'universities',
     name: 'admin.universities.list',
-    component: UniversitiesView
+    component: UniversitiesView,
   },
-  // {
-  //   path: 'colleges',
-  //   name: 'admin.colleges.list',
-  //   component: () => import('@/modules/admin/pages/academic-structure/CollegesView.vue'),
-  // },
-  // {
-  //   path: 'departments',
-  //   name: 'admin.departments.list',
-  //   component: () => import('@/modules/admin/pages/academic-structure/DepartmentsView.vue'),
-  // },
-  // {
-  //   path: 'programs',
-  //   name: 'admin.programs.list',
-  //   component: () => import('@/modules/admin/pages/academic-structure/ProgramsView.vue'),
-  // },
-  // {
-  //   path: 'courses',
-  //   name: 'admin.courses.list',
-  //   component: () => import('@/modules/admin/pages/academic-structure/CoursesView.vue'),
-  // },
+  {
+    path: 'colleges',
+    name: 'admin-colleges',
+    component: CollegesView,
+  },
+  {
+    path: 'departments',
+    name: 'admin-departments',
+    component: DepartmentsView,
+  },
+  {
+    path: 'programs',
+    name: 'admin-programs',
+    component: ProgramsView,
+  },
+  {
+    path: 'courses',
+    name: 'admin.courses.list',
+    component: CoursesView
+  },
 
   // // ---------------- Curriculum ----------------
   // {
