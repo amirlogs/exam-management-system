@@ -20,6 +20,7 @@ class CurriculumResource extends JsonResource
             'version' => $this->version,
             'created_at' => $this->created_at?->format('M d, Y'),
             'updated_at' => $this->updated_at?->format('M d, Y'),
+            'is_active' => $this->isActive(),
             'courses' => CourseResource::collection($this->whenLoaded('courses')),
         ];
     }
