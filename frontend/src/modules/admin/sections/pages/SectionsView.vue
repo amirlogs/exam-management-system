@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref, computed } from 'vue'
-import { Archive, Edit, FilterX, Plus, RotateCcw } from 'lucide-vue-next'
+import { Archive, Edit, FilterX, Plus, RefreshCw } from 'lucide-vue-next'
 
 import BaseDialog from '@/shared/components/ui/BaseDialog.vue'
 import AppPagination from '@/shared/components/AppPagination.vue'
@@ -10,7 +10,7 @@ import BaseSelect from '@/shared/components/ui/BaseSelect.vue'
 
 import { useResourceForm } from '@/shared/composables/useResourceForm'
 import { sectionSchema } from '../schemas/section.schema'
-import { getSections, createSection, updateSection, archiveSection, restoreSection } from '../api/sections'
+import { getSections, createSection, updateSection, archiveSection } from '../api/sections'
 import { getSemesters } from '@/modules/admin/semesters/api/semesters'
 import { getPrograms } from '@/modules/admin/programs/api/programs'
 import { handleApiError } from '@/shared/utils/apiError'
@@ -44,7 +44,7 @@ const selected = ref<Section | null>(null)
 const saving = ref(false)
 const archiving = ref(false)
 
-const { form, errors, validate, reset } = useResourceForm(sectionSchema, {
+const { form, errors, validate, reset, applyServerErrors } = useResourceForm(sectionSchema, {
     semester_id: 0, program_id: 0, year_level: 1, name: 1,
 })
 
@@ -58,12 +58,14 @@ async function load(page = 1) {
     if (!filtersReady.value) return
     loading.value = true
     try {
+        // Backend now filters server-side (RequestFilters) — this returns exactly this semester+program's sections
         const res = await getSections(filterSemesterId.value!, filterProgramId.value!, page)
-        // client-side safety net in case the backend ignores the filter params
-        sections.value = res.data.filter((s) => s.semester_id === filterSemesterId.value && s.program_id === filterProgramId.value)
-        pagination.value = res.pagination
+        sections.value = res.data ?? []
+        pagination.value = res.pagination ?? emptyPagination()
     } catch (err) {
         handleApiError(err, uiStore, undefined, 'Failed to load sections.')
+        sections.value = []
+        pagination.value = emptyPagination()
     } finally {
         loading.value = false
     }
@@ -75,7 +77,9 @@ function clearFilters() {
     filterSemesterId.value = null
     filterProgramId.value = null
     sections.value = []
+    pagination.value = emptyPagination()
 }
+function retry() { load(pagination.value.current_page) }
 
 function openCreate() {
     selected.value = null
@@ -102,7 +106,8 @@ async function submitForm() {
         await load(pagination.value.current_page)
     } catch (err) {
         saving.value = false
-        handleApiError(err, uiStore, undefined, isEditing ? 'Failed to update section.' : 'Failed to save section.')
+        // This is the real fix — applyServerErrors was silently omitted before, so 422 field errors never rendered
+        handleApiError(err, uiStore, applyServerErrors, isEditing ? 'Failed to update section.' : 'Failed to save section.')
     }
 }
 
@@ -150,17 +155,17 @@ async function confirmArchive() {
                     placeholder="Select program"
                     @update:model-value="(v) => { filterProgramId = Number(v); onFilterChange() }" />
             </div>
+            <BaseButton v-if="filtersReady" variant="secondary" :disabled="loading" @click="retry">
+                <template #icon>
+                    <RefreshCw :class="['h-4 w-4', loading && 'animate-spin']" />
+                </template>
+                Refresh
+            </BaseButton>
             <BaseButton v-if="filtersReady" variant="ghost" @click="clearFilters"><template #icon>
                     <FilterX class="h-4 w-4" />
                 </template>Clear</BaseButton>
         </div>
-        <BaseButton v-if="filtersReady" variant="secondary" :disabled="loading" @click="load(pagination.current_page)">
-            <template #icon>
-                <RefreshCw :class="['h-4 w-4', loading && 'animate-spin']" />
-            </template>
-            Refresh
-        </BaseButton>
-        <!-- Empty: no filters chosen -->
+
         <div v-if="!filtersReady"
             class="flex flex-col items-center rounded-md border border-dashed border-border py-16 text-center">
             <FilterX class="mb-3 h-8 w-8 text-text/30" />

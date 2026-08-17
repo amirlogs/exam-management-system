@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { onMounted, ref, computed } from 'vue'
-import { BookOpen, Check, Plus, X, Trash2, RefreshCcw } from 'lucide-vue-next'
+import { BookOpen, Check, Plus, X, Trash2, RefreshCw, Power } from 'lucide-vue-next'
 
 import BaseDialog from '@/shared/components/ui/BaseDialog.vue'
 import BaseButton from '@/shared/components/ui/BaseButton.vue'
 import BaseInput from '@/shared/components/ui/BaseInput.vue'
 import BaseSelect from '@/shared/components/ui/BaseSelect.vue'
-import BaseBadge from '@/shared/components/ui/BaseBadge.vue'
+import BaseSearchableSelect from '@/shared/components/ui/BaseSearchableSelect.vue'
 
 import { useResourceForm } from '@/shared/composables/useResourceForm'
 import { curriculumVersionSchema, curriculumCourseSchema } from '../schemas/curriculum.schema'
@@ -36,16 +36,9 @@ const loadingCurricula = ref(false)
 const activating = ref(false)
 
 const courses = ref<Course[]>([])
-// const courseOptions = computed(() => {
-//     const deptId = selectedProgram.value?.department?.id
-//     const pool = deptId ? courses.value.filter((c) => c.department?.id === deptId) : courses.value
-//     return pool.map((c) => ({ value: String(c.id), label: `${c.code} — ${c.name}` }))
-// })
-const courseOptions = computed(() => {
-    courses.value.map((c) => {
-        return { value: String(c.id), label: `${c.code} — ${c.name}` }
-    })
-})
+// No department-based filtering here — a curriculum can pull courses from any
+// department (e.g. service courses like MATH/PHYS taken by an ENG program).
+const courseOptions = computed(() => courses.value.map((c) => ({ value: String(c.id), label: `${c.code} — ${c.name}` })))
 
 async function loadPrograms() {
     const res = await getPrograms(1, 100)
@@ -56,15 +49,20 @@ async function loadPrograms() {
 }
 async function loadCourses() {
     if (courses.value.length) return
-    const res = await getCourses(1, 200)
-    courses.value = res.data
+    try {
+        const res = await getCourses(1, 200)
+        courses.value = res.data
+    } catch (err) {
+        handleApiError(err, uiStore, undefined, 'Failed to load courses.')
+    }
 }
 async function loadCurricula() {
     if (!selectedProgramId.value) return
     loadingCurricula.value = true
     try {
+        // Server-side filter now exists (RequestFilters, backend section 1) — no more client-side safety net needed
         const res = await getCurriculums(selectedProgramId.value)
-        curricula.value = res.data.filter((c) => c.program_id === selectedProgramId.value) // client-side safety net
+        curricula.value = res.data
         selectedCurriculumId.value = curricula.value.find((c) => c.is_active)?.id ?? curricula.value[0]?.id ?? null
     } catch (err) {
         handleApiError(err, uiStore, undefined, 'Failed to load curricula.')
@@ -86,7 +84,7 @@ onMounted(async () => {
 // ---------------- New version ----------------
 const showVersionModal = ref(false)
 const savingVersion = ref(false)
-const { form: versionForm, errors: versionErrors, validate: validateVersion, reset: resetVersionForm } = useResourceForm(curriculumVersionSchema, {
+const { form: versionForm, errors: versionErrors, validate: validateVersion, reset: resetVersionForm, applyServerErrors: applyVersionErrors } = useResourceForm(curriculumVersionSchema, {
     program_id: 0, version: '',
 })
 
@@ -105,12 +103,18 @@ async function submitVersion() {
         await loadCurricula()
     } catch (err) {
         savingVersion.value = false
-        handleApiError(err, uiStore, undefined, 'Failed to create curriculum version.')
+        handleApiError(err, uiStore, applyVersionErrors, 'Failed to create curriculum version.')
     }
 }
 
-// ---------------- Activate ----------------
-async function toggleActivate() {
+// ---------------- Activate / Deactivate — now with confirmation ----------------
+const showActivateModal = ref(false)
+
+function askToggleActivate() {
+    if (!selectedCurriculum.value) return
+    showActivateModal.value = true
+}
+async function confirmToggleActivate() {
     if (!selectedCurriculum.value) return
     activating.value = true
     try {
@@ -119,6 +123,7 @@ async function toggleActivate() {
         } else {
             await activateCurriculum(selectedCurriculum.value.id)
         }
+        showActivateModal.value = false
         uiStore.showToast(selectedCurriculum.value.is_active ? 'Curriculum deactivated.' : 'Curriculum activated.', 'success')
         await loadCurricula()
     } catch (err) {
@@ -130,7 +135,7 @@ async function toggleActivate() {
 
 // ---------------- Grid ----------------
 const years = computed(() => {
-    const n = selectedProgram.value?.duration_years ?? 4
+    const n = Number(selectedProgram.value?.duration_years) || 4
     return Array.from({ length: n }, (_, i) => i + 1)
 })
 function coursesFor(year: number, semester: number): CurriculumCourse[] {
@@ -146,7 +151,7 @@ function creditsForYear(year: number): number {
 // ---------------- Add course to cell ----------------
 const showAddCourseModal = ref(false)
 const savingCourse = ref(false)
-const { form: courseForm, errors: courseErrors, validate: validateCourse, reset: resetCourseForm } = useResourceForm(curriculumCourseSchema, {
+const { form: courseForm, errors: courseErrors, validate: validateCourse, reset: resetCourseForm, applyServerErrors: applyCourseErrors } = useResourceForm(curriculumCourseSchema, {
     course_id: 0, year_level: 1, semester_number: 1,
 })
 
@@ -166,7 +171,7 @@ async function submitAddCourse() {
         await loadCurricula()
     } catch (err) {
         savingCourse.value = false
-        handleApiError(err, uiStore, undefined, 'Failed to add course.')
+        handleApiError(err, uiStore, applyCourseErrors, 'Failed to add course.')
     }
 }
 
@@ -200,18 +205,19 @@ async function confirmRemove() {
     <div class="mx-auto w-full max-w-360 space-y-6 px-6 py-6">
         <!-- Top control bar -->
         <div class="flex flex-col gap-4 border-b border-border pb-4 md:flex-row md:items-end md:justify-between">
-            <div class="w-full max-w-xs">
-                <label class="mb-1.5 block text-xs font-bold uppercase tracking-wide text-text/60">Program</label>
-                <!-- swap BaseSelect for: -->
-                <BaseSearchableSelect v-model="courseForm.course_id as any" label="Course" :options="courseOptions"
-                    placeholder="Search courses..." :error="courseErrors.course_id" />
+            <div class="flex flex-wrap items-end gap-4">
+                <div class="w-full max-w-xs">
+                    <label class="mb-1.5 block text-xs font-bold uppercase tracking-wide text-text/60">Program</label>
+                    <BaseSelect :model-value="String(selectedProgramId ?? '')" :options="programOptions"
+                        placeholder="Select program" @update:model-value="onProgramChange" />
+                </div>
+                <BaseButton variant="secondary" :disabled="loadingCurricula" @click="loadCurricula">
+                    <template #icon>
+                        <RefreshCw :class="['h-4 w-4', loadingCurricula && 'animate-spin']" />
+                    </template>
+                    Refresh
+                </BaseButton>
             </div>
-            <BaseButton variant="secondary" :disabled="loadingCurricula" @click="loadCurricula">
-                <template #icon>
-                    <RefreshCcw :class="['h-4 w-4', loadingCurricula && 'animate-spin']" />
-                </template>
-                Refresh
-            </BaseButton>
 
             <div class="flex flex-col gap-1.5 md:items-end">
                 <label class="text-xs font-bold uppercase tracking-wide text-text/60">Curriculum version</label>
@@ -232,9 +238,9 @@ async function confirmRemove() {
                     </div>
 
                     <BaseButton v-if="selectedCurriculum" :loading="activating"
-                        :variant="selectedCurriculum.is_active ? 'secondary' : 'primary'" @click="toggleActivate">
+                        :variant="selectedCurriculum.is_active ? 'secondary' : 'primary'" @click="askToggleActivate">
                         <template #icon>
-                            <RefreshCcw class="h-4 w-4" />
+                            <Power class="h-4 w-4" />
                         </template>
                         {{ selectedCurriculum.is_active ? 'Deactivate' : 'Activate this version' }}
                     </BaseButton>
@@ -242,10 +248,8 @@ async function confirmRemove() {
             </div>
         </div>
 
-        <!-- Loading -->
         <div v-if="loadingCurricula" class="py-16 text-center text-sm text-text/50">Loading curriculum...</div>
 
-        <!-- No curricula for this program -->
         <div v-else-if="!curricula.length"
             class="flex flex-col items-center rounded-md border border-border bg-surface py-16 text-center">
             <BookOpen class="mb-3 h-8 w-8 text-text/30" />
@@ -257,7 +261,6 @@ async function confirmRemove() {
             </BaseButton>
         </div>
 
-        <!-- Year x Semester grid -->
         <div v-else class="space-y-8">
             <div v-for="year in years" :key="year">
                 <h2
@@ -312,7 +315,6 @@ async function confirmRemove() {
         </div>
     </div>
 
-    <!-- New version modal -->
     <BaseDialog :model-value="showVersionModal" title="New curriculum version"
         @update:model-value="showVersionModal = false">
         <BaseInput v-model="versionForm.version" label="Version" placeholder="e.g. 2027"
@@ -325,12 +327,11 @@ async function confirmRemove() {
         </template>
     </BaseDialog>
 
-    <!-- Add course modal -->
     <BaseDialog :model-value="showAddCourseModal" title="Add course"
         :description="`Year ${courseForm.year_level}, Semester ${courseForm.semester_number}`"
         @update:model-value="showAddCourseModal = false">
-        <BaseSelect v-model="courseForm.course_id as any" label="Course" :options="courseOptions"
-            placeholder="Select course" :error="courseErrors.course_id" />
+        <BaseSearchableSelect v-model="courseForm.course_id as any" label="Course" :options="courseOptions"
+            placeholder="Search courses..." :error="courseErrors.course_id" />
         <template #footer>
             <div class="flex justify-end gap-2">
                 <BaseButton variant="secondary" @click="showAddCourseModal = false">Cancel</BaseButton>
@@ -338,6 +339,14 @@ async function confirmRemove() {
             </div>
         </template>
     </BaseDialog>
+
+    <ConfirmModal :show="showActivateModal"
+        :title="selectedCurriculum?.is_active ? 'Deactivate this curriculum?' : 'Activate this curriculum?'"
+        :description="selectedCurriculum?.is_active
+            ? 'Students and instructors will no longer see this as the active curriculum.'
+            : 'This becomes the live curriculum for this program. Any previously active version will be deactivated.'"
+        :confirm-text="selectedCurriculum?.is_active ? 'Deactivate' : 'Activate'" variant="danger" :icon="Power"
+        :loading="activating" @close="showActivateModal = false" @confirm="confirmToggleActivate" />
 
     <ConfirmModal :show="showRemoveModal" title="Remove course?"
         :description="`This will remove ${courseToRemove?.course.code} from this curriculum. This cannot be undone.`"
