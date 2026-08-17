@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Filters\RequestFilters;
 use App\Http\Requests\StoreSemesterRequest;
 use App\Http\Requests\UpdateSemesterRequest;
 use App\Http\Resources\SemesterResource;
@@ -27,8 +28,10 @@ class SemesterController extends Controller
 
     public function index(Request $request)
     {
-        $perPage = GetRequestsValidator::validate($request);
-        $semesters = Semester::paginate($perPage);
+        $per_page = GetRequestsValidator::validate($request);
+        $query = Semester::query();
+        RequestFilters::apply($query, $request, ['academic_year', 'status']);
+        $semesters = $query->paginate($per_page);
 
         return $this->paginate($semesters, SemesterResource::class, 'Semesters retrieved successfully');
     }
@@ -98,9 +101,10 @@ class SemesterController extends Controller
     public function archived(Request $request)
     {
         $per_page = GetRequestsValidator::validate($request);
-        $semesters = Semester::onlyTrashed()->paginate($per_page);
+        $query = Semester::query();
+        RequestFilters::apply($query, $request, ['academic_year', 'status']);
+        $semesters = $query->onlyTrashed()->paginate($per_page);
 
         return $this->paginate($semesters, SemesterResource::class, 'Semesters retrieved successfully');
     }
-    
 }

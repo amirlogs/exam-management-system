@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Filters\RequestFilters;
 use App\Http\Requests\StoreDepartmentRequest;
 use App\Http\Requests\UpdateDepartmentRequest;
 use App\Http\Resources\DepartmentResource;
 use App\Models\College;
 use App\Models\Department;
+use App\Validation\GetRequestsValidator;
 use Illuminate\Http\Request;
 
 class DepartmentController extends Controller
@@ -21,24 +23,21 @@ class DepartmentController extends Controller
 
     public function index(Request $request)
     {
-        $request->validate([
-            'per_page' => ['nullable', 'integer', 'min:1'],
-        ]);
 
-        $per_page = min($request->per_page ?? 12, 100);
-        $departments = Department::with('college')->paginate($per_page);
+        $per_page = GetRequestsValidator::validate($request);
+        $query = Department::query();
+        RequestFilters::apply($query, $request, ['college_id']);
+        $departments = $query->with('college')->paginate($per_page);
 
         return $this->paginate($departments, DepartmentResource::class, 'Departments retrieved successfully');
     }
 
     public function archived(Request $request)
     {
-        $request->validate([
-            'per_page' => ['nullable', 'integer', 'min:1'],
-        ]);
-
-        $per_page = min($request->per_page ?? 12, 100);
-        $departments = Department::onlyTrashed()->with('college')->paginate($per_page);
+        $per_page = GetRequestsValidator::validate($request);
+        $query = Department::query();
+        RequestFilters::apply($query, $request, ['college_id']);
+        $departments = $query->onlyTrashed()->with('college')->paginate($per_page);
 
         return $this->paginate($departments, DepartmentResource::class, 'Archived Departments retrieved successfully');
     }

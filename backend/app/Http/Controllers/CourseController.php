@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Filters\RequestFilters;
 use App\Http\Requests\StoreCourseRequest;
 use App\Http\Requests\UpdateCourseRequest;
 use App\Http\Resources\CourseResource;
 use App\Models\Course;
 use App\Models\Department;
+use App\Validation\GetRequestsValidator;
 use Illuminate\Http\Request;
 
 class CourseController extends Controller
@@ -21,11 +23,10 @@ class CourseController extends Controller
 
     public function index(Request $request)
     {
-        $request->validate([
-            'per_page' => ['nullable', 'integer', 'min:1', 'max:25'],
-        ]);
-        $per_page = $request->per_page ?? 10;
-        $courses = Course::with('department')->paginate($per_page);
+        $per_page = GetRequestsValidator::validate($request);
+        $query = Course::query();
+        RequestFilters::apply($query, $request, ['department_id']);
+        $courses = $query->with('department')->paginate($per_page);
 
         return $this->paginate($courses, CourseResource::class, 'Courses retrieved successfully');
     }
@@ -75,11 +76,10 @@ class CourseController extends Controller
 
     public function archived(Request $request)
     {
-        $request->validate([
-            'per_page' => ['nullable', 'integer', 'min:1', 'max:25'],
-        ]);
-        $per_page = $request->per_page ?? 10;
-        $courses = Course::onlyTrashed()->paginate($per_page);
+        $per_page = GetRequestsValidator::validate($request);
+        $query = Course::query();
+        RequestFilters::apply($query, $request, ['department_id']);
+        $courses = $query->onlyTrashed()->paginate($per_page);
 
         return $this->paginate($courses, CourseResource::class, 'Archived courses retrieved successfully');
     }

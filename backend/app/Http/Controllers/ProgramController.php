@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Filters\RequestFilters;
 use App\Http\Requests\StoreProgramRequest;
 use App\Http\Requests\UpdateProgramRequest;
 use App\Http\Resources\ProgramResource;
 use App\Models\Program;
+use App\Validation\GetRequestsValidator;
 use Illuminate\Http\Request;
 
 class ProgramController extends Controller
@@ -20,12 +22,11 @@ class ProgramController extends Controller
 
     public function index(Request $request)
     {
-        $request->validate([
-            'per_page' => ['nullable', 'integer', 'min:1'],
-        ]);
 
-        $per_page = min($request->per_page ?? 12, 100);
-        $programs = Program::paginate($per_page);
+        $per_page = GetRequestsValidator::validate($request);
+        $query = Program::query();
+        RequestFilters::apply($query, $request, ['department_id']);
+        $programs = $query->paginate($per_page);
 
         return $this->paginate($programs, ProgramResource::class, 'Programs retrieved successfully');
     }
@@ -58,12 +59,10 @@ class ProgramController extends Controller
 
     public function archived(Request $request)
     {
-        $request->validate([
-            'per_page' => ['nullable', 'integer', 'min:1'],
-        ]);
-
-        $per_page = min($request->per_page ?? 12, 100);
-        $programs = Program::onlyTrashed()->paginate($per_page);
+        $per_page = GetRequestsValidator::validate($request);
+        $query = Program::query();
+        RequestFilters::apply($query, $request, ['department_id']);
+        $programs = $query->onlyTrashed()->paginate($per_page);
 
         return $this->paginate($programs, ProgramResource::class, 'Archived programs retrieved successfully');
     }

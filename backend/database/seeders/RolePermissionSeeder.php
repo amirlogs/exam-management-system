@@ -39,6 +39,8 @@ class RolePermissionSeeder extends Seeder
             // Semester
             ['semester.create', 'semester'], ['semester.update', 'semester'], ['semester.open', 'semester'],
             ['semester.close', 'semester'], ['semester.archive', 'semester'],
+            // sections
+            ['section.update', 'section'],['section.archive', 'section'], ['section.delete', 'section'],
             // Import
             ['student.import', 'import'], ['instructor.import', 'import'], ['section.import', 'import'], ['class.import', 'import'],
             // Course Offering
@@ -93,6 +95,7 @@ class RolePermissionSeeder extends Seeder
                 'semester.create', 'semester.update', 'semester.open', 'semester.close', 'semester.archive',
                 'curriculum.create', 'curriculum.update', 'curriculum.archive', 'curriculum_version.activate',
                 'curriculum_course.add', 'curriculum_course.remove', 'curriculum_course.update',
+                'section.update', 'section.archive'
             ],
             'university_admin' => [
                 'university.update',
@@ -101,7 +104,7 @@ class RolePermissionSeeder extends Seeder
                 'program.create', 'program.update', 'program.archive',
                 'course.create', 'course.update', 'course.archive',
                 'user.create', 'user.update', 'user.view', 'user.disable', 'user.activate',
-                'student.import', 'instructor.import', 'section.import', 'class.import',
+                'student.import', 'instructor.import', 'section.import', 'section.update', 'section.archive', 'class.import',
                 'semester.create', 'semester.update', 'semester.open', 'semester.close', 'semester.archive',
                 'curriculum.create', 'curriculum.update', 'curriculum.archive', 'curriculum_version.activate',
                 'curriculum_course.add', 'curriculum_course.remove', 'curriculum_course.update',

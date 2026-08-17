@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Filters\RequestFilters;
 use App\Http\Requests\StoreAddCourseRequest;
 use App\Http\Requests\StoreCurriculumRequest;
 use App\Http\Requests\UpdateAddCourseRequest;
@@ -26,7 +27,9 @@ class CurriculumController extends Controller
     public function index(Request $request)
     {
         $perPage = GetRequestsValidator::validate($request);
-        $curriculums = Curriculum::with('courses')->paginate($perPage);
+        $query = Curriculum::query();
+        RequestFilters::apply($query, $request, ['program_id']);
+        $curriculums = $query->with('courses')->paginate($perPage);
 
         return $this->paginate($curriculums, CurriculumResource::class, 'Curriculums retrieved successfully', 200);
     }
@@ -61,7 +64,7 @@ class CurriculumController extends Controller
     public function removeCourse(CurriculumCourse $curriculumCourse)
     {
         $curriculumCourse->delete();
-        
+
         return $this->success(null, 'Course removed from curriculum successfully', 200);
     }
 

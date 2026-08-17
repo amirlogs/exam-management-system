@@ -73,8 +73,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // =================== Roles || Permissions || Users ==========
     Route::post('/roles', [RoleController::class, 'store'])->middleware('permission:role.create');
-    Route::get('/roles', [RoleController::class, 'index'])->middleware('permission:role.assign');
-    Route::patch('/roles/{role}', [RoleController::class, 'update'])->middleware('permission:role.update');
     Route::post('/roles/{role}/permissions', [RoleController::class, 'assignPermission'])->middleware('permission:permission.assign');
     Route::post('/roles/{role}/permissions/remove', [RoleController::class, 'removePermission'])->middleware('permission:permission.assign');
     // FIXED: was singular '/role/{role}' — typo, now matches the rest of this resource
@@ -110,6 +108,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/sections', [SectionController::class, 'store'])->middleware('permission:section.import');
     Route::get('/sections', [SectionController::class, 'index']);
+    Route::get('/sections/archived', [SectionController::class, 'archived']);
+    Route::patch('/sections/{section}', [SectionController::class, 'update']);// ->middleware('permission:section.update');
+    Route::delete('/sections/{section}', [SectionController::class, 'destroy']); // ->middleware('permission:section.archive');
+    Route::post('/sections/{section}/restore', [SectionController::class, 'restore']); // ->middleware('permission:section.archive');
 
     // ===================== IMPORT (students, sections, instructors, users, questions)
     Route::post('/imports/{type}', [ImportController::class, 'store']);
