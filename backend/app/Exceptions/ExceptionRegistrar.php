@@ -57,10 +57,10 @@ class ExceptionRegistrar
             } elseif (
                 $e instanceof HttpExceptionInterface
             ) {
-                $message = $e->getMessage();
+                $message = 'Internal server error';
                 $statusCode = $e->getStatusCode();
             } else {
-                $message = $e->getMessage() ?: 'Internal server error';
+                $message = 'Internal server error';
                 $statusCode = 500;
             }
             if (config('app.debug')) {

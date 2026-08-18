@@ -3,17 +3,21 @@
 namespace App\Http\Controllers;
 
 use App\Commit\ExamQuestionCommitter;
+use App\Http\Filters\RequestFilters;
 use App\Http\Requests\StoreImportRequest;
+use App\Http\Resources\CsvImportResource;
+use App\Http\Resources\ImportHistoryResource;
 use App\Jobs\ImportCsv;
 use App\Models\Exam;
 use App\Models\ImportHistory;
 use App\Models\Question;
 use App\Services\ImportCommitterFactory;
 use App\Services\ImportValidatorFactory;
-use App\Validation\StudentValidator;
+use App\Validation\GetRequestsValidator;
 use App\Validation\ValidateImportContext;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class ImportController extends Controller
 {
@@ -30,6 +34,7 @@ class ImportController extends Controller
         }
 
         $path = $validated['file']->storeAs('imports', uniqid().'.csv');
+
         $import = ImportHistory::create([
             'uploaded_by' => $request->user()->id,
             'context' => $context,
@@ -41,7 +46,29 @@ class ImportController extends Controller
         // dispatch the job
         ImportCsv::dispatch($import);
 
-        return $this->success($import, 'Student import started successfully');
+        return $this->success(new ImportHistoryResource($import), 'Student import started successfully');
+    }
+
+    public function cancel(ImportHistory $importHistory)
+    {
+        if ($importHistory->status === 'confirmed') {
+            return $this->error([], 'Cannot cancel an import that has already been confirmed', 400);
+        }
+
+        Storage::delete($importHistory->file_path);
+        $importHistory->delete();
+
+        return $this->success(null, 'Import cancelled successfully');
+    }
+
+    public function index(Request $request)
+    {
+        $per_page = GetRequestsValidator::validate($request);
+        $query = ImportHistory::query();
+        RequestFilters::apply($query, $request, ['type', 'status']);
+        $importHistory = $query->paginate($per_page);
+
+        return $this->paginate($importHistory, CsvImportResource::class, 'Import history retrieved successfully');
     }
 
     public function show(ImportHistory $importHistory)
@@ -51,14 +78,16 @@ class ImportController extends Controller
 
     public function update(ImportHistory $importHistory, string $rowIndex, Request $request)
     {
-        $errors = StudentValidator::UpdateValidation($request->all());
+
+        if ($importHistory->status !== 'ready_for_review') {
+            return $this->error([], "Import history is in {$importHistory->status} state, cannot update row", 400);
+        }
+
+        $validatorClass = ImportValidatorFactory::create($importHistory->type);
+        $errors = $validatorClass::UpdateValidation($request->all(), $importHistory->context);
 
         if ($errors) {
             return $this->error($errors, 'Validation error', 422);
-        }
-
-        if ($importHistory->status !== 'ready_for_review') {
-            return $this->error([], "Import history is in {$importHistory->status} state, cannot update row$", 400);
         }
 
         // / loop and update only the comming rows
@@ -129,7 +158,7 @@ class ImportController extends Controller
     public function destroy(ImportHistory $importHistory, string $rowIndex, Request $request)
     {
         if ($importHistory->status !== 'ready_for_review') {
-            return $this->error([], "Import history is in {$importHistory->status} state, cannot delete row$", 400);
+            return $this->error([], "Import history is in {$importHistory->status} state, cannot delete row", 400);
         }
 
         $data = $importHistory->validated_data;

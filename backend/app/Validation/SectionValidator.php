@@ -2,53 +2,76 @@
 
 namespace App\Validation;
 
-use App\Models\Program;
-use App\Models\Section;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
-class SectionValidator
+class InstructorValidator
 {
     private static array $rules = [
-        'program_code' => ['required', 'string', 'exists:programs,code'],
-        'year_level' => ['required', 'integer', 'min:1', 'max:8'],
-        'name' => ['required', 'string', 'min:1', 'max:50'],
+        'first_name' => ['required', 'string', 'min:3', 'max:255'],
+        'last_name' => ['required', 'string', 'min:3', 'max:255'],
+        'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
     ];
 
     protected static array $messages = [
-        'program_code.required' => 'The program code field is required.',
-        'program_code.exists' => 'The selected program code is invalid.',
-        'year_level.required' => 'The year level field is required.',
-        'year_level.integer' => 'The year level must be an integer.',
-        'year_level.min' => 'The year level must be at least 1.',
-        'year_level.max' => 'The year level may not be greater than 8.',
-        'name.required' => 'The section name field is required.',
-        'name.max' => 'The section name may not be greater than 50 characters.',
+        'first_name.required' => 'The first name field is required.',
+        'first_name.min' => 'The first name must be at least 3 characters.',
+        'first_name.max' => 'The first name may not be greater than 255 characters.',
+        'last_name.required' => 'The last name field is required.',
+        'last_name.min' => 'The last name must be at least 3 characters.',
+        'last_name.max' => 'The last name may not be greater than 255 characters.',
+        'email.required' => 'The email field is required.',
+        'email.email' => 'The email must be a valid email address.',
+        'email.max' => 'The email may not be greater than 255 characters.',
+        'email.unique' => 'The email has already been taken.',
     ];
 
-    public static function validate(array $data, array $context = [])
+    private static array $updateRules = [
+        'first_name' => ['sometimes', 'string', 'min:3', 'max:255'],
+        'last_name' => ['sometimes', 'string', 'min:3', 'max:255'],
+        'email' => ['sometimes', 'string', 'email', 'max:255'],
+    ];
+
+    protected static array $updateMessages = [
+        'first_name.min' => 'The first name must be at least 3 characters.',
+        'first_name.max' => 'The first name may not be greater than 255 characters.',
+        'last_name.min' => 'The last name must be at least 3 characters.',
+        'last_name.max' => 'The last name may not be greater than 255 characters.',
+        'email.email' => 'The email must be a valid email address.',
+        'email.max' => 'The email may not be greater than 255 characters.',
+        'email.unique' => 'The email has already been taken.',
+    ];
+
+    public static function validate(array $data)
     {
         $validator = Validator::make($data, self::$rules, self::$messages);
-        $errors = $validator->errors()->all();
 
-        // if (empty($errors)) {
-        //     $semesterId = $context['semester_id'] ?? null;
+        return $validator->errors()->all();
+    }
 
-        //     if (! $semesterId) {
-        //         $errors[] = 'No semester_id was provided for this import batch.';
-        //     } else {
-        //         $program = Program::where('code', $data['program_code'])->first();
+    public static function updateValidation(array $data, ?int $userId = null)
+    {
+        $rules = self::$updateRules;
 
-        // $duplicate = Section::where('program_id', $program->id)
-        //     ->where('semester_id', $semesterId)
-        //     ->where('year_level', $data['year_level'])
-        //     ->where('name', $data['name'])
-        //     ->exists();
+        if (array_key_exists('email', $data)) {
+            $emailRule = Rule::unique('users', 'email');
+            if ($userId) {
+                $emailRule->ignore($userId);
+            }
+            $rules['email'][] = $emailRule;
+        }
 
-        //         if ($duplicate) {
-        //             $errors[] = "Section '{$data['name']}' already exists for program '{$data['program_code']}' in this semester.";
-        //         }
-        //     }
-        // }
-        return $errors;
+        $validator = Validator::make($data, $rules, self::$updateMessages);
+
+        $validator->after(function ($validator) use ($data) {
+            if (empty($data)) {
+                $validator->errors()->add(
+                    'field',
+                    'At least one field must be provided.'
+                );
+            }
+        });
+
+        return $validator->errors()->all();
     }
 }

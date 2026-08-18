@@ -21,7 +21,7 @@ class GetRequestsValidator
         }
 
         $per_page = min($request->per_page ?? 12, $max_per_page);
-        
+
         return $per_page;
     }
 }
