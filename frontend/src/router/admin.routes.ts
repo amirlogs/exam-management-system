@@ -2,6 +2,9 @@ import CollegesView from '@/modules/admin/colleges/pages/CollegesView.vue'
 import CoursesView from '@/modules/admin/courses/pages/CoursesView.vue'
 import CurriculumPlannerView from '@/modules/admin/curriculum/pages/CurriculumPlannerView.vue'
 import DepartmentsView from '@/modules/admin/departments/pages/DepartmentsView.vue'
+import ImportDetailView from '@/modules/admin/imports/pages/ImportDetailView.vue'
+import ImportsListView from '@/modules/admin/imports/pages/ImportsListView.vue'
+import NewImportView from '@/modules/admin/imports/pages/NewImportView.vue'
 import DashboardView from '@/modules/admin/pages/DashboardView.vue'
 import ProgramsView from '@/modules/admin/programs/pages/ProgramsView.vue'
 import SectionsView from '@/modules/admin/sections/pages/SectionsView.vue'
@@ -48,43 +51,11 @@ export default [
   { path: 'sections', name: 'admin-sections', component: SectionsView },
 
   // // ---------------- Data Import ----------------
-  // {
-  //   path: 'imports',
-  //   name: 'admin.imports.hub',
-  //   component: () => import('@/modules/admin/pages/imports/ImportHubView.vue'),
-  // },
-  // {
-  //   path: 'imports/new/:type',
-  //   name: 'admin.imports.new',
-  //   component: () => import('@/modules/admin/pages/imports/ImportUploadView.vue'),
-  // },
-  // {
-  //   path: 'imports/:importId/review',
-  //   name: 'admin.imports.review',
-  //   component: () => import('@/modules/admin/pages/imports/ImportReviewView.vue'),
-  // },
-
+  { path: 'imports', name: 'admin-imports', component: ImportsListView },
+  { path: 'imports/new', name: 'admin-import-new', component: NewImportView },
+  { path: 'imports/:id(\\d+)', name: 'admin-import-detail', component: ImportDetailView },
   // // ---------------- Course Offerings ----------------
-  // {
-  //   path: 'course-offerings',
-  //   name: 'admin.course-offerings.list',
-  //   component: () => import('@/modules/admin/pages/course-offerings/CourseOfferingsView.vue'),
-  // },
-  // {
-  //   path: 'course-offerings/generate',
-  //   name: 'admin.course-offerings.generate',
-  //   component: () => import('@/modules/admin/pages/course-offerings/GenerateSuggestionsView.vue'),
-  // },
-  // {
-  //   path: 'course-offerings/new',
-  //   name: 'admin.course-offerings.new',
-  //   component: () => import('@/modules/admin/pages/course-offerings/CreateCourseOfferingView.vue'),
-  // },
-  // {
-  //   path: 'course-offerings/:courseOfferingId',
-  //   name: 'admin.course-offerings.detail',
-  //   component: () => import('@/modules/admin/pages/course-offerings/CourseOfferingDetailView.vue'),
-  // },
+  { path: 'course-offerings', name: 'admin-course-offerings', component: CourseOfferingsBoard },
 
   // // ---------------- Users & Roles ----------------
   // {

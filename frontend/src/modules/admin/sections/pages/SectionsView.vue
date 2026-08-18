@@ -58,7 +58,6 @@ async function load(page = 1) {
     if (!filtersReady.value) return
     loading.value = true
     try {
-        // Backend now filters server-side (RequestFilters) — this returns exactly this semester+program's sections
         const res = await getSections(filterSemesterId.value!, filterProgramId.value!, page)
         sections.value = res.data ?? []
         pagination.value = res.pagination ?? emptyPagination()
@@ -106,7 +105,6 @@ async function submitForm() {
         await load(pagination.value.current_page)
     } catch (err) {
         saving.value = false
-        // This is the real fix — applyServerErrors was silently omitted before, so 422 field errors never rendered
         handleApiError(err, uiStore, applyServerErrors, isEditing ? 'Failed to update section.' : 'Failed to save section.')
     }
 }
