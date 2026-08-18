@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Filters\RequestFilters;
 use App\Http\Requests\StoreCourseOfferingRequest;
+use App\Http\Resources\CourseOfferingResource;
+use App\Http\Resources\CourseOfferingSuggestionResource;
 use App\Models\CourseOffering;
 use App\Models\Curriculum;
 use App\Models\CurriculumCourse;
@@ -10,22 +13,19 @@ use App\Models\Enrollment;
 use App\Models\Section;
 use App\Models\Semester;
 use App\Models\Student;
+use App\Validation\GetRequestsValidator;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class CourseOfferingController extends Controller
 {
     public function generateSuggestions(Request $request)
     {
-        $request->validate(['semester_id' => 'required|exists:semesters,id']);
+        $request->validate(['semester_id' => ['required', Rule::exists('semesters', 'id')->withoutTrashed()]]);
         $semester = Semester::find($request->semester_id);
-
-        if (! $semester) {
-            $this->error(null, 'Semester not found', 404);
-        }
         $termNumber = $semester->term_number;
 
-        $activeCurriculums = Curriculum::where('status', 'active')->with('program')->get();
-
+        $activeCurriculums = Curriculum::where('status', 'active')->with('program', 'courses')->get();
         $suggestions = [];
 
         foreach ($activeCurriculums as $curriculum) {
@@ -35,7 +35,6 @@ class CourseOfferingController extends Controller
                 ->get();
 
             foreach ($requiredCourses as $cc) {
-                // students/sections yet this semester — don't suggest offering it.
                 $hasSection = Section::where('program_id', $curriculum->program_id)
                     ->where('semester_id', $semester->id)
                     ->where('year_level', $cc->year_level)
@@ -47,6 +46,7 @@ class CourseOfferingController extends Controller
 
                 $alreadyOffered = CourseOffering::where('course_id', $cc->course_id)
                     ->where('semester_id', $semester->id)
+                    ->whereNotIn('status', ['cancelled', 'rejected'])
                     ->exists();
 
                 if ($alreadyOffered) {
@@ -64,7 +64,7 @@ class CourseOfferingController extends Controller
             }
         }
 
-        return $this->success($suggestions, 'Course offering suggestions generated successfully');
+        return $this->success(CourseOfferingSuggestionResource::collection($suggestions), 'Course offering suggestions generated successfully');
     }
 
     public function store(StoreCourseOfferingRequest $request)
@@ -73,6 +73,7 @@ class CourseOfferingController extends Controller
 
         $duplicate = CourseOffering::where('course_id', $request->course_id)
             ->where('semester_id', $validated['semester_id'])
+            ->whereNotIn('status', ['cancelled', 'rejected'])
             ->exists();
 
         if ($duplicate) {
@@ -86,7 +87,7 @@ class CourseOfferingController extends Controller
             'status' => 'draft',
         ]);
 
-        return $this->success($offering->load('course', 'semester'), 'Course offering created successfully', 201);
+        return $this->success(new CourseOfferingResource($offering->load('course', 'semester')), 'Course offering created successfully', 201);
     }
 
     public function attachSections(CourseOffering $courseOffering, Request $request)
@@ -95,15 +96,23 @@ class CourseOfferingController extends Controller
 
         $section = Section::find($request->section_id);
         if (! $section) {
-            $this->error(null, 'Section not found', 404);
-        }
+            return $this->error(null, 'Section not found', 404);        }
+
         $courseOffering->sections()->syncWithoutDetaching([$section->id]);
 
-        return $this->success($courseOffering->load('sections'), 'Section attached to course offering successfully');
+        return $this->success(new CourseOfferingResource($courseOffering->load('sections')), 'Section attached to course offering successfully');
+    }
+
+    public function detachSection(CourseOffering $courseOffering, Section $section)
+    {
+        $courseOffering->sections()->detach($section->id);
+
+        return $this->success(new CourseOfferingResource($courseOffering->load('sections')), 'Section removed from course offering successfully');
     }
 
     public function attachInstructors(CourseOffering $courseOffering, Request $request)
     {
+        // unchanged
         $request->validate([
             'instructor_id' => 'required|exists:users,id',
             'type' => 'required|in:lead_instructor,instructor',
@@ -113,16 +122,43 @@ class CourseOfferingController extends Controller
             $request->instructor_id => ['type' => $request->type, 'assigned_at' => now()],
         ]);
 
-        return $this->success($courseOffering->load('instructors'), 'Instructor assigned successfully');
+        return $this->success(new CourseOfferingResource($courseOffering->load('instructors')), 'Instructor assigned successfully');
+    }
+
+    public function removeInstructor(CourseOffering $courseOffering, $instructorId)
+    {
+        $courseOffering->instructors()->detach($instructorId);
+
+        return $this->success(new CourseOfferingResource($courseOffering->load('instructors')), 'Instructor removed successfully');
     }
 
     public function index(Request $request)
     {
-        $offerings = CourseOffering::with('course', 'semester', 'sections', 'instructors')
-            ->when($request->semester_id, fn ($q, $id) => $q->where('semester_id', $id))
-            ->get();
+        $perPage = GetRequestsValidator::validate($request);
+        $query = CourseOffering::query();
+        RequestFilters::apply($query, $request, ['course_id', 'semester_id', 'status']);
+        $offerings = $query->with('course', 'semester', 'sections', 'instructors')
+            ->paginate($perPage);
 
-        return $this->success($offerings, 'Course offerings fetched successfully');
+        return $this->paginate($offerings, CourseOfferingResource::class, 'Course offerings fetched successfully');
+    }
+
+    public function archived(Request $request)
+    {
+        $perPage = GetRequestsValidator::validate($request);
+        $query = CourseOffering::onlyTrashed();
+        RequestFilters::apply($query, $request, ['course_id', 'semester_id', 'status']);
+        $offerings = $query->with('course', 'semester', 'sections', 'instructors')->paginate($perPage);
+
+        return $this->paginate($offerings, CourseOfferingResource::class, 'Archived course offerings fetched successfully');
+    }
+
+    public function restore($id)
+    {
+        $offering = CourseOffering::onlyTrashed()->findOrFail($id);
+        $offering->restore();
+
+        return $this->success(new CourseOfferingResource($offering->load('course', 'semester')), 'Course offering restored successfully');
     }
 
     public function update(CourseOffering $courseOffering, Request $request)
@@ -137,26 +173,20 @@ class CourseOfferingController extends Controller
         }
         $courseOffering->update($request->only('course_id', 'semester_id'));
 
-        return $this->success($courseOffering, 'Course offering updated successfully');
+        return $this->success(new CourseOfferingResource($courseOffering->load('course', 'semester')), 'Course offering updated successfully');
     }
 
-    public function changeInstructor(CourseOffering $courseOffering, int $instructorId, Request $request)
+    public function changeInstructor(CourseOffering $courseOffering, Request $request)
     {
         $request->validate([
             'instructor_id' => 'required|exists:users,id',
             'type' => 'required|in:lead_instructor,instructor',
         ]);
 
-        if (! $courseOffering->instructors()->where('instructor_id', $instructorId)->exists()) {
-            return $this->error(null, 'This instructor is not currently assigned to this offering', 404);
-        }
+        $courseOffering->instructors()->wherePivot('type', $request->type)->detach();
+        $courseOffering->instructors()->attach($request->instructor_id, ['type' => $request->type, 'assigned_at' => now()]);
 
-        $courseOffering->instructors()->detach($instructorId);
-        $courseOffering->instructors()->syncWithoutDetaching([
-            $request->instructor_id => ['type' => $request->type, 'assigned_at' => now()],
-        ]);
-
-        return $this->success($courseOffering->load('instructors'), 'Instructor changed successfully');
+        return $this->success(new CourseOfferingResource($courseOffering->load('instructors')), 'Instructor changed successfully');
     }
 
     public function approve(CourseOffering $courseOffering)
@@ -164,10 +194,9 @@ class CourseOfferingController extends Controller
         if ($courseOffering->status !== 'draft') {
             return $this->error(null, 'Only draft offerings can be approved', 409);
         }
-
         $courseOffering->approve();
 
-        return $this->success($courseOffering->refresh(), 'Course offering approved successfully');
+        return $this->success(new CourseOfferingResource($courseOffering->load('instructors', 'course')), 'Course offering approved successfully');
     }
 
     public function reject(CourseOffering $courseOffering, Request $request)
@@ -177,10 +206,9 @@ class CourseOfferingController extends Controller
         if ($courseOffering->status !== 'draft') {
             return $this->error(null, 'Only draft offerings can be rejected', 409);
         }
-
         $courseOffering->reject($request->reason);
 
-        return $this->success($courseOffering->refresh(), 'Course offering rejected successfully');
+        return $this->success(new CourseOfferingResource($courseOffering->load('instructors', 'course')), 'Course offering rejected successfully');
     }
 
     public function cancel(CourseOffering $courseOffering)
@@ -188,10 +216,9 @@ class CourseOfferingController extends Controller
         if (in_array($courseOffering->status, ['cancelled', 'rejected'])) {
             return $this->error(null, 'Offering is already cancelled or rejected', 409);
         }
-
         $courseOffering->cancel();
 
-        return $this->success($courseOffering->refresh(), 'Course offering cancelled successfully');
+        return $this->success(new CourseOfferingResource($courseOffering->refresh()->load('course', 'semester', 'instructors')), 'Course offering cancelled successfully');
     }
 
     public function destroy(CourseOffering $courseOffering)
@@ -203,20 +230,19 @@ class CourseOfferingController extends Controller
 
     public function enrollSection(CourseOffering $courseOffering)
     {
-        $sectionIds = $courseOffering->sections()->pluck('sections.id');
+        if ($courseOffering->status !== 'approved') {
+            return $this->error(null, 'Only approved offerings can be enrolled', 409);
+        }
 
-        $students = Student::whereIn('section_id', $sectionIds)
-            ->where('status', 'active')
-            ->get();
+        $sectionIds = $courseOffering->sections()->pluck('sections.id');
+        $students = Student::whereIn('section_id', $sectionIds)->where('status', 'active')->get();
 
         $enrolledCount = 0;
-
         foreach ($students as $student) {
             $created = Enrollment::firstOrCreate(
                 ['student_id' => $student->id, 'course_offering_id' => $courseOffering->id],
                 ['status' => 'active']
             );
-
             if ($created->wasRecentlyCreated) {
                 $enrolledCount++;
             }
