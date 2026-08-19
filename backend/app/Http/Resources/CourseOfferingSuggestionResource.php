@@ -15,6 +15,7 @@ class CourseOfferingSuggestionResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
+            'course_id' => $this['course_id'], 
             'course_code' => $this['course_code'],
             'course_name' => $this['course_name'],
             'program_id' => $this['program_id'],

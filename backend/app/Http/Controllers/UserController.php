@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Filters\RequestFilters;
 use App\Http\Requests\AssignRoleRequest;
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
 use App\Models\UserRole;
+use App\Validation\GetRequestsValidator;
+use Illuminate\Http\Request;
 
 class UserController extends Controller
 {
@@ -16,17 +19,27 @@ class UserController extends Controller
         $validated = $request->validated();
         $user = User::create($validated);
 
-        return $this->success($user->refresh(), 'User created successfully', 201);
+        return $this->success(new UserResource($user->refresh()), 'User created successfully', 201);
     }
 
     public function assignRole(User $user, AssignRoleRequest $request)
     {
         $validated = $request->validated();
         $userRoles = $user->userRoles()->pluck('role_id');
+        $duplicate = $user->userRoles()
+            ->where('role_id', $validated['role_id'])
+            ->where('university_id', $validated['university_id'] ?? null)
+            ->where('college_id', $validated['college_id'] ?? null)
+            ->where('department_id', $validated['department_id'] ?? null)
+            ->exists();
 
-        if ($userRoles->contains($validated['role_id'])) {
-            return $this->error('Role already assigned to user', 400);
+        if ($duplicate) {
+            return $this->error('This exact role assignment already exists for this user', 400);
         }
+
+        // if ($userRoles->contains($validated['role_id'])) {
+        //     return $this->error('Role already assigned to user', 400);
+        // }
 
         $user->userRoles()->create([
             ...$validated,
@@ -34,21 +47,33 @@ class UserController extends Controller
             'assigned_at' => now(),
         ]);
 
-        return $this->success($user->refresh(), 'Role assigned successfully');
+        return $this->success(new UserResource($user->refresh()), 'Role assigned successfully');
     }
 
-    public function removeRole(User $user, UserRole $userRole)
+    public function removeRole(User $user, Request $request)
     {
+        // userRole
+        $request->validate([
+            'role_id' => 'required|exists:roles,id',
+        ]);
+        $userRole = UserRole::where('user_id', $user->id)->where('role_id', $request->role_id)->first();
+        if (! $userRole) {
+            return $this->error('Role not assigned to user', 400);
+        }
+
         $userRole->delete();
 
-        return $this->success($user->refresh(), 'Role removed successfully');
+        return $this->success(new UserResource($user->refresh()), 'Role removed successfully');
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $user = User::with('userRoles.role')->get();
+        $per_page = GetRequestsValidator::validate($request);
+        $query = User::query();
+        RequestFilters::apply($query, $request, ['first_name', 'email']);
+        $user = $query->with('userRoles.role')->paginate($per_page);
 
-        return $this->success(UserResource::collection($user), 'User fetched successfully');
+        return $this->paginate($user, UserResource::class, 'User fetched successfully');
     }
 
     public function update(User $user, UpdateUserRequest $request)
@@ -56,6 +81,15 @@ class UserController extends Controller
         $validated = $request->validated();
         $user->update($validated);
 
-        return $this->success($user->refresh(), 'User updated successfully');
+        return $this->success(new UserResource($user->refresh()), 'User updated successfully');
+
     }
+
+    public function disable(User $user)
+    {
+        $user->update(['is_active' => false]);
+
+        return $this->success(new UserResource($user->refresh()), 'User disabled successfully');
+    }
+    
 }

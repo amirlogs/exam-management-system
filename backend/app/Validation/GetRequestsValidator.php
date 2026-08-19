@@ -10,7 +10,7 @@ class GetRequestsValidator
 {
     use ApiResponse;
 
-    public static function validate($request, $max_per_page = 100)
+    public static function validate($request, $max_per_page = 1000)
     {
         $validator = Validator::make($request->all(), [
             'per_page' => 'nullable|integer|min:1',
@@ -20,7 +20,7 @@ class GetRequestsValidator
             throw new ValidationException($validator);
         }
 
-        $per_page = min($request->per_page ?? 12, $max_per_page);
+        $per_page = min($request->per_page ?? 100 , $max_per_page);
 
         return $per_page;
     }
