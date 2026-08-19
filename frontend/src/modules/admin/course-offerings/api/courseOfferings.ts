@@ -51,3 +51,9 @@ export async function enrollOfferingSection(id: number): Promise<{ enrolled_coun
   const res = await api.post(`/course-offerings/${id}/enroll`)
   return res.data.data
 }
+
+// =================== users   ======================
+export async function getUsers(): Promise<[]> {
+  const res = await api.get('/users')
+  return res.data.data
+}

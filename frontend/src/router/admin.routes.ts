@@ -1,4 +1,7 @@
+import RolesView from '@/modules/admin/access/pages/RolesView.vue'
+import UsersView from '@/modules/admin/access/pages/UsersView.vue'
 import CollegesView from '@/modules/admin/colleges/pages/CollegesView.vue'
+import CourseOfferingsBoard from '@/modules/admin/course-offerings/pages/CourseOfferingsBoard.vue'
 import CoursesView from '@/modules/admin/courses/pages/CoursesView.vue'
 import CurriculumPlannerView from '@/modules/admin/curriculum/pages/CurriculumPlannerView.vue'
 import DepartmentsView from '@/modules/admin/departments/pages/DepartmentsView.vue'
@@ -58,21 +61,8 @@ export default [
   { path: 'course-offerings', name: 'admin-course-offerings', component: CourseOfferingsBoard },
 
   // // ---------------- Users & Roles ----------------
-  // {
-  //   path: 'users',
-  //   name: 'admin.users.list',
-  //   component: () => import('@/modules/admin/pages/users/UsersView.vue'),
-  // },
-  // {
-  //   path: 'roles',
-  //   name: 'admin.roles.list',
-  //   component: () => import('@/modules/admin/pages/users/RolesView.vue'),
-  // },
-  // {
-  //   path: 'roles/:roleId/permissions',
-  //   name: 'admin.roles.permissions',
-  //   component: () => import('@/modules/admin/pages/users/RolePermissionsView.vue'),
-  // },
+  { path: 'users', name: 'admin-users', component: UsersView },
+  { path: 'roles', name: 'admin-roles', component: RolesView },
 
   // // ---------------- Results ----------------
   // {

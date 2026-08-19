@@ -1,25 +1,25 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { School, User, X, UserCheck, Ban, Users2 } from 'lucide-vue-next'
 import BaseDialog from '@/shared/components/ui/BaseDialog.vue'
 import BaseButton from '@/shared/components/ui/BaseButton.vue'
 import BaseBadge from '@/shared/components/ui/BaseBadge.vue'
 import BaseSelect from '@/shared/components/ui/BaseSelect.vue'
-import ConfirmModal from '@/shared/components/ui/ConfirmModal.vue'
 import { getSections } from '@/modules/admin/sections/api/sections'
-import { getUsers } from '@/modules/admin/users/api/users' // ASSUMPTION: your users list endpoint — adjust import path if different
 import type { CourseOffering } from '../types/courseOffering'
 import {
     attachSection, detachSection, attachInstructor, removeInstructor,
-    approveOffering, rejectOffering, cancelOffering, enrollOfferingSection,
+    approveOffering, rejectOffering, cancelOffering, enrollOfferingSection,getUsers
 } from '../api/courseOfferings'
 import { useUiStore } from '@/stores/ui'
+import ConfirmModal from '@/shared/components/ConfirmModal.vue'
 
 const props = defineProps<{ modelValue: boolean; offering: CourseOffering | null }>()
 const emit = defineEmits<{ 'update:modelValue': [boolean]; updated: [CourseOffering] }>()
 
 const uiStore = useUiStore()
 const local = ref<CourseOffering | null>(null)
+const loadingOptions = ref(false)
 
 const sectionOptions = ref<{ value: string; label: string }[]>([])
 const instructorOptions = ref<{ value: string; label: string }[]>([])
@@ -32,16 +32,32 @@ const showRejectModal = ref(false)
 const showCancelModal = ref(false)
 const rejectReason = ref('')
 
-onMounted(async () => {
-    local.value = props.offering
-    if (!local.value) return
-    const [secRes, userRes] = await Promise.all([
-        getSections(local.value.semester_id, 0, 1, 200).catch(() => ({ data: [] })), // program_id 0 = all, adjust to your real "no filter" convention
-        getUsers?.(1, 200).catch(() => ({ data: [] })) ?? Promise.resolve({ data: [] }),
-    ])
-    sectionOptions.value = (secRes.data ?? []).map((s: any) => ({ value: String(s.id), label: `Section ${s.name} (Year ${s.year_level})` }))
-    instructorOptions.value = (userRes.data ?? []).map((u: any) => ({ value: String(u.id), label: `${u.first_name} ${u.last_name}` }))
-})
+// THE FIX: watch the prop (with immediate) instead of onMounted, so `local`
+// updates every time a *different* offering is opened, not just on first mount.
+watch(
+    () => props.offering,
+    async (offering) => {
+        local.value = offering
+        selectedSectionId.value = ''
+        selectedInstructorId.value = ''
+        rejectReason.value = ''
+
+        if (!offering) return
+
+        loadingOptions.value = true
+        try {
+            const [secRes, userRes] = await Promise.all([
+                getSections(offering.semester_id, 0, 1, 200).catch(() => ({ data: [] })),
+                getUsers?.(1, 200).catch(() => ({ data: [] })) ?? Promise.resolve({ data: [] }),
+            ])
+            sectionOptions.value = (secRes.data ?? []).map((s: any) => ({ value: String(s.id), label: `Section ${s.name} (Year ${s.year_level})` }))
+            instructorOptions.value = (userRes.data ?? []).map((u: any) => ({ value: String(u.id), label: `${u.first_name} ${u.last_name}` }))
+        } finally {
+            loadingOptions.value = false
+        }
+    },
+    { immediate: true },
+)
 
 const isDraft = computed(() => local.value?.status === 'draft')
 const isApproved = computed(() => local.value?.status === 'approved')
@@ -153,7 +169,9 @@ async function enroll() {
 <template>
     <BaseDialog :model-value="modelValue" :title="local?.course?.name" :description="local?.course?.code"
         max-width="max-w-2xl" @update:model-value="close">
-        <div v-if="local" class="space-y-6">
+        <div v-if="!local" class="py-10 text-center text-sm text-text/50">Loading...</div>
+
+        <div v-else class="space-y-6">
             <BaseBadge
                 :variant="local.status === 'approved' ? 'success' : local.status === 'rejected' ? 'danger' : local.status === 'cancelled' ? 'neutral' : 'info'">
                 {{ local.status }}
@@ -164,7 +182,6 @@ async function enroll() {
                 {{ local.rejection_reason }}
             </p>
 
-            <!-- Sections -->
             <div>
                 <h4 class="mb-2 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-text/60">
                     <School class="h-3.5 w-3.5" /> Sections
@@ -188,7 +205,6 @@ async function enroll() {
                 </div>
             </div>
 
-            <!-- Instructors -->
             <div>
                 <h4 class="mb-2 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-text/60">
                     <User class="h-3.5 w-3.5" /> Instructors
@@ -218,13 +234,13 @@ async function enroll() {
         </div>
 
         <template #footer>
-            <div class="flex flex-wrap justify-end gap-2">
+            <div v-if="local" class="flex flex-wrap justify-end gap-2">
                 <BaseButton v-if="isApproved" variant="secondary" :loading="busy" @click="enroll">
                     <template #icon>
                         <Users2 class="h-4 w-4" />
                     </template>Enroll students
                 </BaseButton>
-                <BaseButton v-if="local?.status !== 'cancelled' && local?.status !== 'rejected'" variant="secondary"
+                <BaseButton v-if="local.status !== 'cancelled' && local.status !== 'rejected'" variant="secondary"
                     @click="showCancelModal = true">
                     <template #icon>
                         <Ban class="h-4 w-4" />
