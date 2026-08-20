@@ -85,4 +85,21 @@ class User extends Authenticatable
             'student' => $perms->intersect($studentIndicators)->isNotEmpty(),
         ];
     }
+
+    public function hasWorkspace(string $workspace): bool
+    {
+        $workspaces = $this->workspaces();
+        if (! $workspaces[$workspace]) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public function hasPermission(string $reqPermmision): bool
+    {
+        $permmisions = $this->permissionNames();
+
+        return in_array($reqPermmision, $permmisions, true);
+    }
 }

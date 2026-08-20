@@ -9,6 +9,7 @@ use App\Http\Requests\UpdateUserRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
 use App\Models\UserRole;
+use App\Services\Navigation\NavigationService;
 use App\Validation\GetRequestsValidator;
 use Illuminate\Http\Request;
 
@@ -91,5 +92,18 @@ class UserController extends Controller
 
         return $this->success(new UserResource($user->refresh()), 'User disabled successfully');
     }
-    
+
+    public function allowedRoutes(Request $request, NavigationService $navigationService)
+    {
+        $request->validate([
+            'workspace' => ['required', 'string', 'in:admin,instructor,student'],
+        ]);
+
+        if (! $request->user()->hasWorkspace($request->workspace)) {
+            return $this->error(null, 'You are not allowed to access this workspace', 403);
+        }
+        $navigation = $navigationService->forUser($request->user(), $request->workspace);
+        
+        return $this->success($navigation, 'Navigation fetched successfully');
+    }
 }

@@ -16,7 +16,7 @@ class CheckPermission
             abort(401, 'Unauthenticated.');
         }
 
-        if (! in_array($permission, $user->permissionNames(), true)) {
+        if (! $user->hasPermission($permission)) {
             abort(403, "Missing permission: {$permission}");
         }
 

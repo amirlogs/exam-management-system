@@ -17,7 +17,7 @@ class AcademicStructureSeeder extends Seeder
         // ---------------- University ----------------
         $astu = University::updateOrCreate(
             ['code' => 'ASTU'],
-            ['name' => 'Addis Science and Technology University', 'address' => 'Addis Ababa, Ethiopia']
+            ['name' => 'Adama Science and Technology University', 'address' => 'Adama , Ethiopia']
         );
 
         // ---------------- Colleges ----------------
