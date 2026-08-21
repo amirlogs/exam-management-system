@@ -36,6 +36,7 @@ const visibleWorkspaces = computed(() => {
 
 function selectWorkspace(workspace: keyof WorkspaceState) {
   isOpen.value = false
+  usePermissionsStore().setActiveWorkspace(workspace);
   router.push(`/${workspace}/dashboard`)
 }
 </script>

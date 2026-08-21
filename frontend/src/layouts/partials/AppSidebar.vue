@@ -1,7 +1,13 @@
 <script setup lang="ts">
-import { PanelLeftClose, PanelLeftOpen, X, GraduationCap, Settings } from 'lucide-vue-next'
+import { PanelLeftClose, PanelLeftOpen, X, GraduationCap, Settings ,LayoutGrid, Building2, Landmark, BookOpen,
+  ListTree, CalendarDays, Users2, Upload, ClipboardList,
+  ShieldCheck, BarChart3,
+} from 'lucide-vue-next'
 import type { Component } from 'vue'
 import { useSidebar } from '@/shared/composables/useSidebar'
+import {
+} from 'lucide-vue-next'
+const icons = {LayoutGrid,Landmark,Building2,GraduationCap,BookOpen,ListTree,CalendarDays,Users2,Upload, ClipboardList,ShieldCheck,BarChart3,}
 
 defineProps<{
     brandName: string
@@ -79,7 +85,7 @@ function handleNavigate() {
                             : 'text-text/60 hover:bg-bg hover:text-text',
                         isCollapsed ? 'md:justify-center md:px-0' : '',
                     ]" :title="isCollapsed ? item.label : ''">
-                    <component :is="item.icon" class="w-5 h-5 md:w-4.5 md:h-4.5 shrink-0" />
+                    <component :is="icons[item.icon]" class="w-5 h-5 md:w-4.5 md:h-4.5 shrink-0" />
                     <span :class="isCollapsed ? 'md:hidden' : ''">{{ item.label }}</span>
                 </router-link>
             </nav>

@@ -8,17 +8,15 @@ class AdminNavigation
     {
         return [
             [
-                'key' => 'dashboard',
                 'label' => 'Dashboard',
-                'route' => '/admin/dashboard',
+                'to' => '/admin/dashboard',
                 'icon' => 'LayoutGrid',
                 'permissions' => [],
             ],
 
             [
-                'key' => 'universities',
                 'label' => 'Universities',
-                'route' => '/admin/universities',
+                'to' => '/admin/universities',
                 'icon' => 'Landmark',
                 'permissions' => [
                     'university.view',
@@ -28,9 +26,8 @@ class AdminNavigation
             ],
 
             [
-                'key' => 'colleges',
                 'label' => 'Colleges',
-                'route' => '/admin/colleges',
+                'to' => '/admin/colleges',
                 'icon' => 'Building2',
                 'permissions' => [
                     'college.view',
@@ -40,9 +37,8 @@ class AdminNavigation
             ],
 
             [
-                'key' => 'departments',
                 'label' => 'Departments',
-                'route' => '/admin/departments',
+                'to' => '/admin/departments',
                 'icon' => 'Building2',
                 'permissions' => [
                     'department.view',
@@ -52,9 +48,8 @@ class AdminNavigation
             ],
 
             [
-                'key' => 'programs',
                 'label' => 'Programs',
-                'route' => '/admin/programs',
+                'to' => '/admin/programs',
                 'icon' => 'GraduationCap',
                 'permissions' => [
                     'program.view',
@@ -64,9 +59,8 @@ class AdminNavigation
             ],
 
             [
-                'key' => 'courses',
                 'label' => 'Courses',
-                'route' => '/admin/courses',
+                'to' => '/admin/courses',
                 'icon' => 'BookOpen',
                 'permissions' => [
                     'course.view',
@@ -76,9 +70,8 @@ class AdminNavigation
             ],
 
             [
-                'key' => 'curriculum',
                 'label' => 'Curriculum',
-                'route' => '/admin/curriculum',
+                'to' => '/admin/curriculum',
                 'icon' => 'ListTree',
                 'permissions' => [
                     'curriculum.view',
@@ -87,9 +80,8 @@ class AdminNavigation
             ],
 
             [
-                'key' => 'semesters',
                 'label' => 'Semesters',
-                'route' => '/admin/semesters',
+                'to' => '/admin/semesters',
                 'icon' => 'CalendarDays',
                 'permissions' => [
                     'semester.view',
@@ -99,9 +91,8 @@ class AdminNavigation
             ],
 
             [
-                'key' => 'sections',
                 'label' => 'Sections',
-                'route' => '/admin/sections',
+                'to' => '/admin/sections',
                 'icon' => 'Users2',
                 'permissions' => [
                     'section.view',
@@ -111,9 +102,8 @@ class AdminNavigation
             ],
 
             [
-                'key' => 'imports',
                 'label' => 'Data Import',
-                'route' => '/admin/imports',
+                'to' => '/admin/imports',
                 'icon' => 'Upload',
                 'permissions' => [
                     'import.view',
@@ -122,9 +112,8 @@ class AdminNavigation
             ],
 
             [
-                'key' => 'course-offerings',
                 'label' => 'Course Offerings',
-                'route' => '/admin/course-offerings',
+                'to' => '/admin/course-offerings',
                 'icon' => 'ClipboardList',
                 'permissions' => [
                     'course_offering.view',
@@ -133,9 +122,8 @@ class AdminNavigation
             ],
 
             [
-                'key' => 'users',
                 'label' => 'Users',
-                'route' => '/admin/users',
+                'to' => '/admin/users',
                 'icon' => 'Users2',
                 'permissions' => [
                     'user.view',
@@ -144,9 +132,8 @@ class AdminNavigation
             ],
 
             [
-                'key' => 'roles',
                 'label' => 'Roles & Permissions',
-                'route' => '/admin/roles',
+                'to' => '/admin/roles',
                 'icon' => 'ShieldCheck',
                 'permissions' => [
                     'role.view',
@@ -156,9 +143,8 @@ class AdminNavigation
             ],
 
             [
-                'key' => 'results',
                 'label' => 'Results',
-                'route' => '/admin/results',
+                'to' => '/admin/results',
                 'icon' => 'BarChart3',
                 'permissions' => [
                     'result.view',

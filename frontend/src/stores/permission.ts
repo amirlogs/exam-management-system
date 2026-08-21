@@ -1,9 +1,12 @@
+import { setWorkspace } from '@/api/auth'
 import type { WorkspaceState } from '@/modules/instructor/pages/question-bank/types'
+import router from '@/router'
 import trueCouter from '@/shared/utils/trueCounter'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import type { Router } from 'vue-router'
 import { useAuthStore } from './auth'
+import { useNavigationStore } from './navigation'
 
 export const usePermissionsStore = defineStore('permissions', () => {
   const permissions = ref<string[]>([])
@@ -16,7 +19,6 @@ export const usePermissionsStore = defineStore('permissions', () => {
     workspaces.value = newWorkspaces
   }
 
-  // error.value = 'Invalid email or password. Please try again.'
   function can(permission: string) {
     return permissions.value.includes(permission)
   }
@@ -25,28 +27,26 @@ export const usePermissionsStore = defineStore('permissions', () => {
     permissions.value = []
   }
 
-  function setActiveWorkspace(workspace: string) {
+  const setActiveWorkspace = async (workspace: string) => {
+    const response = await setWorkspace(workspace)
     activeWorkspace.value = workspace
+    useNavigationStore().fetchNavigation(workspace)
   }
 
   const routeToWorkspace = async (router: Router) => {
+    console.log('routeToWorkspace')
     if (!workspaces.value) {
-      useAuthStore().initializeAuth()
+      useAuthStore().initializeAuth(router)
     }
     if (!workspaces.value) {
       return router.push({ name: 'no-access' })
     }
     const workspace = trueCouter(workspaces.value)
     if (typeof workspace === 'string') {
-      activeWorkspace.value = workspace
+      setActiveWorkspace(workspace)
       return router.push(`/${workspace}/dashboard`)
     } else {
-      return router.push({
-        name: 'select-workspace',
-        state: {
-          workspaces: workspaces.value,
-        },
-      })
+      return router.replace('/select-workspace')
     }
   }
 

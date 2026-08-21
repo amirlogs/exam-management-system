@@ -89,7 +89,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/users/{user}/roles', [UserController::class, 'removeRole'])->middleware('permission:role.remove');
     Route::post('/users/{user}/disable', [UserController::class, 'disable'])->middleware('permission:user.disable');
 
-    Route::get('/users/allowed-routes', [UserController::class, 'allowedRoutes']);
+    Route::get('/me/allowed-routes', [UserController::class, 'allowedRoutes']);
+    Route::post('/me/workspace' , [UserController::class, 'setWorkspace']);
 
     // =====================PERMISSIONS=====================
     Route::get('/permissions', [PermissionController::class, 'index'])->middleware('permission:permission.view');

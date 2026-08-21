@@ -17,7 +17,7 @@ const app = createApp(App)
 app.use(createPinia())
 const authStore = useAuthStore()
 
-authStore.initializeAuth().finally(() => {
+authStore.initializeAuth(router).finally(() => {
   app.use(router)
   app.mount('#app')
 })

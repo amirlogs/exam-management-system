@@ -29,7 +29,6 @@ onMounted(async () => {
             currentWorkspace.value = permissionsStore.workspaces
         }
     }
-    console.log(currentWorkspace.value)
 })
 
 const roles: (keyof WorkspaceState)[] = ['admin', 'instructor', 'student']
@@ -64,15 +63,14 @@ const workspaces = {
 const defaultWorkspaceId = ref<string | null>(null)
 const openMenuId = ref<string | null>(null)
 
-function setDefault(id: string) {
-    defaultWorkspaceId.value = defaultWorkspaceId.value === id ? null : id
-    openMenuId.value = null
-}
 
 function closeMenu() {
     openMenuId.value = null
 }
 
+function handleWorkspace(role:string){
+ permissionsStore.setActiveWorkspace(role)
+}
 onMounted(() => document.addEventListener('click', closeMenu))
 onUnmounted(() => document.removeEventListener('click', closeMenu))
 </script>
@@ -130,7 +128,7 @@ onUnmounted(() => document.removeEventListener('click', closeMenu))
                     </div>
                     <p class="text-text/60 text-sm leading-relaxed flex-1">{{ workspaces[role].description }}</p>
 
-                    <BaseButton variant="primary" block class="mt-6" @click="$emit('enter-workspace', role)">
+                    <BaseButton variant="primary" block class="mt-6" @click="handleWorkspace(role)">
                         <RouterLink :to="role + '/dashboard'">
                             Enter Workspace
                         </RouterLink>

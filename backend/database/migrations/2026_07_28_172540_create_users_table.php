@@ -19,6 +19,8 @@ return new class extends Migration
             $table->string('password');
             $table->boolean('is_active')->default(true);
             $table->boolean('is_first_login')->default(true);
+            $table->string('default_workspace')->nullable();
+
             $table->timestamps();
         });
     }

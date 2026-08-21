@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Filters\RequestFilters;
 use App\Http\Requests\AssignRoleRequest;
+use App\Http\Requests\SetWorkspaceRequest;
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
 use App\Http\Resources\UserResource;
@@ -93,17 +94,27 @@ class UserController extends Controller
         return $this->success(new UserResource($user->refresh()), 'User disabled successfully');
     }
 
-    public function allowedRoutes(Request $request, NavigationService $navigationService)
+    public function allowedRoutes(SetWorkspaceRequest $request, NavigationService $navigationService)
     {
-        $request->validate([
-            'workspace' => ['required', 'string', 'in:admin,instructor,student'],
-        ]);
+        $validated =  $request->validated();
+        if (! $request->user()->hasWorkspace($validated['workspace'])) {
+            return $this->error(null, 'You are not allowed to access this workspace', 403);
+        }
+        $navigation = $navigationService->forUser($request->user(), $validated['workspace']);
+
+        return $this->success($navigation, 'Navigation fetched successfully');
+    }
+
+    public function setWorkspace(SetWorkspaceRequest $request)
+    {
+        $validated = $request->validated();
 
         if (! $request->user()->hasWorkspace($request->workspace)) {
             return $this->error(null, 'You are not allowed to access this workspace', 403);
         }
-        $navigation = $navigationService->forUser($request->user(), $request->workspace);
         
-        return $this->success($navigation, 'Navigation fetched successfully');
+        $request->user()->update(['default_workspace' => $validated['workspace']]);
+
+        return $this->success(new UserResource($request->user()->refresh()), 'Workspace set successfully');
     }
 }

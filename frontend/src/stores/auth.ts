@@ -1,6 +1,7 @@
 import * as authapi from '@/api/auth'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import type { Router } from 'vue-router'
 import { usePermissionsStore } from './permission'
 
 export const useAuthStore = defineStore('userAuth', () => {
@@ -35,7 +36,7 @@ export const useAuthStore = defineStore('userAuth', () => {
     //function which will take token and set to the state
   }
 
-  async function initializeAuth() {
+  async function initializeAuth(router: Router) {
     if (!token.value) {
       isInitializing.value = false
       return
@@ -45,6 +46,14 @@ export const useAuthStore = defineStore('userAuth', () => {
       user.value = response.data.data.user
       usePermissionsStore().setPermissions(response.data.data.permissions)
       usePermissionsStore().setWorkspaces(response.data.data.workspaces)
+
+      if (response.data.data.user?.default_workspace) {
+        const workspace = response.data.data.user.default_workspace
+        usePermissionsStore().setActiveWorkspace(workspace)
+        return true
+      } else {
+        usePermissionsStore().routeToWorkspace(router)
+      }
     } catch (err) {
       user.value = null
       token.value = null
