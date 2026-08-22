@@ -20,6 +20,7 @@ class UserResource extends JsonResource
             'last_name' => $this->last_name,
             'email' => $this->email,
             'is_first_login' => $this->is_first_login,
+            'is_active' => $this->is_active,
             'default_workspace' => $this->default_workspace,
             'created_at' => $this->created_at?->format('M d, Y'),
             'updated_at' => $this->updated_at?->format('M d, Y'),

@@ -93,6 +93,13 @@ class UserController extends Controller
 
         return $this->success(new UserResource($user->refresh()), 'User disabled successfully');
     }
+    public function activate(User $user)
+    {
+        $user->update(['is_active' => true]);
+
+        return $this->success(new UserResource($user->refresh()), 'User activated successfully');
+    }
+
 
     public function allowedRoutes(SetWorkspaceRequest $request, NavigationService $navigationService)
     {

@@ -9,7 +9,7 @@ import NotFoundView from '@/shared/pages/NotFoundView.vue'
 import UnauthorizedView from '@/shared/pages/UnauthorizedView.vue'
 import { createRouter, createWebHistory } from 'vue-router'
 import adminRoutes from './admin.routes'
-import { authGuard } from './guards'
+import { authGuard, permissionGuard } from './guards'
 import teachingRoutes from './instructor.routes'
 import studentRoutes from './student.routes'
 const routes = [
@@ -92,5 +92,5 @@ const router = createRouter({
 })
 
 router.beforeEach(authGuard)
-// router.beforeEach(permissionGuard)
+router.beforeEach(permissionGuard)
 export default router

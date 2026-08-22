@@ -1,5 +1,5 @@
 import { useAuthStore } from '@/stores/auth'
-// import { usePermissionStore } from '@/stores/permission'
+import { usePermissionsStore } from '@/stores/permission'
 import type { NavigationGuard } from 'vue-router'
 
 export const authGuard: NavigationGuard = (to) => {
@@ -15,11 +15,25 @@ export const authGuard: NavigationGuard = (to) => {
   return true
 }
 
-// import { usePermissionsStore } from '@/stores/permission' // renamed, plural now
+export const permissionGuard: NavigationGuard = (to) => {
+  const permissionsStore = usePermissionsStore()
+  const permissions = to.meta.permissions
+  if (!Array.isArray(permissions) || permissions.length === 0) {
+    return
+  }
+  const mode = to.meta.permissionMode ?? 'any'
+  
+  if (mode === 'all') {
+    const hasPermission = permissions.every((permission) => permissionsStore.hasPermission(permission))
 
-// export const permissionGuard: NavigationGuard = (to) => {
-//   const permissionsStore = usePermissionsStore()
-//   if (to.meta.permission && !permissionsStore.can(to.meta.permission)) {
-//     return { path: '/unauthorized' }
-//   }
-// }
+    if (!hasPermission) {
+      return { path: '/unauthorized' }
+    }
+  } else {
+    const hasPermission = permissions.some((permission) => permissionsStore.hasPermission(permission))
+
+    if (!hasPermission) {
+      return { path: '/unauthorized' }
+    }
+  }
+}

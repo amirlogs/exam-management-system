@@ -26,11 +26,18 @@ export default [
     path: 'universities',
     name: 'admin.universities.list',
     component: UniversitiesView,
+    meta: {
+      permissions: ['university.view'],
+    },
   },
   {
     path: 'colleges',
     name: 'admin-colleges',
     component: CollegesView,
+    // meta: {
+    //   permissions: ['colleges.view'],
+    //   permissionMode: 'any',
+    // },
   },
   {
     path: 'departments',

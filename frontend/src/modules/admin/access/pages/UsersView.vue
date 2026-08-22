@@ -15,6 +15,7 @@ import type { User } from '../types/user'
 import type { Pagination } from '@/shared/composables/useCrudResource'
 import { useUiStore } from '@/stores/ui'
 import ConfirmModal from '@/shared/components/ConfirmModal.vue'
+import ResourceToolbar from '@/shared/components/ResourceToolbar.vue'
 
 const uiStore = useUiStore()
 const users = ref<User[]>([])
@@ -67,12 +68,14 @@ function openCreate() {
     reset({ first_name: '', last_name: '', email: '', password: '' })
     showFormModal.value = true
 }
+
 function openEdit(user: User) {
     selected.value = user
     reset({ first_name: user.first_name, last_name: user.last_name, email: user.email, password: '' })
     showFormModal.value = true
     openMenuId.value = null
 }
+
 function closeFormModal() { showFormModal.value = false; selected.value = null }
 
 async function submitForm() {
@@ -105,6 +108,7 @@ function openManageRoles(user: User) {
     showRolesModal.value = true
     openMenuId.value = null
 }
+
 function onRolesUpdated(updated: User) {
     const idx = users.value.findIndex((u) => u.id === updated.id)
     if (idx !== -1) users.value[idx] = updated
@@ -115,6 +119,7 @@ function openToggleStatus(user: User) {
     showDisableModal.value = true
     openMenuId.value = null
 }
+
 async function confirmToggleStatus() {
     if (!selected.value) return
     toggling.value = true
@@ -132,21 +137,51 @@ async function confirmToggleStatus() {
     }
 }
 
-function initials(u: User) { return `${u.first_name[0] ?? ''}${u.last_name[0] ?? ''}`.toUpperCase() }
+function initials(u: User) {
+  const a = u.first_name?.[0] ?? ''
+  const b = u.last_name?.[0] ?? ''
+  const combined = (a + b).toUpperCase()
+  return combined || '—'
+}
+
+// Search and refresh
+
+const searchQuery = ref('')
+const refreshing = ref(false)
+
+//pass searchQuery.value to the serch
+const activeView = ref<'active' | 'archived'>('active')
+
+async function handleRefresh() {
+  refreshing.value = true
+  await load(pagination.value.current_page)
+  refreshing.value = false
+}
+function handleSearch(query: string) {
+  searchQuery.value = query
+  load(1)
+}
 </script>
 
 <template>
     <div class="mx-auto w-full max-w-360 space-y-6 px-6 py-6">
-        <section class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-                <h1 class="text-2xl font-semibold tracking-tight text-text">Users</h1>
-                <p class="mt-1 text-sm text-text/60">Manage institutional accounts and role assignments.</p>
-            </div>
-            <BaseButton @click="openCreate"><template #icon>
-                    <Plus class="h-4 w-4" />
-                </template>Add user</BaseButton>
-        </section>
-
+        <ResourceToolbar
+          title="Users"
+          description="Manage institutional accounts and role assignments."
+          search-placeholder="Search by name or email…"
+          show-search
+          show-refresh
+          :refreshing="refreshing"
+          @update:search="handleSearch"
+          @refresh="handleRefresh"
+        >
+          <template #actions>
+            <BaseButton @click="openCreate">
+              <template #icon><Plus class="h-4 w-4" /></template>
+              Add user
+            </BaseButton>
+          </template>
+        </ResourceToolbar>
         <div class="rounded-md border border-border bg-surface">
             <div class="overflow-x-auto">
                 <table class="w-full min-w-190 border-collapse">

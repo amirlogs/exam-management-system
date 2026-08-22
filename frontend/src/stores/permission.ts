@@ -1,6 +1,5 @@
 import { setWorkspace } from '@/api/auth'
 import type { WorkspaceState } from '@/modules/instructor/pages/question-bank/types'
-import router from '@/router'
 import trueCouter from '@/shared/utils/trueCounter'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
@@ -19,8 +18,16 @@ export const usePermissionsStore = defineStore('permissions', () => {
     workspaces.value = newWorkspaces
   }
 
-  function can(permission: string) {
+  function hasPermission(permission: string) {
     return permissions.value.includes(permission)
+  }
+
+  function hasAnyPermission(required: string[]): boolean {
+    return required.some((permission) => permissions.value.includes(permission))
+  }
+
+  function hasAllPermissions(required: string[]): boolean {
+    return required.every((permission) => permissions.value.includes(permission))
   }
 
   function clear() {
@@ -53,7 +60,9 @@ export const usePermissionsStore = defineStore('permissions', () => {
   return {
     permissions,
     setPermissions,
-    can,
+    hasPermission,
+    hasAnyPermission,
+    hasAllPermissions,
     clear,
     activeWorkspace,
     setActiveWorkspace,

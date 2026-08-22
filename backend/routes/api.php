@@ -35,11 +35,11 @@ Route::middleware('auth:sanctum')->group(function () {
     // ============ UNIVERSITY STRUCTURE ============
     Route::post('/universities', [UniversityController::class, 'store'])->middleware('permission:university.create');
     Route::get('/universities', [UniversityController::class, 'index'])->middleware('permission:university.view');
-    Route::get('/universities/archived', [UniversityController::class, 'archived'])->middleware('permission:university.view');
-    Route::get('/universities/{university}', [UniversityController::class, 'show'])->middleware('permission:university.view');
     Route::patch('/universities/{university}', [UniversityController::class, 'update'])->middleware('permission:university.update');
-    Route::delete('/universities/{university}', [UniversityController::class, 'destroy'])->middleware('permission:university.archive');
-    Route::post('/universities/{university}/restore', [UniversityController::class, 'restore'])->middleware('permission:university.restore');
+    // Route::get('/universities/archived', [UniversityController::class, 'archived'])->middleware('permission:university.view');
+    // Route::get('/universities/{university}', [UniversityController::class, 'show'])->middleware('permission:university.view');
+    // Route::delete('/universities/{university}', [UniversityController::class, 'destroy'])->middleware('permission:university.archive');
+    // Route::post('/universities/{university}/restore', [UniversityController::class, 'restore'])->middleware('permission:university.restore');
 
     Route::post('/colleges', [CollegeController::class, 'store'])->middleware('permission:college.create');
     Route::get('/colleges', [CollegeController::class, 'index'])->middleware('permission:college.view');
@@ -88,9 +88,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/users/{user}/roles', [UserController::class, 'assignRole'])->middleware('permission:role.assign');
     Route::delete('/users/{user}/roles', [UserController::class, 'removeRole'])->middleware('permission:role.remove');
     Route::post('/users/{user}/disable', [UserController::class, 'disable'])->middleware('permission:user.disable');
+    Route::post('/users/{user}/activate', [UserController::class, 'activate']); // ->middleware('permission:user.activate');
 
     Route::get('/me/allowed-routes', [UserController::class, 'allowedRoutes']);
-    Route::post('/me/workspace' , [UserController::class, 'setWorkspace']);
+    Route::post('/me/workspace', [UserController::class, 'setWorkspace']);
 
     // =====================PERMISSIONS=====================
     Route::get('/permissions', [PermissionController::class, 'index'])->middleware('permission:permission.view');

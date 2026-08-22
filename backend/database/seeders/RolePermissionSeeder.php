@@ -33,8 +33,8 @@ class RolePermissionSeeder extends Seeder
             ['university.create', 'university'],
             ['university.view', 'university'],
             ['university.update', 'university'],
-            ['university.archive', 'university'],
-            ['university.restore', 'university'],
+            // ['university.archive', 'university'],
+            // ['university.restore', 'university'],
 
             // College
             ['college.create', 'college'],
