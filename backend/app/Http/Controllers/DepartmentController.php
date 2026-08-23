@@ -26,7 +26,7 @@ class DepartmentController extends Controller
 
         $per_page = GetRequestsValidator::validate($request);
         $query = Department::query();
-        RequestFilters::apply($query, $request, ['college_id']);
+        RequestFilters::apply($query, $request, ['college_id', 'type']);
         $departments = $query->with('college')->paginate($per_page);
 
         return $this->paginate($departments, DepartmentResource::class, 'Departments retrieved successfully');
@@ -36,7 +36,7 @@ class DepartmentController extends Controller
     {
         $per_page = GetRequestsValidator::validate($request);
         $query = Department::query();
-        RequestFilters::apply($query, $request, ['college_id']);
+        RequestFilters::apply($query, $request, ['college_id', 'type']);
         $departments = $query->onlyTrashed()->with('college')->paginate($per_page);
 
         return $this->paginate($departments, DepartmentResource::class, 'Archived Departments retrieved successfully');

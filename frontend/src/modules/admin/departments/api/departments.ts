@@ -7,15 +7,27 @@ interface ListResponse<T> {
   pagination: Pagination
 }
 
-export async function getDepartments(page = 1, perPage = 10): Promise<ListResponse<Department>> {
-  const res = await api.get('/departments', { params: { page, per_page: perPage } })
+export async function getDepartments(
+  page = 1,
+  perPage = 10,
+  search = '',
+  filters?: { college_id?: number | null; type?: string },
+): Promise<ListResponse<Department>> {
+  const res = await api.get('/departments', {
+    params: { page, per_page: perPage, search, ...filters },
+  })
   return res.data
 }
+
 export async function getArchivedDepartments(
   page = 1,
   perPage = 10,
+  search = '',
+  filters?: { college_id?: number | null; type?: string },
 ): Promise<ListResponse<Department>> {
-  const res = await api.get('/departments/archived', { params: { page, per_page: perPage } })
+  const res = await api.get('/departments/archived', {
+    params: { page, per_page: perPage, search, ...filters },
+  })
   return res.data
 }
 export async function createDepartment(data: CreateDepartmentData) {

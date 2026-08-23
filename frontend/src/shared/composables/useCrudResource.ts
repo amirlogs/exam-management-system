@@ -34,25 +34,43 @@ export function useCrudResource<T extends { id: number }>(api: CrudApi<T>, label
     from: null,
     to: null,
   })
+
   const activePagination = ref<Pagination>(emptyPagination())
   const archivedPagination = ref<Pagination>(emptyPagination())
 
-  const currentPagination = () =>
-    activeTab.value === 'active' ? activePagination.value : archivedPagination.value
+  const currentPagination = () => (activeTab.value === 'active' ? activePagination.value : archivedPagination.value)
   const currentList = () => (activeTab.value === 'active' ? items.value : archivedItems.value)
+
+  // Track if initial fetch has completed
+  const isInitialLoad = ref(true)
 
   async function load(page = 1) {
     loading.value = true
     error.value = null
+
     try {
-      const response =
-        activeTab.value === 'active' ? await api.list(page) : await api.listArchived(page)
-      if (activeTab.value === 'active') {
-        items.value = response.data
-        activePagination.value = response.pagination
+      if (isInitialLoad.value) {
+        // Fetch BOTH active and archived on first render to get accurate initial tab counts
+        const [activeRes, archivedRes] = await Promise.all([api.list(page), api.listArchived(1)])
+
+        items.value = activeRes.data
+        activePagination.value = activeRes.pagination
+
+        archivedItems.value = archivedRes.data
+        archivedPagination.value = archivedRes.pagination
+
+        isInitialLoad.value = false
       } else {
-        archivedItems.value = response.data
-        archivedPagination.value = response.pagination
+        // Subsequent pagination / tab toggles only fetch the current tab's data
+        if (activeTab.value === 'active') {
+          const response = await api.list(page)
+          items.value = response.data
+          activePagination.value = response.pagination
+        } else {
+          const response = await api.listArchived(page)
+          archivedItems.value = response.data
+          archivedPagination.value = response.pagination
+        }
       }
     } catch (err: any) {
       error.value =
@@ -73,7 +91,7 @@ export function useCrudResource<T extends { id: number }>(api: CrudApi<T>, label
   async function archive(item: T) {
     await api.remove(item.id)
     items.value = items.value.filter((i) => i.id !== item.id)
-    activePagination.value.total -= 1
+    activePagination.value.total = Math.max(0, activePagination.value.total - 1)
     archivedPagination.value.total += 1
     uiStore.showToast(`${String(item[labelKey])} archived.`, 'success')
   }
@@ -81,7 +99,7 @@ export function useCrudResource<T extends { id: number }>(api: CrudApi<T>, label
   async function restore(item: T) {
     await api.restore(item.id)
     archivedItems.value = archivedItems.value.filter((i) => i.id !== item.id)
-    archivedPagination.value.total -= 1
+    archivedPagination.value.total = Math.max(0, archivedPagination.value.total - 1)
     activePagination.value.total += 1
     uiStore.showToast(`${String(item[labelKey])} restored.`, 'success')
   }

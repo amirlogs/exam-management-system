@@ -34,20 +34,25 @@ export default [
     path: 'colleges',
     name: 'admin-colleges',
     component: CollegesView,
-    // meta: {
-    //   permissions: ['colleges.view'],
-    //   permissionMode: 'any',
-    // },
+    meta: {
+      permissions: ['college.view'],
+    },
   },
   {
     path: 'departments',
     name: 'admin-departments',
     component: DepartmentsView,
+    meta: {
+      permissions: ['department.view'],
+    },
   },
   {
     path: 'programs',
     name: 'admin-programs',
     component: ProgramsView,
+    meta: {
+      permissions: ['program.view'],
+    },
   },
   {
     path: 'courses',
