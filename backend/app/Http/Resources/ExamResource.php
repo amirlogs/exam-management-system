@@ -16,13 +16,21 @@ class ExamResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'title' => $this->title,
             'course_offering_id' => $this->course_offering_id,
             'type' => $this->type,
             'duration_minutes' => $this->duration_minutes,
             'composition' => $this->composition,
             'status' => $this->status,
-            'scheduled_start' => $this->scheduled_start,
-            'scheduled_end' => $this->scheduled_end,
+            'scheduled_start' => $this->scheduled_start?->format('M d,Y'),
+            'scheduled_end' => $this->scheduled_end?->format('M d,Y'),
+            'creator' => [
+                'id' => $this->created_by,
+                'name' => $this->creator->first_name,
+                'email' => $this->creator->email,
+            ],
+            'created_at' => $this->created_at?->format('M d,Y'),
+            'updated_at' => $this->updated_at?->format('M d,Y'),
         ];
     }
 }

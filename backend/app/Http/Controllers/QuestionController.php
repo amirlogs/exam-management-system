@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Filters\RequestFilters;
 use App\Http\Resources\QuestionResource;
 use App\Models\Course;
 use App\Models\Question;
+use App\Validation\GetRequestsValidator;
 use App\Validation\QuestionValidator;
 use Illuminate\Http\Request;
 
@@ -12,11 +14,13 @@ class QuestionController extends Controller
 {
     public function index(Request $request)
     {
-        $questions = Question::when($request->course_id, fn ($q, $id) => $q->where('course_id', $id))
-            ->when($request->chapter, fn ($q, $c) => $q->where('chapter', $c))
-            ->get();
+        $per_page = GetRequestsValidator::validate($request);
+        $query = Question::query();
+        RequestFilters::apply($query, $request, ['course_id', 'import_history_id', 'type', 'chapter', 'status']);
 
-        return $this->success(QuestionResource::collection($questions), 'Questions fetched successfully');
+        $questions = $query->paginate($per_page);
+
+        return $this->paginate($questions, QuestionResource::class, 'Questions fetched successfully');
     }
 
     public function show(Question $question)
@@ -76,7 +80,7 @@ class QuestionController extends Controller
             }
         }
 
-        return $this->success($question->fresh('options'), 'Question updated successfully');
+        return $this->success(new QuestionResource($question), 'Question updated successfully');
     }
 
     // public function activate(Question $question)
@@ -92,10 +96,6 @@ class QuestionController extends Controller
 
     public function destroy(Question $question)
     {
-        // if ($question->status !== 'active') {
-        //     return $this->error(null, 'Only active questions can be archived.', 409);
-        // }
-
         $question->update(['status' => 'archived']);
         $question->delete();
 
@@ -111,6 +111,17 @@ class QuestionController extends Controller
         $question->restore();
         $question->update(['status' => 'active']);
 
-        return $this->success($question, 'Question restored successfully');
+        return $this->success(new QuestionResource($question), 'Question restored successfully');
+    }
+
+    public function archived(Request $request)
+    {
+        $per_page = GetRequestsValidator::validate($request);
+        $query = Question::query();
+        RequestFilters::apply($query, $request, ['course_id', 'import_history_id', 'type', 'chapter', 'status']);
+
+        $questions = $query->onlyTrashed()->paginate($per_page);
+
+        return $this->paginate($questions, QuestionResource::class, 'Archived questions retrieved successfully');
     }
 }

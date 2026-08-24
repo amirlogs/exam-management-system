@@ -1,7 +1,7 @@
 import RolesView from '@/modules/admin/access/pages/RolesView.vue'
 import UsersView from '@/modules/admin/access/pages/UsersView.vue'
 import CollegesView from '@/modules/admin/colleges/pages/CollegesView.vue'
-import CourseOfferingsBoard from '@/modules/admin/course-offerings/pages/CourseOfferingsBoard.vue'
+import CourseOfferingsView from '@/modules/admin/course-offerings/pages/CourseOfferingsView.vue'
 import CoursesView from '@/modules/admin/courses/pages/CoursesView.vue'
 import CurriculumPlannerView from '@/modules/admin/curriculum/pages/CurriculumPlannerView.vue'
 import DepartmentsView from '@/modules/admin/departments/pages/DepartmentsView.vue'
@@ -58,19 +58,50 @@ export default [
     path: 'courses',
     name: 'admin.courses.list',
     component: CoursesView,
+    meta: {
+      permissions: ['course.view'],
+    },
   },
 
   // // ---------------- Curriculum ----------------
-  { path: 'curriculum', name: 'admin-curriculum', component: CurriculumPlannerView },
-  { path: 'semesters', name: 'admin-semesters', component: SemestersView },
-  { path: 'sections', name: 'admin-sections', component: SectionsView },
+  {
+    path: 'curriculum',
+    name: 'admin-curriculum',
+    component: CurriculumPlannerView,
+    meta: {
+      permissions: ['curriculum.view'],
+    },
+  },
+  {
+    path: 'semesters',
+    name: 'admin-semesters',
+    component: SemestersView,
+    meta: {
+      permissions: ['semester.view'],
+    },
+  },
+  {
+    path: 'sections',
+    name: 'admin-sections',
+    component: SectionsView,
+    meta: {
+      permissions: ['section.view'],
+    },
+  },
 
   // // ---------------- Data Import ----------------
   { path: 'imports', name: 'admin-imports', component: ImportsListView },
   { path: 'imports/new', name: 'admin-import-new', component: NewImportView },
   { path: 'imports/:id(\\d+)', name: 'admin-import-detail', component: ImportDetailView },
   // // ---------------- Course Offerings ----------------
-  { path: 'course-offerings', name: 'admin-course-offerings', component: CourseOfferingsBoard },
+  {
+    path: 'course-offerings',
+    name: 'admin-course-offerings',
+    component: CourseOfferingsView,
+    meta: {
+      permissions: ['course_offering.view'],
+    },
+  },
 
   // // ---------------- Users & Roles ----------------
   { path: 'users', name: 'admin-users', component: UsersView },

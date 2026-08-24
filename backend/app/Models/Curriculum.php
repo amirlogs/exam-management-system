@@ -9,24 +9,23 @@ class Curriculum extends Model
 {
     protected $table = 'curricula';
 
-    protected $fillable = ['program_id', 'version', 'academic_year', 'status'];
+    protected $fillable = [
+        'program_id',
+        'version',
+        'status',
+    ];
 
     public function program()
     {
         return $this->belongsTo(Program::class);
     }
 
-    public function curriculumCourses()
+    public function courses()
     {
         return $this->hasMany(CurriculumCourse::class);
     }
 
-    public function courses()
-    {
-        return $this->belongsToMany(Course::class, 'curriculum_courses');
-    }
-
-    public function isActive()
+    public function isActive(): bool
     {
         return $this->status === 'active';
     }
@@ -36,8 +35,18 @@ class Curriculum extends Model
         DB::transaction(function () {
             static::where('program_id', $this->program_id)
                 ->where('status', 'active')
-                ->update(['status' => 'archived']);
-            $this->update(['status' => 'active']);
+                ->update([
+                    'status' => 'archived',
+                ]);
+
+            $this->update([
+                'status' => 'active',
+            ]);
         });
+    }
+
+    public function curriculumCourses()
+    {
+        return $this->hasMany(CurriculumCourse::class);
     }
 }

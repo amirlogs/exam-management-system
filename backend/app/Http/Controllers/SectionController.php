@@ -32,7 +32,7 @@ class SectionController extends Controller
         $per_page = GetRequestsValidator::validate($request);
         $query = Section::query();
         RequestFilters::apply($query, $request, ['semester_id', 'program_id', 'year_level']);
-        $sections = $query->paginate($per_page);
+        $sections = $query->with('program', 'semester')->paginate($per_page);
 
         return $this->paginate($sections, SectionResource::class, 'sections fetched successfully');
     }
@@ -75,8 +75,7 @@ class SectionController extends Controller
         $per_page = GetRequestsValidator::validate($request);
         $query = Section::query();
         RequestFilters::apply($query, $request, ['semester_id', 'program_id', 'year_level']);
-        $sections = $query->onlyTrashed()->paginate($per_page);
-
+        $sections = $query->with('program', 'semester')->onlyTrashed()->paginate($per_page);
         return $this->paginate($sections, SectionResource::class, 'archived sections fetched successfully');
     }
 }

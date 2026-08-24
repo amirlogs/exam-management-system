@@ -15,7 +15,6 @@ return new class extends Migration
             $table->id();
             $table->foreignId('program_id')->constrained()->cascadeOnDelete();
             $table->string('version');
-            // $table->string('academic_year')-;
             $table->string('status')->default('draft');
             $table->timestamps();
         });

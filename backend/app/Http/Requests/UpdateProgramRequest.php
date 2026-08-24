@@ -28,7 +28,7 @@ class UpdateProgramRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'department_id' => ['sometimes', 'integer', 'esists:departments,id'],
+            'department_id' => ['sometimes', 'integer', 'exists:departments,id'],
             'code' => ['sometimes', 'string', 'max:255', 'min:2', Rule::unique('programs')->ignore($this->program)],
             'name' => ['sometimes', 'string', 'max:255', Rule::unique('programs')->ignore($this->program)],
             'duration_years' => ['sometimes', 'integer', 'min:1', 'max:10'],

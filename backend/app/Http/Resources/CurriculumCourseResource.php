@@ -21,7 +21,6 @@ class CurriculumCourseResource extends JsonResource
             'year_level' => $this->year_level,
             'semester_number' => $this->semester_number,
             'created_at' => $this->created_at?->format('M d, Y'),
-            'deleted_at' => $this->deleted_at?->format('M d, Y'),
             'course' => new CourseResource($this->whenLoaded('course')),
             'curriculum' => new CurriculumResource($this->whenLoaded('curriculum')),
         ];

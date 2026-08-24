@@ -1,22 +1,22 @@
 <?php
 
-use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
+use illuminate\database\migrations\migration;
+use illuminate\database\schema\blueprint;
+use illuminate\support\facades\schema;
 
-return new class extends Migration
+return new class extends migration
 {
     /**
-     * Run the migrations.
+     * run the migrations.
      */
     public function up(): void
     {
-        Schema::create('questions', function (Blueprint $table) {
+        schema::create('questions', function (blueprint $table) {
             $table->id();
-            $table->foreignId('course_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('created_by')->constrained('users');
-            $table->foreignId('import_history_id')->nullable()->constrained('import_histories')->nullOnDelete();
-            $table->enum('type', ['MCQ', 'TRUE_FALSE', 'ESSAY', 'SHORT_ANSWER']);
+            $table->foreignid('course_id')->constrained()->cascadeondelete();
+            $table->foreignid('created_by')->constrained('users');
+            $table->foreignid('import_history_id')->nullable()->constrained('import_histories')->nullondelete();
+            $table->enum('type', ['mcq', 'true_false', 'essay', 'short_answer']);
             $table->string('chapter')->nullable();
             $table->text('content');
             $table->string('difficulty')->nullable();
@@ -26,10 +26,10 @@ return new class extends Migration
     }
 
     /**
-     * Reverse the migrations.
+     * reverse the migrations.
      */
     public function down(): void
     {
-        Schema::dropIfExists('questions');
+        schema::dropifexists('questions');
     }
 };

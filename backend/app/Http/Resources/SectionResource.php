@@ -22,6 +22,8 @@ class SectionResource extends JsonResource
             'semester_id' => $this->semester_id,
             'created_at' => $this->created_at?->format('M d, Y'),
             'updated_at' => $this->updated_at?->format('M d, Y'),
+            'program' =>  new ProgramResource($this->whenLoaded('program')),
+            'semester' => new SemesterResource($this->whenLoaded('semester'))
         ];
     }
 }

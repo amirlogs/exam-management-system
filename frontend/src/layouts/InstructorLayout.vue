@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useRoute, useRouter } from 'vue-router'
-import { LayoutGrid, BookOpen, HelpCircle, CheckSquare, Flag } from 'lucide-vue-next'
+import { LayoutGrid, BookOpen, HelpCircle, CheckSquare, Flag , FileText } from 'lucide-vue-next'
 import AppSidebar from './partials/AppSidebar.vue'
 import AppTopbar from './partials/AppTopbar.vue'
 import WorkspaceSwitcherDropdown from './partials/WorkspaceSwitcherDropdown.vue'
@@ -10,14 +10,21 @@ const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 
-
 const navItems = [
     { label: 'Dashboard', to: '/instructor/dashboard', icon: LayoutGrid },
     { label: 'My Courses', to: '/instructor/courses', icon: BookOpen },
     { label: 'Question Bank', to: '/instructor/question-bank', icon: HelpCircle },
 ]
-</script>
 
+//  const navItems = [
+//   { label: 'Dashboard', to: '/instructor/dashboard', icon: LayoutGrid },
+//   { label: 'My Courses', to: '/instructor/courses', icon: BookOpen },
+//   { label: 'Question Bank', to: '/instructor/question-bank', icon: HelpCircle },
+//   { label: 'Exams', to: '/instructor/exams', icon: FileText },
+//   { label: 'Grading', to: '/instructor/grading', icon: CheckSquare },
+// ]
+ 
+</script>
 
 <template>
     <div class="flex min-h-screen bg-bg">

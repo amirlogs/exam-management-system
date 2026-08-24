@@ -11,7 +11,7 @@ class Question extends Model
 
     protected $fillable = [
         'course_id', 'created_by', 'type', 'chapter',
-        'content', 'difficulty', 'status','import_history_id'
+        'content', 'difficulty', 'status', 'import_history_id',
     ];
 
     public function course()
@@ -37,5 +37,10 @@ class Question extends Model
     public function importHistory()
     {
         return $this->belongsTo(ImportHistory::class);
+    }
+
+    public function examQuestions()
+    {
+        return $this->hasMany(ExamQuestion::class);
     }
 }

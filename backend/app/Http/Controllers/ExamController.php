@@ -3,10 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Commit\ExamQuestionCommitter;
+use App\Http\Filters\RequestFilters;
 use App\Http\Requests\AddQuestionsRequest;
 use App\Http\Requests\ExamCompositionRequest;
 use App\Http\Requests\StoreOnlineExamRequest;
 use App\Http\Requests\StoreQuestionRequest;
+use App\Http\Resources\ExamQuestionResource;
+use App\Http\Resources\ExamResource;
 use App\Jobs\ImportCsv;
 use App\Models\Course;
 use App\Models\CourseOffering;
@@ -17,12 +20,28 @@ use App\Models\ImportHistory;
 use App\Models\Question;
 use App\Services\ImportCommitterFactory;
 use App\Services\ImportValidatorFactory;
+use App\Validation\GetRequestsValidator;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class ExamController extends Controller
 {
+    public function index(CourseOffering $courseOffering, Request $request)
+    {
+        $per_page = GetRequestsValidator::validate($request);
+        $query = Exam::query();
+        RequestFilters::apply($query, $request, ['type', 'status']);
+        $exam = $query->where('course_offering_id', $courseOffering->id)->paginate($per_page);
+
+        return $this->paginate($exam, ExamResource::class, 'Exam fetched successfully');
+    }
+
+    public function show(Exam $exam)
+    {
+        return $this->success(new ExamResource($exam), 'Exam fetched successfully');
+    }
+
     public function store(CourseOffering $courseOffering, StoreOnlineExamRequest $request)
     {
         $validated = $request->validated();
@@ -45,7 +64,8 @@ class ExamController extends Controller
             'course_offering_id' => $courseOffering->id,
         ]);
 
-        return $this->success($exam->refresh(), 'Exam created successfully', 201);
+        // return $this->success($exam, 'Exam created successfully', 201);
+        return $this->success(new ExamResource($exam->refresh()), 'Exam created successfully', 201);
     }
 
     public function composition(Exam $exam, ExamCompositionRequest $request)
@@ -56,7 +76,7 @@ class ExamController extends Controller
         }
         $exam->update(['composition' => $validated['composition']]);
 
-        return $this->success($exam->refresh(), 'Exam composition updated successfully');
+        return $this->success(new ExamResource($exam->refresh()), 'Exam composition updated successfully');
     }
 
     public function addQuestions(Exam $exam, AddQuestionsRequest $request)
@@ -82,9 +102,9 @@ class ExamController extends Controller
         $question = $exam->examQuestions()->create([
             ...$validated,
             'marks' => $marks,
-        ]);
+        ])->load('question');
 
-        return $this->success($question, 'Question added successfully', 201);
+        return $this->success(new ExamQuestionResource($question), 'Question added successfully', 201);
     }
 
     public function removeQuestion(Exam $exam, ExamQuestion $examQuestion)
@@ -98,8 +118,12 @@ class ExamController extends Controller
         return $this->success(null, 'Question removed successfully');
     }
 
-    public function questions(Exam $exam)
+    public function questions(Exam $exam , Request $request)
     {
+        $per_page = GetRequestsValidator::validate($request);
+        $query = Question::query();
+        RequestFilters::apply($query, $request, ['course_id', 'import_history_id', 'type', 'chapter', 'status']);
+
         $questions = $exam->questions()->with('options')->get();
 
         $totalMarks = $questions->sum(function ($question) {
@@ -296,35 +320,6 @@ class ExamController extends Controller
         return $this->success($exam->fresh(), 'Exam archived successfully');
     }
 }
-
-/*
-public function importQuestions(StoreQuestionRequest $request)
-    {
-        $validated = $request->validated();
-        $context = json_decode($validated['context'], true);
-        if (! Course::find($context['course_id'])) {
-            return $this->error(null, 'Course not found', 404);
-        }
-
-        $path = $request->file('file')->store('imports');
-
-        $import = ImportHistory::create([
-            'uploaded_by' => $request->user()->id,
-            'type' => 'questions',
-            'file_path' => $path,
-            'context' => ['course_id' => $context['course_id'], 'uploaded_by' => $request->user()->id],
-            'status' => 'pending',
-        ]);
-
-        // $import->update(['context' => array_merge($import->context, ['import_history_id' => $import->id])]);
-
-        ImportCsv::dispatch($import);
-
-        return $this->success($import, 'Question import queued successfully', 201);
-
-    }
-
-*/
 
 /**
 public function confirmImportQuestions(Exam $exam, ImportHistory $importHistory)

@@ -14,25 +14,34 @@ class ExamQuestionResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        // return [
+        //     'id' => $this->id,
+        //     'exam_question_id' => $this->pivot->id,
+        //     'course_id' => $this->course_id,
+        //     'created_by' => $this->created_by,
+        //     'import_history_id' => $this->import_history_id,
+        //     'type' => $this->type,
+        //     'chapter' => $this->chapter,
+        //     'content' => $this->content,
+        //     'difficulty' => $this->difficulty,
+        //     'status' => $this->status,
+        //     'order_number' => $this->pivot->order_number,
+        //     'marks' => $this->pivot->marks,
+        //     'options' => $this->options->map(function ($option) {
+        //         return [
+        //             'id' => $option->id,
+        //             'content' => $option->option_text,
+        //         ];
+        //     }),
+        //     'question' => new QuestionResource($this->whenLoaded('question')),
+        // ];
         return [
             'id' => $this->id,
-            'exam_question_id' => $this->pivot->id,
-            'course_id' => $this->course_id,
-            'created_by' => $this->created_by,
-            'import_history_id' => $this->import_history_id,
-            'type' => $this->type,
-            'chapter' => $this->chapter,
-            'content' => $this->content,
-            'difficulty' => $this->difficulty,
-            'status' => $this->status,
-            'order_number' => $this->pivot->order_number,
-            'marks' => $this->pivot->marks,
-            'options' => $this->options->map(function ($option) {
-                return [
-                    'id' => $option->id,
-                    'content' => $option->option_text,
-                ];
-            }),
+            'exam_id' => $this->exam_id,
+            'marks' => $this->marks,
+            'created_at' => $this->created_at?->format('M d, Y'),
+            'updated_at' => $this->updated_at?->format('M d, Y'),
+            'question' => new QuestionResource($this->whenLoaded('question')),
         ];
     }
 }

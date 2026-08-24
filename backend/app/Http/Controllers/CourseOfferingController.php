@@ -96,7 +96,8 @@ class CourseOfferingController extends Controller
 
         $section = Section::find($request->section_id);
         if (! $section) {
-            return $this->error(null, 'Section not found', 404);        }
+            return $this->error(null, 'Section not found', 404);
+        }
 
         $courseOffering->sections()->syncWithoutDetaching([$section->id]);
 
@@ -249,5 +250,37 @@ class CourseOfferingController extends Controller
         }
 
         return $this->success(['enrolled_count' => $enrolledCount], 'Students enrolled successfully');
+    }
+
+    public function reopen(CourseOffering $courseOffering)
+    {
+        if (! in_array($courseOffering->status, ['rejected', 'cancelled'])) {
+            return $this->error(null, 'Only rejected or cancelled offerings can be reopened', 409);
+        }
+
+        $duplicate = CourseOffering::where('course_id', $courseOffering->course_id)
+            ->where('semester_id', $courseOffering->semester_id)
+            ->where('id', '!=', $courseOffering->id)
+            ->whereNotIn('status', ['cancelled', 'rejected'])
+            ->with('course')
+            ->first();
+
+        if ($duplicate) {
+            return $this->error(
+                null,
+                "Cannot reopen: an active offering for {$duplicate->course->code} already exists in this semester (status: {$duplicate->status}). Archive or cancel that one first.",
+                409
+            );
+        }
+
+        $courseOffering->update([
+            'status' => 'draft',
+            'rejection_reason' => null,
+        ]);
+
+        return $this->success(
+            new CourseOfferingResource($courseOffering->load('course', 'semester', 'sections', 'instructors')),
+            'Course offering reopened as draft'
+        );
     }
 }

@@ -1,19 +1,32 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { Edit, MoreVertical, Archive, RotateCcw } from 'lucide-vue-next'
+import { Edit, MoreVertical, Archive, RotateCcw, type LucideIcon } from 'lucide-vue-next'
 import { usePermissionsStore } from '@/stores/permission'
+
+interface ExtraAction {
+    key: string
+    label: string
+    icon: LucideIcon
+    permission?: string
+    variant?: 'default' | 'danger' | 'accent'
+    /** Show only in 'active' tab, only 'archived', or both (default). */
+    showOn?: 'active' | 'archived' | 'both'
+}
 
 const props = defineProps<{
     activeTab: 'active' | 'archived'
     editPermission?: string
     archivePermission?: string
     restorePermission?: string
+    /** Extra menu items beyond edit/archive/restore, e.g. View, Reopen. */
+    extraActions?: ExtraAction[]
 }>()
 
 const emit = defineEmits<{
     edit: []
     archive: []
     restore: []
+    action: [key: string]
 }>()
 
 const permissionsStore = usePermissionsStore()
@@ -21,19 +34,31 @@ const permissionsStore = usePermissionsStore()
 const isOpen = ref(false)
 const menuPosition = ref({ top: 0, left: 0 })
 
-// Check if user has permission for active actions (Edit or Archive)
+const visibleExtras = computed(() =>
+    (props.extraActions ?? []).filter((a) => {
+        const permOk = !a.permission || permissionsStore.hasPermission(a.permission)
+        return permOk
+    }),
+)
+
+const activeExtras = computed(() =>
+    visibleExtras.value.filter((a) => !a.showOn || a.showOn === 'both' || a.showOn === 'active'),
+)
+const archivedExtras = computed(() =>
+    visibleExtras.value.filter((a) => !a.showOn || a.showOn === 'both' || a.showOn === 'archived'),
+)
+
 const canShowActiveMenu = computed(() => {
     const activePerms = [props.editPermission, props.archivePermission].filter(Boolean) as string[]
-    return activePerms.some((p) => permissionsStore.hasPermission(p))
+    const baseAllowed = activePerms.some((p) => permissionsStore.hasPermission(p))
+    return baseAllowed || activeExtras.value.length > 0
 })
 
-// Check if user has permission for archived actions (Restore)
 const canShowArchivedMenu = computed(() => {
-    if (!props.restorePermission) return false
-    return permissionsStore.hasPermission(props.restorePermission)
+    const restoreAllowed = !!props.restorePermission && permissionsStore.hasPermission(props.restorePermission)
+    return restoreAllowed || archivedExtras.value.length > 0
 })
 
-// Determine overall trigger button visibility based on active tab
 const canShowTrigger = computed(() => {
     return props.activeTab === 'active' ? canShowActiveMenu.value : canShowArchivedMenu.value
 })
@@ -44,7 +69,11 @@ function toggleMenu(event: MouseEvent) {
         return
     }
     const rect = (event.currentTarget as HTMLElement).getBoundingClientRect()
-    const menuHeight = 100
+    const itemCount =
+        (props.activeTab === 'active'
+            ? (props.editPermission ? 1 : 0) + (props.archivePermission ? 1 : 0) + activeExtras.value.length
+            : (props.restorePermission ? 1 : 0) + archivedExtras.value.length) || 1
+    const menuHeight = Math.max(44, itemCount * 36 + 8)
     const openUpward = window.innerHeight - rect.bottom < menuHeight
     menuPosition.value = {
         top: openUpward ? rect.top - menuHeight - 4 : rect.bottom + 4,
@@ -76,7 +105,6 @@ onUnmounted(() => {
 </script>
 
 <template>
-    <!-- Render button only if user has permission for current tab -->
     <div v-if="canShowTrigger">
         <button type="button" data-action-trigger
             class="inline-flex h-8 w-8 items-center justify-center rounded-md text-text/50 transition hover:bg-text/5 hover:text-text"
@@ -84,14 +112,11 @@ onUnmounted(() => {
             <MoreVertical class="h-4 w-4" />
         </button>
 
-        <!-- Dropdown Menu -->
         <Teleport to="body">
             <div v-if="isOpen" data-action-menu
                 class="fixed z-[100] w-40 rounded-md border border-border bg-surface py-1 shadow-lg"
-                :style="{ top: menuPosition.top + 'px', left: menuPosition.left + 'px' }"
-                @click.stop>
+                :style="{ top: menuPosition.top + 'px', left: menuPosition.left + 'px' }" @click.stop>
 
-                <!-- Active Tab Options -->
                 <template v-if="activeTab === 'active'">
                     <button v-if="editPermission" v-can="editPermission" type="button"
                         class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-text hover:bg-text/5"
@@ -100,8 +125,15 @@ onUnmounted(() => {
                         Edit
                     </button>
 
-                    <div v-if="editPermission && archivePermission"
-                        v-can:all="[editPermission, archivePermission]"
+                    <button v-for="a in activeExtras" :key="a.key" type="button"
+                        class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-text/5"
+                        :class="a.variant === 'danger' ? 'text-error hover:bg-error/5' : a.variant === 'accent' ? 'text-accent hover:bg-accent/5' : 'text-text'"
+                        @click="closeMenu(); emit('action', a.key)">
+                        <component :is="a.icon" class="h-4 w-4" :class="a.variant ? '' : 'text-text/50'" />
+                        {{ a.label }}
+                    </button>
+
+                    <div v-if="(editPermission || activeExtras.length) && archivePermission"
                         class="my-1 border-t border-border" />
 
                     <button v-if="archivePermission" v-can="archivePermission" type="button"
@@ -112,13 +144,20 @@ onUnmounted(() => {
                     </button>
                 </template>
 
-                <!-- Archived Tab Options -->
                 <template v-else>
                     <button v-if="restorePermission" v-can="restorePermission" type="button"
                         class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-accent hover:bg-accent/5"
                         @click="closeMenu(); emit('restore')">
                         <RotateCcw class="h-4 w-4" />
                         Restore
+                    </button>
+
+                    <button v-for="a in archivedExtras" :key="a.key" type="button"
+                        class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-text/5"
+                        :class="a.variant === 'danger' ? 'text-error hover:bg-error/5' : a.variant === 'accent' ? 'text-accent hover:bg-accent/5' : 'text-text'"
+                        @click="closeMenu(); emit('action', a.key)">
+                        <component :is="a.icon" class="h-4 w-4" :class="a.variant ? '' : 'text-text/50'" />
+                        {{ a.label }}
                     </button>
                 </template>
 

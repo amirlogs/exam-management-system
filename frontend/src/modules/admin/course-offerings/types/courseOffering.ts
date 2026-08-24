@@ -6,18 +6,23 @@ export interface OfferingCourse {
   name: string
   credit_hours: number
 }
+
 export interface OfferingSemester {
   id: number
   name: string
   academic_year: string
   status: string
+  start_date?: string
+  end_date?: string
 }
+
 export interface OfferingSection {
   id: number
   name: string
   year_level: number
   program_id: number
 }
+
 export interface OfferingInstructor {
   id: number
   first_name: string
@@ -30,6 +35,7 @@ export interface CourseOffering {
   id: number
   course_id: number
   semester_id: number
+  created_by: number | null
   status: OfferingStatus
   rejection_reason: string | null
   created_at: string
@@ -47,4 +53,13 @@ export interface OfferingSuggestion {
   program_id: number
   program_name: string
   year_level: number
+}
+
+export interface OfferingUser {
+  id: number
+  first_name: string
+  last_name: string
+  email: string
+  is_active: boolean
+  role_name: string[]
 }

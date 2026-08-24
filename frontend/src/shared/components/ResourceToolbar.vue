@@ -148,10 +148,7 @@ onBeforeUnmount(() => {
                 </p>
             </div>
 
-            <div
-                v-if="$slots.actions"
-                class="flex shrink-0 items-center gap-2 sm:pt-1"
-            >
+            <div v-if="$slots.actions" class="flex shrink-0 items-center gap-2 sm:pt-1">
                 <slot name="actions" />
             </div>
         </div>
@@ -159,199 +156,121 @@ onBeforeUnmount(() => {
         <div v-if="showTabs" class="border-b border-border">
             <div class="flex min-w-0 items-center gap-6">
 
-                <button
-                    type="button"
-                    class="relative flex h-10 shrink-0 items-center gap-2 text-sm font-medium transition-colors"
-                    :class="
-                        activeTab === 'active'
+                <button type="button"
+                    class="relative flex h-10 shrink-0 items-center gap-2 text-sm font-medium transition-colors" :class="activeTab === 'active'
                             ? 'text-accent'
                             : 'text-text/60 hover:text-text'
-                    "
-                    @click="emit('change-tab', 'active')"
-                >
+                        " @click="emit('change-tab', 'active')">
                     <Building class="h-4 w-4" />
 
                     <span>Active</span>
 
-                    <span
-                        class="rounded-full px-2 py-0.5 text-xs tabular-nums"
-                        :class="
-                            activeTab === 'active'
-                                ? 'bg-accent/10 text-accent'
-                                : 'bg-text/5 text-text/55'
-                        "
-                    >
+                    <span class="rounded-full px-2 py-0.5 text-xs tabular-nums" :class="activeTab === 'active'
+                            ? 'bg-accent/10 text-accent'
+                            : 'bg-text/5 text-text/55'
+                        ">
                         {{ activeCount }}
                     </span>
 
-                    <span
-                        v-if="activeTab === 'active'"
-                        class="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-accent"
-                    />
+                    <span v-if="activeTab === 'active'"
+                        class="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-accent" />
                 </button>
 
-                <button
-                    type="button"
-                    class="relative flex h-10 shrink-0 items-center gap-2 text-sm font-medium transition-colors"
-                    :class="
-                        activeTab === 'archived'
+                <button type="button"
+                    class="relative flex h-10 shrink-0 items-center gap-2 text-sm font-medium transition-colors" :class="activeTab === 'archived'
                             ? 'text-accent'
                             : 'text-text/60 hover:text-text'
-                    "
-                    @click="emit('change-tab', 'archived')"
-                >
+                        " @click="emit('change-tab', 'archived')">
                     <Archive class="h-4 w-4" />
 
                     <span>Archived</span>
 
-                    <span
-                        class="rounded-full px-2 py-0.5 text-xs tabular-nums"
-                        :class="
-                            activeTab === 'archived'
-                                ? 'bg-accent/10 text-accent'
-                                : 'bg-text/5 text-text/55'
-                        "
-                    >
+                    <span class="rounded-full px-2 py-0.5 text-xs tabular-nums" :class="activeTab === 'archived'
+                            ? 'bg-accent/10 text-accent'
+                            : 'bg-text/5 text-text/55'
+                        ">
                         {{ archivedCount }}
                     </span>
 
-                    <span
-                        v-if="activeTab === 'archived'"
-                        class="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-accent"
-                    />
+                    <span v-if="activeTab === 'archived'"
+                        class="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-accent" />
                 </button>
 
             </div>
         </div>
 
-        <div
-            v-if="
-                showSearch ||
-                showFilter ||
-                showRefresh ||
-                showColumns ||
-                showFullscreen
-            "
-            class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
-        >
+        <div v-if="
+            showSearch ||
+            showFilter ||
+            showRefresh ||
+            showColumns ||
+            showFullscreen
+        " class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 
-            <div
-                v-if="showSearch"
-                class="relative w-full sm:w-80"
-            >
-                <Search
-                    class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text/35"
-                />
+            <div v-if="showSearch" class="relative w-full sm:w-80">
+                <Search class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text/35" />
 
-                <input
-                    type="text"
-                    :placeholder="searchPlaceholder || 'Search…'"
+                <input type="text" :placeholder="searchPlaceholder || 'Search…'"
                     class="w-full rounded-lg border border-border bg-surface py-2 pl-9 pr-4 text-sm text-text outline-none transition placeholder:text-text/40 focus:border-accent focus:ring-2 focus:ring-accent/10"
                     @input="
                         emit(
                             'update:search',
                             ($event.target as HTMLInputElement).value,
                         )
-                    "
-                />
+                        " />
             </div>
 
             <div class="flex shrink-0 items-center gap-2">
 
-                <button
-                    v-if="showFilter"
-                    type="button"
-                    data-resource-filter-trigger
+                <button v-if="showFilter" type="button" data-resource-filter-trigger
                     class="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg border px-3 text-sm font-medium transition-colors"
-                    :class="
-                        filterOpen
+                    :class="filterOpen
                             ? 'border-accent bg-accent/5 text-accent'
                             : hasActiveFilters
                                 ? 'border-accent/30 bg-accent/5 text-accent hover:border-accent/50 hover:bg-accent/10'
                                 : 'border-border bg-surface text-text/70 hover:border-accent/40 hover:text-text'
-                    "
-                    :aria-expanded="filterOpen"
-                    aria-haspopup="true"
-                    @click.stop="toggleFilter"
-                >
-                    <X
-                        v-if="filterOpen"
-                        class="h-4 w-4"
-                    />
+                        " :aria-expanded="filterOpen" aria-haspopup="true" @click.stop="toggleFilter">
+                    <X v-if="filterOpen" class="h-4 w-4" />
 
-                    <SlidersHorizontal
-                        v-else
-                        class="h-4 w-4"
-                    />
+                    <SlidersHorizontal v-else class="h-4 w-4" />
 
                     <span>{{ filterButtonLabel }}</span>
 
-                    <span
-                        v-if="hasActiveFilters && !filterOpen"
-                        class="flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[10px] font-semibold leading-none text-white"
-                    >
+                    <span v-if="hasActiveFilters && !filterOpen"
+                        class="flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[10px] font-semibold leading-none text-white">
                         {{ filterCount || '' }}
                     </span>
                 </button>
 
-                <button
-                    v-if="showRefresh"
-                    type="button"
-                    :disabled="refreshing"
+                <button v-if="showRefresh" type="button" :disabled="refreshing"
                     class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-surface text-text/60 transition-colors hover:border-accent/40 hover:text-accent disabled:opacity-50"
-                    title="Refresh"
-                    @click="emit('refresh')"
-                >
-                    <RefreshCw
-                        class="h-4 w-4"
-                        :class="{ 'animate-spin': refreshing }"
-                    />
+                    title="Refresh" @click="emit('refresh')">
+                    <RefreshCw class="h-4 w-4" :class="{ 'animate-spin': refreshing }" />
                 </button>
 
-                <button
-                    v-if="showColumns"
-                    type="button"
+                <button v-if="showColumns" type="button"
                     class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-surface text-text/60 transition-colors hover:border-accent/40 hover:text-accent"
-                    title="Show/hide columns"
-                    @click="emit('columns')"
-                >
+                    title="Show/hide columns" @click="emit('columns')">
                     <Columns3 class="h-4 w-4" />
                 </button>
 
-                <button
-                    v-if="showFullscreen"
-                    type="button"
+                <button v-if="showFullscreen" type="button"
                     class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-surface text-text/60 transition-colors hover:border-accent/40 hover:text-accent"
-                    :title="
-                        isFullscreen
+                    :title="isFullscreen
                             ? 'Exit fullscreen'
                             : 'Enter fullscreen'
-                    "
-                    @click="toggleFullscreen"
-                >
-                    <Minimize2
-                        v-if="isFullscreen"
-                        class="h-4 w-4"
-                    />
+                        " @click="toggleFullscreen">
+                    <Minimize2 v-if="isFullscreen" class="h-4 w-4" />
 
-                    <Maximize2
-                        v-else
-                        class="h-4 w-4"
-                    />
+                    <Maximize2 v-else class="h-4 w-4" />
                 </button>
 
             </div>
         </div>
 
-        <div
-            v-if="showFilter && filterOpen"
-            data-resource-filter
-            class="overflow-hidden rounded-lg border border-border bg-surface"
-            @click.stop
-        >
-            <div
-                class="flex items-center justify-between gap-4 border-b border-border bg-text/[0.02] px-4 py-3"
-            >
+        <div v-if="showFilter && filterOpen" data-resource-filter
+            class="overflow-hidden rounded-lg border border-border bg-surface" @click.stop>
+            <div class="flex items-center justify-between gap-4 border-b border-border bg-text/[0.02] px-4 py-3">
                 <div class="flex items-center gap-2">
                     <SlidersHorizontal class="h-4 w-4 text-text/50" />
 
@@ -362,13 +281,9 @@ onBeforeUnmount(() => {
                     </div>
                 </div>
 
-                <button
-                    v-if="hasActiveFilters"
-                    type="button"
+                <button v-if="hasActiveFilters" type="button"
                     class="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium text-text/60 transition-colors hover:bg-text/5 hover:text-accent"
-                    title="Reset all filters"
-                    @click="resetFilters"
-                >
+                    title="Reset all filters" @click="resetFilters">
                     <RotateCcw class="h-3.5 w-3.5" />
 
                     <span>Reset</span>

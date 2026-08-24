@@ -29,7 +29,8 @@ class CurriculumController extends Controller
         $perPage = GetRequestsValidator::validate($request);
         $query = Curriculum::query();
         RequestFilters::apply($query, $request, ['program_id']);
-        $curriculums = $query->with('courses')->paginate($perPage);
+
+        $curriculums = $query->with('courses.course')->paginate($perPage);
 
         return $this->paginate($curriculums, CurriculumResource::class, 'Curriculums retrieved successfully', 200);
     }

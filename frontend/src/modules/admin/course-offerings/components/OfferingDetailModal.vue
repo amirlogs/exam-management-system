@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { School, User, X, UserCheck, Ban, Users2 } from 'lucide-vue-next'
+import { School, User, X, UserCheck, Ban, Users2, Archive, RotateCcw } from 'lucide-vue-next'
 import BaseDialog from '@/shared/components/ui/BaseDialog.vue'
 import BaseButton from '@/shared/components/ui/BaseButton.vue'
 import BaseBadge from '@/shared/components/ui/BaseBadge.vue'
@@ -9,13 +9,18 @@ import { getSections } from '@/modules/admin/sections/api/sections'
 import type { CourseOffering } from '../types/courseOffering'
 import {
     attachSection, detachSection, attachInstructor, removeInstructor,
-    approveOffering, rejectOffering, cancelOffering, enrollOfferingSection,getUsers
+    approveOffering, rejectOffering, cancelOffering, enrollOfferingSection,
+    archiveOffering, reopenOffering, getUsers,
 } from '../api/courseOfferings'
 import { useUiStore } from '@/stores/ui'
 import ConfirmModal from '@/shared/components/ConfirmModal.vue'
 
 const props = defineProps<{ modelValue: boolean; offering: CourseOffering | null }>()
-const emit = defineEmits<{ 'update:modelValue': [boolean]; updated: [CourseOffering] }>()
+const emit = defineEmits<{
+    'update:modelValue': [boolean]
+    updated: [CourseOffering]
+    archived: [number]
+}>()
 
 const uiStore = useUiStore()
 const local = ref<CourseOffering | null>(null)
@@ -28,12 +33,13 @@ const selectedInstructorId = ref('')
 const instructorType = ref<'lead_instructor' | 'instructor'>('lead_instructor')
 
 const busy = ref(false)
+const reopening = ref(false)
+const archiving = ref(false)
 const showRejectModal = ref(false)
 const showCancelModal = ref(false)
+const showArchiveModal = ref(false)
 const rejectReason = ref('')
 
-// THE FIX: watch the prop (with immediate) instead of onMounted, so `local`
-// updates every time a *different* offering is opened, not just on first mount.
 watch(
     () => props.offering,
     async (offering) => {
@@ -48,10 +54,19 @@ watch(
         try {
             const [secRes, userRes] = await Promise.all([
                 getSections(offering.semester_id, 0, 1, 200).catch(() => ({ data: [] })),
-                getUsers?.(1, 200).catch(() => ({ data: [] })) ?? Promise.resolve({ data: [] }),
+                getUsers(1, 200).catch(() => ({ data: [] })),
             ])
-            sectionOptions.value = (secRes.data ?? []).map((s: any) => ({ value: String(s.id), label: `Section ${s.name} (Year ${s.year_level})` }))
-            instructorOptions.value = (userRes.data ?? []).map((u: any) => ({ value: String(u.id), label: `${u.first_name} ${u.last_name}` }))
+            sectionOptions.value = (secRes.data ?? []).map((s: any) => ({
+                value: String(s.id),
+                label: `Section ${s.name} (Year ${s.year_level})`,
+            }))
+            instructorOptions.value = (userRes.data ?? [])
+                .filter(
+                    (u) =>
+                        u.role_name?.includes('instructor') ||
+                        u.role_name?.includes('lead_instructor'),
+                )
+                .map((u) => ({ value: String(u.id), label: `${u.first_name} ${u.last_name}` }))
         } finally {
             loadingOptions.value = false
         }
@@ -61,6 +76,14 @@ watch(
 
 const isDraft = computed(() => local.value?.status === 'draft')
 const isApproved = computed(() => local.value?.status === 'approved')
+const isDeadEnd = computed(() => local.value?.status === 'rejected' || local.value?.status === 'cancelled')
+
+const archiveWarning = computed(() => {
+    if (isDeadEnd.value) {
+        return `This will remove the ${local.value?.course?.code} offering from the list. You can restore it later from the Archived tab if needed.`
+    }
+    return `This offering is still ${local.value?.status}. Archiving it now will remove it from the active list even though it hasn't been cancelled or rejected. You can restore it later from the Archived tab.`
+})
 
 function close() { emit('update:modelValue', false) }
 
@@ -152,6 +175,34 @@ async function confirmCancel() {
         busy.value = false
     }
 }
+async function reopen() {
+    if (!local.value) return
+    reopening.value = true
+    try {
+        local.value = await reopenOffering(local.value.id)
+        emit('updated', local.value)
+        uiStore.showToast('Offering reopened as draft.', 'success')
+    } catch (err: any) {
+        uiStore.showToast(err?.response?.data?.message || 'Failed to reopen offering.', 'error')
+    } finally {
+        reopening.value = false
+    }
+}
+async function confirmArchive() {
+    if (!local.value) return
+    archiving.value = true
+    try {
+        await archiveOffering(local.value.id)
+        emit('archived', local.value.id)
+        showArchiveModal.value = false
+        uiStore.showToast('Offering archived.', 'success')
+        close()
+    } catch (err: any) {
+        uiStore.showToast(err?.response?.data?.message || 'Failed to archive offering.', 'error')
+    } finally {
+        archiving.value = false
+    }
+}
 async function enroll() {
     if (!local.value) return
     busy.value = true
@@ -172,10 +223,15 @@ async function enroll() {
         <div v-if="!local" class="py-10 text-center text-sm text-text/50">Loading...</div>
 
         <div v-else class="space-y-6">
-            <BaseBadge
-                :variant="local.status === 'approved' ? 'success' : local.status === 'rejected' ? 'danger' : local.status === 'cancelled' ? 'neutral' : 'info'">
-                {{ local.status }}
-            </BaseBadge>
+            <div class="flex items-center justify-between">
+                <BaseBadge
+                    :variant="local.status === 'approved' ? 'success' : local.status === 'rejected' ? 'danger' : local.status === 'cancelled' ? 'neutral' : 'info'">
+                    {{ local.status }}
+                </BaseBadge>
+
+                <span class="text-xs text-text/40">{{ local.semester?.name }} · {{ local.semester?.academic_year
+                    }}</span>
+            </div>
 
             <p v-if="local.status === 'rejected' && local.rejection_reason"
                 class="rounded-md bg-error/10 p-3 text-sm text-error">
@@ -190,14 +246,14 @@ async function enroll() {
                     <span v-for="s in local.sections" :key="s.id"
                         class="flex items-center gap-1.5 rounded-full border border-border bg-bg px-3 py-1 text-xs text-text">
                         Section {{ s.name }} (Y{{ s.year_level }})
-                        <button v-if="isDraft" type="button" class="text-text/40 hover:text-error"
-                            @click="removeSectionFrom(s.id)">
+                        <button v-if="isDraft" v-can="'course_offering.section.remove'" type="button"
+                            class="text-text/40 hover:text-error" @click="removeSectionFrom(s.id)">
                             <X class="h-3 w-3" />
                         </button>
                     </span>
                     <span v-if="!local.sections?.length" class="text-xs text-text/40">No sections attached.</span>
                 </div>
-                <div v-if="isDraft" class="flex gap-2">
+                <div v-if="isDraft" v-can="'course_offering.section.assign'" class="flex gap-2">
                     <BaseSelect v-model="selectedSectionId" :options="sectionOptions" placeholder="Add a section"
                         class="flex-1" />
                     <BaseButton variant="secondary" :disabled="!selectedSectionId" :loading="busy" @click="addSection">
@@ -214,14 +270,14 @@ async function enroll() {
                         class="flex items-center gap-1.5 rounded-full border border-border bg-bg px-3 py-1 text-xs text-text">
                         {{ i.first_name }} {{ i.last_name }} <span class="text-text/40">· {{ i.type ===
                             'lead_instructor' ? 'Lead' : 'Instructor' }}</span>
-                        <button v-if="isDraft" type="button" class="text-text/40 hover:text-error"
-                            @click="removeInstructorFrom(i.id)">
+                        <button v-if="isDraft" v-can="'course_offering.instructor.remove'" type="button"
+                            class="text-text/40 hover:text-error" @click="removeInstructorFrom(i.id)">
                             <X class="h-3 w-3" />
                         </button>
                     </span>
                     <span v-if="!local.instructors?.length" class="text-xs text-text/40">No instructors assigned.</span>
                 </div>
-                <div v-if="isDraft" class="flex flex-wrap gap-2">
+                <div v-if="isDraft" v-can="'course_offering.instructor.assign'" class="flex flex-wrap gap-2">
                     <BaseSelect v-model="selectedInstructorId" :options="instructorOptions"
                         placeholder="Select instructor" class="flex-1" />
                     <BaseSelect v-model="instructorType"
@@ -235,20 +291,38 @@ async function enroll() {
 
         <template #footer>
             <div v-if="local" class="flex flex-wrap justify-end gap-2">
-                <BaseButton v-if="isApproved" variant="secondary" :loading="busy" @click="enroll">
+                <BaseButton v-if="isApproved" v-can="'course_offering.section.enroll'" variant="secondary"
+                    :loading="busy" @click="enroll">
                     <template #icon>
                         <Users2 class="h-4 w-4" />
                     </template>Enroll students
                 </BaseButton>
-                <BaseButton v-if="local.status !== 'cancelled' && local.status !== 'rejected'" variant="secondary"
-                    @click="showCancelModal = true">
+
+                <BaseButton v-if="local.status !== 'cancelled' && local.status !== 'rejected'"
+                    v-can="'course_offering.cancel'" variant="secondary" @click="showCancelModal = true">
                     <template #icon>
                         <Ban class="h-4 w-4" />
                     </template>Cancel offering
                 </BaseButton>
+
+                <BaseButton v-if="isDeadEnd" v-can="'course_offering.update'" variant="secondary" :loading="reopening"
+                    @click="reopen">
+                    <template #icon>
+                        <RotateCcw class="h-4 w-4" />
+                    </template>Reopen as draft
+                </BaseButton>
+
+                <BaseButton v-can="'course_offering.archive'" variant="secondary" @click="showArchiveModal = true">
+                    <template #icon>
+                        <Archive class="h-4 w-4" />
+                    </template>Archive
+                </BaseButton>
+
                 <template v-if="isDraft">
-                    <BaseButton variant="secondary" @click="showRejectModal = true">Reject</BaseButton>
-                    <BaseButton :loading="busy" @click="approve"><template #icon>
+                    <BaseButton v-can="'course_offering.reject'" variant="secondary" @click="showRejectModal = true">
+                        Reject</BaseButton>
+                    <BaseButton v-can="'course_offering.approve'" :loading="busy" @click="approve">
+                        <template #icon>
                             <UserCheck class="h-4 w-4" />
                         </template>Approve
                     </BaseButton>
@@ -261,7 +335,7 @@ async function enroll() {
         @update:model-value="showRejectModal = false">
         <div>
             <label class="mb-1.5 block text-xs font-bold uppercase tracking-wide text-text/60">Reason</label>
-            <textarea v-model="rejectReason" rows="3"
+            <textarea v-model="rejectReason" rows="3" maxlength="500"
                 class="w-full rounded-md border border-border bg-bg px-3 py-2 text-sm text-text outline-none focus:border-accent"
                 placeholder="Why is this offering being rejected?" />
         </div>
@@ -275,7 +349,11 @@ async function enroll() {
     </BaseDialog>
 
     <ConfirmModal :show="showCancelModal" title="Cancel this offering?"
-        description="Students will not be able to enroll in this offering. This can be reversed by creating a new offering for the same course later."
+        description="Students will not be able to enroll in this offering. It can be reopened as a draft later if needed."
         confirm-text="Cancel offering" variant="danger" :icon="Ban" :loading="busy" @close="showCancelModal = false"
         @confirm="confirmCancel" />
+
+    <ConfirmModal :show="showArchiveModal" title="Archive this offering?" :description="archiveWarning"
+        confirm-text="Archive offering" variant="danger" :icon="Archive" :loading="archiving"
+        @close="showArchiveModal = false" @confirm="confirmArchive" />
 </template>

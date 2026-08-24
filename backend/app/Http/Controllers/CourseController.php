@@ -25,7 +25,7 @@ class CourseController extends Controller
     {
         $per_page = GetRequestsValidator::validate($request);
         $query = Course::query();
-        RequestFilters::apply($query, $request, ['department_id']);
+        RequestFilters::apply($query, $request, ['department_id' , 'credit_hours']);
         $courses = $query->with('department')->paginate($per_page);
 
         return $this->paginate($courses, CourseResource::class, 'Courses retrieved successfully');
@@ -78,7 +78,7 @@ class CourseController extends Controller
     {
         $per_page = GetRequestsValidator::validate($request);
         $query = Course::query();
-        RequestFilters::apply($query, $request, ['department_id']);
+        RequestFilters::apply($query, $request, ['department_id' , 'credit_hours']);
         $courses = $query->onlyTrashed()->paginate($per_page);
 
         return $this->paginate($courses, CourseResource::class, 'Archived courses retrieved successfully');

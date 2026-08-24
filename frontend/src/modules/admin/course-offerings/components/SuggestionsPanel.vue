@@ -34,7 +34,8 @@ function key(s: OfferingSuggestion) {
                     <p class="text-sm font-medium text-text">{{ s.course_code }} — {{ s.course_name }}</p>
                     <p class="text-xs text-text/50">{{ s.program_name }} · Year {{ s.year_level }}</p>
                 </div>
-                <BaseButton variant="secondary" :loading="creatingKey === key(s)" @click="emit('create', s)">
+                <BaseButton v-can="'course_offering.create'" variant="secondary" :loading="creatingKey === key(s)"
+                    @click="emit('create', s)">
                     <template #icon>
                         <Plus class="h-4 w-4" />
                     </template>Create

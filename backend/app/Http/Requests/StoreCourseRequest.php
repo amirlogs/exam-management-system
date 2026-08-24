@@ -27,7 +27,7 @@ class StoreCourseRequest extends FormRequest
             'department_id' => ['required', 'integer', 'exists:departments,id'],
             'code' => ['required', 'string', 'min:3', 'max:255', 'unique:courses,code'],
             'name' => ['required', 'string', 'min:3', 'max:255', 'unique:courses,name'],
-            'credit_hours' => ['required', 'integer', 'min:1', 'max:100'],
+            'credit_hours' => ['required', 'integer', 'min:1', 'max:30'],
         ];
     }
 

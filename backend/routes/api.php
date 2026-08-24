@@ -136,9 +136,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/course-offerings/suggestions/generate', [CourseOfferingController::class, 'generateSuggestions'])->middleware('permission:course_offering.create');
     Route::post('/course-offerings', [CourseOfferingController::class, 'store'])->middleware('permission:course_offering.create');
     Route::get('/course-offerings/archived', [CourseOfferingController::class, 'archived'])->middleware('permission:course_offering.view');
+    Route::get('/course-offerings', [CourseOfferingController::class, 'index'])->middleware('permission:course_offering.view');
+    Route::post('course-offerings/{courseOffering}/reopen', [CourseOfferingController::class, 'reopen'])->middleware('permission:course_offering.update');
     Route::post('/course-offerings/{courseOffering}/sections', [CourseOfferingController::class, 'attachSections'])->middleware('permission:course_offering.section.assign');
     Route::post('/course-offerings/{courseOffering}/instructors', [CourseOfferingController::class, 'attachInstructors'])->middleware('permission:course_offering.instructor.assign');
-    Route::get('/course-offerings', [CourseOfferingController::class, 'index'])->middleware('permission:course_offering.view');
+
     //
     Route::patch('/course-offerings/{courseOffering}', [CourseOfferingController::class, 'update'])->middleware('permission:course_offering.update');
     Route::patch('/course-offerings/{courseOffering}/instructors', [CourseOfferingController::class, 'changeInstructor'])->middleware('permission:course_offering.instructor.assign');
@@ -160,22 +162,25 @@ Route::middleware('auth:sanctum')->group(function () {
     // ========================== QUESTION BANK ===================
     Route::post('/courses/{courseId}/questions', [QuestionController::class, 'store'])->middleware('permission:question.create');
     Route::get('/questions', [QuestionController::class, 'index'])->middleware('permission:question.view');
+    Route::get('/questions/archived', [QuestionController::class, 'archived'])->middleware('permission:question.view');
     Route::get('/questions/{question}', [QuestionController::class, 'show'])->middleware('permission:question.view');
     Route::patch('/questions/{question}', [QuestionController::class, 'update'])->middleware('permission:question.update');
     Route::delete('/questions/{question}', [QuestionController::class, 'destroy'])->middleware('permission:question.archive');
     Route::post('/questions/{question}/restore', [QuestionController::class, 'restore'])->middleware('permission:question.restore');
 
+    // ======================== QUESTION FLAGS ========================
     Route::post('/questions/{question}/flags', [QuestionFlagController::class, 'store'])->middleware('permission:question.flag');
     Route::get('/questions/{question}/flags', [QuestionFlagController::class, 'index'])->middleware('permission:question.view');
     Route::patch('/question-flags/{flag}/resolve', [QuestionFlagController::class, 'resolve'])->middleware('permission:question.update');
 
     // ======================== EXAMS(admin/instructor side) ========================
+    Route::get('/course-offerings/{courseOffering}/exams', [ExamController::class, 'index'])->middleware('permission:exam.view');
+    Route::get('/exams/{exam}', [ExamController::class, 'show'])->middleware('permission:exam.view');
     Route::post('/course-offerings/{courseOffering}/exams', [ExamController::class, 'store'])->middleware('permission:exam.create');
-    Route::patch('/exams/{exam}/composition', [ExamController::class, 'updateComposition'])->middleware('permission:exam.update');
-    Route::post('/exams/{exam}/questions', [ExamController::class, 'addQuestion'])->middleware('permission:exam.update');
-    Route::post('/exams/{exam}/question-imports/{importHistory}/confirm', [ExamController::class, 'confirmImportedQuestions'])->middleware('permission:exam.update');
-    Route::delete('/exams/{exam}/questions/{examQuestion}', [ExamController::class, 'removeQuestion'])->middleware('permission:exam.update');
+    Route::patch('/exams/{exam}/composition', [ExamController::class, 'composition'])->middleware('permission:exam.update');
+    Route::post('/exams/{exam}/questions', [ExamController::class, 'addQuestions'])->middleware('permission:exam.update');
     Route::get('/exams/{exam}/questions', [ExamController::class, 'questions'])->middleware('permission:exam.view');
+    Route::delete('/exams/{exam}/questions/{examQuestion}', [ExamController::class, 'removeQuestion'])->middleware('permission:exam.update');
     Route::get('/exams/{exam}/composition-status', [ExamController::class, 'compositionStatus'])->middleware('permission:exam.view');
     Route::post('/exams/{exam}/submit-approval', [ExamController::class, 'submitApproval'])->middleware('permission:exam.submit');
     Route::post('/exams/{exam}/revert-to-draft', [ExamController::class, 'revertToDraft'])->middleware('permission:exam.revert');
