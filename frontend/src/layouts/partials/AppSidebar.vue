@@ -1,13 +1,19 @@
 <script setup lang="ts">
-import { PanelLeftClose, PanelLeftOpen, X, GraduationCap, Settings ,LayoutGrid, Building2, Landmark, BookOpen,
-  ListTree, CalendarDays, Users2, Upload, ClipboardList,
-  ShieldCheck, BarChart3,
+import {
+    PanelLeftClose, PanelLeftOpen, X, GraduationCap, Settings, LayoutGrid, Building2, Landmark, BookOpen,
+    ListTree, CalendarDays, Users2, Upload, ClipboardList,
+    ShieldCheck, BarChart3, HelpCircle, FileText, ClipboardCheck, Flag
 } from 'lucide-vue-next'
+
 import type { Component } from 'vue'
 import { useSidebar } from '@/shared/composables/useSidebar'
 import {
 } from 'lucide-vue-next'
-const icons = {LayoutGrid,Landmark,Building2,GraduationCap,BookOpen,ListTree,CalendarDays,Users2,Upload, ClipboardList,ShieldCheck,BarChart3,}
+
+const icons = {
+    LayoutGrid, Landmark, Building2, GraduationCap, BookOpen, ListTree, CalendarDays, Users2, Upload, ClipboardList, ShieldCheck, BarChart3,
+    HelpCircle, FileText, ClipboardCheck, Flag
+}
 
 defineProps<{
     brandName: string
@@ -48,7 +54,7 @@ function handleNavigate() {
                     <div class="overflow-hidden">
                         <h1 class="text-base font-bold text-accent truncate">{{ brandName }}</h1>
                         <p class="text-[10px] font-bold tracking-wider uppercase text-text/40 truncate">{{ brandSubtitle
-                            }}</p>
+                        }}</p>
                     </div>
                 </div>
 

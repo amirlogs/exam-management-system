@@ -5,16 +5,13 @@ import AppSidebar from './partials/AppSidebar.vue'
 import AppTopbar from './partials/AppTopbar.vue'
 import WorkspaceSwitcherDropdown from './partials/WorkspaceSwitcherDropdown.vue'
 import { useAuthStore } from '@/stores/auth'
+import { useNavigationStore } from '@/stores/navigation'
 
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
+const navgationStore = useNavigationStore()
 
-const navItems = [
-    { label: 'Dashboard', to: '/instructor/dashboard', icon: LayoutGrid },
-    { label: 'My Courses', to: '/instructor/courses', icon: BookOpen },
-    { label: 'Question Bank', to: '/instructor/question-bank', icon: HelpCircle },
-]
 
 //  const navItems = [
 //   { label: 'Dashboard', to: '/instructor/dashboard', icon: LayoutGrid },
@@ -28,7 +25,7 @@ const navItems = [
 
 <template>
     <div class="flex min-h-screen bg-bg">
-        <AppSidebar brand-name="University Exam" brand-subtitle="Management Portal" :items="navItems"
+        <AppSidebar brand-name="University Exam" brand-subtitle="Management Portal" :items="navgationStore.items"
             :active-to="route.path" />
 
         <div class="flex-1 flex flex-col min-w-0">

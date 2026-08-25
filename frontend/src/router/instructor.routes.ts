@@ -1,91 +1,93 @@
-// import CourseDetailsView from '@/modules/instructor/courses/pages/CourseDetailsView.vue'
+import DashboardView from '@/modules/instructor/pages/DashboardView.vue'
 // import MyCoursesView from '@/modules/instructor/courses/pages/MyCoursesView.vue'
+// import QuestionBankListView from '@/modules/instructor/question-bank/pages/QuestionBankList.vue'
+
+// import ImportQuestionsView from '@/modules/instructor/question-bank/pages/ImportQuestions.vue'
+// import QuestionListView from '@/modules/instructor/question-bank/pages/QuestionListView.vue'
+// import ImportFlagsView from '@/modules/instructor/question-bank/pages/ImportFlagsView.vue'
+// import ExamsListView from '@/modules/instructor/exams/pages/ExamsListView.vue'
 // import ExamBuilderView from '@/modules/instructor/exams/pages/ExamBuilderView.vue'
-// import ExamsView from '@/modules/instructor/exams/pages/ExamsView.vue'
-// import EvaluateAnswersView from '@/modules/instructor/grading/pages/EvaluateAnswersView.vue'
-// import GradingView from '@/modules/instructor/grading/pages/GradingView.vue'
-// import DashboardView from '@/modules/instructor/pages/DashboardView.vue'
-// import QuestionBankView from '@/modules/instructor/questions/pages/QuestionBankView.vue'
-// import QuestionFlagsView from '@/modules/instructor/questions/pages/QuestionFlagsView.vue'
-import { BookOpen, CheckSquare, FileText, HelpCircle, LayoutGrid } from 'lucide-vue-next'
+// import GradingQueueView from '@/modules/instructor/grading/pages/GradingQueueView.vue'
+// import GradingDetailView from '@/modules/instructor/grading/pages/GradingDetailView.vue'
+// import FlagsView from '@/modules/instructor/pages/FlagsView.vue'
 
 export default [
   {
     path: 'dashboard',
     name: 'instructor.dashboard',
-    // component: DashboardView,
+    component: DashboardView,
   },
-
-  // ---------------- Course Offerings ----------------
   {
     path: 'courses',
-    name: 'instructor-courses',
+    name: 'instructor.courses.list',
     // component: MyCoursesView,
-    meta: {
-      permissions: ['course_offering.view'],
-    },
-  },
-  {
-    path: 'courses/:id',
-    name: 'instructor-course-details',
-    // component: CourseDetailsView,
-    meta: {
-      permissions: ['course_offering.view'],
-    },
+    meta: { permissions: ['course_offering.view'] },
   },
 
   // ---------------- Question Bank ----------------
   {
     path: 'question-bank',
-    name: 'instructor-question-bank',
-    // component: QuestionBankView,
-    meta: {
-      permissions: ['question.view'],
-    },
+    name: 'instructor.question-bank.list',
+    // component: QuestionBankListView,
+    meta: { permissions: ['question.view'] },
   },
   {
-    path: 'question-bank/flags',
-    name: 'instructor-question-flags',
-    // component: QuestionFlagsView,
-    meta: {
-      permissions: ['question.view'],
-    },
+    path: 'courses/:courseId/question-bank',
+    name: 'instructor.question-bank.list.byCourse',
+    // component: QuestionBankListView,
+    meta: { permissions: ['question.view'] },
+  },
+  {
+    path: 'courses/:courseId/question-bank/import/:importId?',
+    name: 'instructor.question-bank.import',
+    // component: ImportQuestionsView,
+    meta: { permissions: ['question.create'] },
+  },
+  {
+    path: 'courses/:courseId/question-bank/imports/:importId/questions',
+    name: 'instructor.import.questions',
+    // component: QuestionListView,
+    meta: { permissions: ['question.view'] },
+  },
+  {
+    path: 'courses/:courseId/question-bank/imports/:importId/flags',
+    name: 'instructor.import.flags',
+    // component: ImportFlagsView,
+    meta: { permissions: ['question.update'] },
   },
 
-  // ---------------- Exams Management ----------------
+  // ---------------- Exams ----------------
   {
     path: 'exams',
-    name: 'instructor-exams',
-    // component: ExamsView,
-    meta: {
-      permissions: ['exam.view'],
-    },
+    name: 'instructor.exams.list',
+    // component: ExamsListView,
+    meta: { permissions: ['exam.create', 'exam.update'] },
   },
   {
-    path: 'exams/:id/builder',
-    name: 'instructor-exam-builder',
+    path: 'exams/:examId/build',
+    name: 'instructor.exams.build',
     // component: ExamBuilderView,
-    meta: {
-      permissions: ['exam.update'],
-    },
+    meta: { permissions: ['exam.update'] },
   },
 
-  // ---------------- Grading & Submissions ----------------
+  // ---------------- Grading ----------------
   {
     path: 'grading',
-    name: 'instructor-grading',
-    // component: GradingView,
-    meta: {
-      permissions: ['grade.update'],
-    },
+    name: 'instructor.grading.list',
+    // component: GradingQueueView,
+    meta: { permissions: ['grade.create'] },
   },
   {
-    path: 'grading/exams/:examId',
-    name: 'instructor-evaluate-answers',
-    // component: EvaluateAnswersView,
-    meta: {
-      permissions: ['grade.update'],
-    },
+    path: 'grading/:examId',
+    name: 'instructor.grading.detail',
+    // component: GradingDetailView,
+    meta: { permissions: ['grade.create'] },
+  },
+
+  // ---------------- Flags ----------------
+  {
+    path: 'flags',
+    name: 'instructor.flags',
+    // component: FlagsView,
   },
 ]
-
