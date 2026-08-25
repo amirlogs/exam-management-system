@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+
         Schema::create('exams', function (Blueprint $table) {
             $table->id();
             $table->foreignId('course_offering_id')->constrained()->cascadeOnDelete();
@@ -18,6 +19,8 @@ return new class extends Migration
             $table->enum('type', ['MIDTERM', 'FINAL']);
             $table->unsignedSmallInteger('duration_minutes');
             $table->json('composition')->nullable();
+            $table->unsignedInteger('total_marks')->default(0);
+            $table->unsignedInteger('total_questions')->default(0);
             $table->string('status')->default('draft'); // draft pending_approval approved scheduled active completed published cancelled
             $table->unsignedInteger('review_cycle')->default(0);
             $table->foreignId('current_review_id')->nullable();

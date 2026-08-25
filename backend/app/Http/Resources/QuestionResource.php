@@ -16,8 +16,6 @@ class QuestionResource extends JsonResource
             'content' => $this->content,
             'difficulty' => $this->difficulty,
             'status' => $this->status,
-            'total_mark'=> $this->total_mark,
-            'total_questions' => $this->total_questions,
             'options' => $this->whenLoaded('options', fn () => $this->options->map(fn ($o) => [
                 'id' => $o->id,
                 'option_text' => $o->option_text,
@@ -25,6 +23,10 @@ class QuestionResource extends JsonResource
             ])),
             'created_at' => $this->created_at?->format('M d, Y'),
             'updated_at' => $this->updated_at?->format('M d, Y'),
+
+            // if exist exam id and oters
+            'exam_id' => $this->exam_id ?? '',
+            'marks' => $this->marks ?? ''
         ];
     }
 }

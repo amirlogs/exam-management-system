@@ -181,7 +181,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/exams/{exam}/questions', [ExamController::class, 'addQuestions'])->middleware('permission:exam.update');
     Route::get('/exams/{exam}/questions', [ExamController::class, 'questions'])->middleware('permission:exam.view');
     Route::delete('/exams/{exam}/questions/{examQuestion}', [ExamController::class, 'removeQuestion'])->middleware('permission:exam.update');
-    Route::get('/exams/{exam}/composition-status', [ExamController::class, 'compositionStatus'])->middleware('permission:exam.view');
     Route::post('/exams/{exam}/submit-approval', [ExamController::class, 'submitApproval'])->middleware('permission:exam.submit');
     Route::post('/exams/{exam}/revert-to-draft', [ExamController::class, 'revertToDraft'])->middleware('permission:exam.revert');
     Route::post('/exams/{exam}/approve', [ExamController::class, 'approve'])->middleware('permission:exam.approve');

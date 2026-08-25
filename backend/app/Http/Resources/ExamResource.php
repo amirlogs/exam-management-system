@@ -24,6 +24,11 @@ class ExamResource extends JsonResource
             'status' => $this->status,
             'scheduled_start' => $this->scheduled_start?->format('M d,Y'),
             'scheduled_end' => $this->scheduled_end?->format('M d,Y'),
+            'review_cycle' => $this->review_cycle,
+            'current_review_id' => $this->current_review_id,
+            'grading_status' => $this->grading_status,
+            'total_marks' => $this->total_marks,
+            'total_questions' => $this->total_questions,
             'creator' => [
                 'id' => $this->created_by,
                 'name' => $this->creator->first_name,

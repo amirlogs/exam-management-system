@@ -7,11 +7,9 @@ use App\Http\Filters\RequestFilters;
 use App\Http\Requests\AddQuestionsRequest;
 use App\Http\Requests\ExamCompositionRequest;
 use App\Http\Requests\StoreOnlineExamRequest;
-use App\Http\Requests\StoreQuestionRequest;
 use App\Http\Resources\ExamQuestionResource;
 use App\Http\Resources\ExamResource;
-use App\Jobs\ImportCsv;
-use App\Models\Course;
+use App\Http\Resources\QuestionResource;
 use App\Models\CourseOffering;
 use App\Models\Exam;
 use App\Models\ExamAttempt;
@@ -24,6 +22,7 @@ use App\Validation\GetRequestsValidator;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use LDAP\Result;
 
 class ExamController extends Controller
 {
@@ -99,11 +98,21 @@ class ExamController extends Controller
             $marks = $request->marks;
         }
 
-        $question = $exam->examQuestions()->create([
-            ...$validated,
-            'marks' => $marks,
-        ])->load('question');
+        $question = DB::transaction(function () use ($exam, $validated, $marks) {
+            $question = $exam->examQuestions()->create([
+                ...$validated,
+                'marks' => $marks,
+            ])->load('question');
 
+            $questions = $exam->examQuestions()->with('question')->get();
+            $totalMarks = $questions->sum('marks');
+            $totalQuestions = $questions->count();
+            $exam->update([
+                'total_marks' => $totalMarks,
+                'total_questions' => $totalQuestions,
+            ]);
+            return $question;
+        });
         return $this->success(new ExamQuestionResource($question), 'Question added successfully', 201);
     }
 
@@ -118,27 +127,19 @@ class ExamController extends Controller
         return $this->success(null, 'Question removed successfully');
     }
 
-    public function questions(Exam $exam , Request $request)
+    public function questions(Exam $exam, Request $request)
     {
         $per_page = GetRequestsValidator::validate($request);
-        $query = Question::query();
-        RequestFilters::apply($query, $request, ['course_id', 'import_history_id', 'type', 'chapter', 'status']);
+        $query = $exam->questions()->with('options')->getQuery();
+        
+        RequestFilters::apply($query, $request, ['type', 'status']);
 
-        $questions = $exam->questions()->with('options')->get();
-
-        $totalMarks = $questions->sum(function ($question) {
-            return $question->pivot->marks;
-        });
-
-        return $this->success([
-            'questions' => $questions,
-            'total' => $questions->count(),
-            'total_points' => $totalMarks,
-        ],
-            'Questions retrieved successfully');
+        $questions = $query->paginate($per_page);
+        
+        return $this->paginate($questions , QuestionResource::class , "Exam Questions retrieved successfully");
     }
 
-    public function submitForApproval(Exam $exam)
+    public function submitApproval(Exam $exam)
     {
         if (! $exam->questions()->count()) {
             return $this->error(null, 'Exam must have at least one question to be submitted for approval', 422);
@@ -153,9 +154,20 @@ class ExamController extends Controller
             'review_cycle' => $exam->review_cycle + 1,
         ]);
 
-        return $this->success($exam->fresh(), 'Exam submitted for approval successfully');
+        return $this->success(new ExamResource($exam->fresh()), 'Exam submitted for approval successfully');
     }
 
+    public function revertToDraft(Exam $exam)
+    {
+        if ($exam->status !== 'pending_approval') {
+            return $this->error(null, 'Exam must be in pending approval state to be changed to draft', 422);
+        }
+
+        $exam->update(['status' => 'draft']);
+
+        return $this->success(new ExamResource($exam->fresh()), 'Exam changed to draft successfully');
+    }
+    
     public function approve(Exam $exam, Request $request)
     {
         if ($exam->status !== 'pending_approval') {
@@ -174,7 +186,7 @@ class ExamController extends Controller
             ]);
         });
 
-        return $this->success($exam->fresh(), 'Exam approved successfully');
+        return $this->success(new ExamResource($exam->fresh()), 'Exam approved successfully');
     }
 
     public function reject(Exam $exam, Request $request)
@@ -200,19 +212,8 @@ class ExamController extends Controller
                 'current_review_id' => $review->id,
             ]);
         });
-
-        return $this->success($exam->fresh(), 'Exam rejected successfully');
-    }
-
-    public function chnageToDraft(Exam $exam)
-    {
-        if ($exam->status !== 'pending_approval') {
-            return $this->error(null, 'Exam must be in pending approval state to be changed to draft', 422);
-        }
-
-        $exam->update(['status' => 'draft']);
-
-        return $this->success($exam->fresh(), 'Exam changed to draft successfully');
+        
+        return $this->success(new ExamResource($exam->fresh()),'Exam rejected successfully');
     }
 
     public function schedule(Exam $exam, Request $request)
@@ -234,7 +235,7 @@ class ExamController extends Controller
             'scheduled_end' => $scheduleEnd,
         ]);
 
-        return $this->success($exam->fresh(), 'Exam scheduled successfully');
+        return $this->success(new ExamResource($exam->fresh()), 'Exam scheduled successfully');
     }
 
     public function updateSchedule(Exam $exam, Request $request)
@@ -257,7 +258,7 @@ class ExamController extends Controller
             'duration_minutes' => $request->duration_minutes ?? $exam->duration_minutes,
         ]);
 
-        return $this->success($exam->fresh(), 'Exam schedule updated successfully');
+        return $this->success(new ExamResource($exam->fresh()), 'Exam schedule updated successfully');
     }
 
     public function extendTime(Exam $exam, Request $request)
@@ -274,7 +275,7 @@ class ExamController extends Controller
             'scheduled_end' => $newEndTime,
         ]);
 
-        return $this->success($exam->fresh(), 'Exam time extended successfully');
+        return $this->success(new ExamResource($exam->fresh()), 'Exam time extended successfully');
     }
 
     public function publish(Exam $exam)
@@ -285,13 +286,13 @@ class ExamController extends Controller
 
         $exam->update([
             'status' => 'active',
-            // 'activated_at' => now(),
+            'activated_at' => now(),
         ]);
 
-        return $this->success($exam->fresh(), 'Exam published successfully');
+        return $this->success(new ExamResource($exam->fresh()), 'Exam published successfully');
     }
 
-    public function complete(Exam $exam)
+    public function end(Exam $exam)
     {
         if ($exam->status !== 'active') {
             return $this->error(null, 'Exam must be active to be completed', 422);
@@ -304,7 +305,7 @@ class ExamController extends Controller
             ]);
         });
 
-        return $this->success($exam->fresh(), 'Exam completed successfully');
+        return $this->success(new ExamResource($exam->fresh()), 'Exam completed successfully');
     }
 
     public function archive(Exam $exam)
@@ -317,38 +318,7 @@ class ExamController extends Controller
             'status' => 'archived',
         ]);
 
-        return $this->success($exam->fresh(), 'Exam archived successfully');
+        return $this->success(new ExamResource($exam->fresh()), 'Exam archived successfully');
     }
 }
 
-/**
-public function confirmImportQuestions(Exam $exam, ImportHistory $importHistory)
-{
-    $validatorClass = ImportValidatorFactory::create($importHistory->type);
-    foreach ($importHistory->validated_data as $row) {
-        $errors = $validatorClass::validate($row['data'], $importHistory->context);
-        if ($errors) {
-            return $this->error($errors, 'All rows must be valid before confirming', 422);
-        }
-    }
-
-    $committerClass = ImportCommitterFactory::create($importHistory->type);
-
-    DB::transaction(function () use ($importHistory, $committerClass, $exam) {
-        foreach ($importHistory->validated_data as $row) {
-            $committerClass::commit($row['data'], $importHistory->context);
-        }
-
-        $importHistory->update(['status' => 'confirmed']);
-
-        // commit the exam question
-        $questions = Question::where('import_history_id', $importHistory->id);
-        foreach ($questions as $question) {
-            ExamQuestionCommitter::commit($question, $exam);
-        }
-    });
-
-    return $this->success($importHistory->fresh(), 'Import confirmed successfully');
-}
-
- **/

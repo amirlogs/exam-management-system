@@ -17,7 +17,7 @@ class ExamQuestionCommitter
             $marks = 1;
         }
 
-        ExamQuestion::create([
+       $examQuestion =  ExamQuestion::create([
             'question_id' => $question->id,
             'exam_id' => $exam->id,
             'marks' => $marks,

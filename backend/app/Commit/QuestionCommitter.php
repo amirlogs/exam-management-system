@@ -14,7 +14,7 @@ class QuestionCommitter
             'course_id' => $context['course_id'],
             'created_by' => $context['uploaded_by'],
             'import_history_id' => $importHistory->id,
-            'type' => $data['type'],
+            'type' => strtolower( $data['type']),
             'chapter' => $data['chapter'] ?? null,
             'content' => $data['content'],
             'difficulty' => $data['difficulty'],

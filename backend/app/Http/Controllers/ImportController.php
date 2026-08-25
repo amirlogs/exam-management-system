@@ -9,6 +9,7 @@ use App\Http\Resources\CsvImportResource;
 use App\Http\Resources\ImportHistoryResource;
 use App\Jobs\ImportCsv;
 use App\Models\Exam;
+use App\Models\ExamQuestion;
 use App\Models\ImportHistory;
 use App\Models\Question;
 use App\Services\ImportCommitterFactory;
@@ -149,10 +150,20 @@ class ImportController extends Controller
                 foreach ($questions as $question) {
                     ExamQuestionCommitter::commit($question, $exam);
                 }
+
+                // updating exam count and total questions
+                $examQuestions = ExamQuestion::where('exam_id', $exam->id)->get();
+                $totalMarks = $examQuestions->sum('marks');
+                $totalQuestions = $examQuestions->count();
+                $exam->update([
+                    'total_marks' => $totalMarks,
+                    'total_questions' => $totalQuestions,
+                ], );
+
             }
         });
 
-        return $this->success($importHistory->fresh(), 'Import confirmed successfully');
+        return $this->success($importHistory->refresh(), 'Import confirmed successfully');
     }
 
     public function destroy(ImportHistory $importHistory, string $rowIndex, Request $request)
