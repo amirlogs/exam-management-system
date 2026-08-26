@@ -1,5 +1,7 @@
 export type OfferingStatus = 'draft' | 'approved' | 'rejected' | 'cancelled'
 
+export type InstructorAssignmentType = 'lead_instructor' | 'instructor'
+
 export interface OfferingCourse {
   id: number
   code: string
@@ -16,26 +18,54 @@ export interface OfferingSemester {
   end_date?: string
 }
 
+export interface OfferingProgram {
+  id: number
+  name: string
+  code?: string
+  duration_years?: number
+}
+
 export interface OfferingSection {
   id: number
   name: string
   year_level: number
   program_id: number
+  semester_id: number
+  program?: OfferingProgram
 }
 
-export interface OfferingInstructor {
+export interface InstructorUser {
   id: number
   first_name: string
   last_name: string
   email: string
-  type?: 'lead_instructor' | 'instructor'
+  is_active: boolean
+}
+
+export interface OfferingInstructor {
+  id: number
+  employee_number: string
+  academic_rank?: string | null
+  status: string
+  user?: InstructorUser
+}
+
+export interface InstructorAssignment {
+  id: number
+  course_offering_id: number
+  section_id: number
+  instructor_id: number
+  type: InstructorAssignmentType
+  assigned_at: string | null
+  instructor?: OfferingInstructor
+  section?: OfferingSection
 }
 
 export interface CourseOffering {
   id: number
   course_id: number
   semester_id: number
-  created_by: number | null
+  created_by: string | null
   status: OfferingStatus
   rejection_reason: string | null
   created_at: string
@@ -43,7 +73,7 @@ export interface CourseOffering {
   course?: OfferingCourse
   semester?: OfferingSemester
   sections?: OfferingSection[]
-  instructors?: OfferingInstructor[]
+  instructor_assignments?: InstructorAssignment[]
 }
 
 export interface OfferingSuggestion {
@@ -55,11 +85,10 @@ export interface OfferingSuggestion {
   year_level: number
 }
 
-export interface OfferingUser {
+export interface OfferingInstructorOption {
   id: number
-  first_name: string
-  last_name: string
-  email: string
-  is_active: boolean
-  role_name: string[]
+  employee_number: string
+  academic_rank?: string | null
+  status: string
+  user?: InstructorUser
 }

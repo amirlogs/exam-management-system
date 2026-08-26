@@ -1,6 +1,14 @@
 <script setup lang="ts">
 import { onMounted, onBeforeUnmount, ref, computed, watch } from 'vue'
-import { GraduationCap, Sparkles, RotateCcw, Archive as ArchiveIcon, Eye } from 'lucide-vue-next'
+import {
+    Archive as ArchiveIcon,
+    Eye,
+    GraduationCap,
+    RotateCcw,
+    Sparkles,
+    Users,
+} from 'lucide-vue-next'
+
 import ResourceToolbar from '@/shared/components/ResourceToolbar.vue'
 import TableRowActions from '@/shared/components/TableRowActions.vue'
 import BaseButton from '@/shared/components/ui/BaseButton.vue'
@@ -8,54 +16,111 @@ import BaseSelect from '@/shared/components/ui/BaseSelect.vue'
 import BaseBadge from '@/shared/components/ui/BaseBadge.vue'
 import AppPagination from '@/shared/components/AppPagination.vue'
 import ConfirmModal from '@/shared/components/ConfirmModal.vue'
+
 import SuggestionsPanel from '../components/SuggestionsPanel.vue'
 import OfferingDetailModal from '../components/OfferingDetailModal.vue'
+
 import {
-    listOfferings, getArchivedOfferings, generateSuggestions, createOffering,
-    archiveOffering, restoreOffering,
+    listOfferings,
+    getArchivedOfferings,
+    generateSuggestions,
+    createOffering,
+    getOffering,
+    archiveOffering,
+    restoreOffering,
 } from '../api/courseOfferings'
+
 import { getSemesters } from '@/modules/admin/semesters/api/semesters'
-import type { CourseOffering, OfferingSuggestion, OfferingStatus } from '../types/courseOffering'
+
+import type {
+    CourseOffering,
+    OfferingSuggestion,
+    OfferingStatus,
+} from '../types/courseOffering'
+
 import type { Semester } from '@/modules/admin/semesters/types/semester'
 import type { Pagination } from '@/shared/composables/useCrudResource'
 import { useUiStore } from '@/stores/ui'
 
 const uiStore = useUiStore()
 
-type OfferingColumn = 'course' | 'semester' | 'status' | 'sections' | 'instructors' | 'updated_at'
+type OfferingColumn =
+    | 'course'
+    | 'status'
+    | 'sections'
+    | 'instructors'
+    | 'semester'
+    | 'updated_at'
 
-const columns: { key: OfferingColumn; label: string; required?: boolean }[] = [
-    { key: 'course', label: 'Course', required: true },
-    { key: 'status', label: 'Status', required: true },
-    { key: 'sections', label: 'Sections' },
-    { key: 'instructors', label: 'Instructors' },
-    { key: 'semester', label: 'Semester' },
-    { key: 'updated_at', label: 'Updated' },
-]
-const visibleColumns = ref<OfferingColumn[]>(['course', 'status', 'sections', 'instructors', 'updated_at'])
-const isColumnVisible = (c: OfferingColumn) => visibleColumns.value.includes(c)
-function toggleColumn(c: OfferingColumn) {
-    const cfg = columns.find((x) => x.key === c)
-    if (cfg?.required) return
-    isColumnVisible(c)
-        ? (visibleColumns.value = visibleColumns.value.filter((x) => x !== c))
-        : (visibleColumns.value = [...visibleColumns.value, c])
-}
-function resetColumns() {
-    visibleColumns.value = ['course', 'status', 'sections', 'instructors', 'updated_at']
-}
+const columns: {
+    key: OfferingColumn
+    label: string
+    required?: boolean
+}[] = [
+        { key: 'course', label: 'Course', required: true },
+        { key: 'status', label: 'Status', required: true },
+        { key: 'sections', label: 'Sections' },
+        { key: 'instructors', label: 'Instructors' },
+        { key: 'semester', label: 'Semester' },
+        { key: 'updated_at', label: 'Updated' },
+    ]
+
+const visibleColumns = ref<OfferingColumn[]>([
+    'course',
+    'status',
+    'sections',
+    'instructors',
+    'semester',
+])
+
 const showColumns = ref(false)
-const totalTableColumns = computed(() => visibleColumns.value.length + 1)
+
+const isColumnVisible = (column: OfferingColumn) =>
+    visibleColumns.value.includes(column)
+
+function toggleColumn(column: OfferingColumn) {
+    const config = columns.find((item) => item.key === column)
+
+    if (config?.required) return
+
+    if (isColumnVisible(column)) {
+        visibleColumns.value = visibleColumns.value.filter(
+            (item) => item !== column,
+        )
+    } else {
+        visibleColumns.value = [...visibleColumns.value, column]
+    }
+}
+
+function resetColumns() {
+    visibleColumns.value = [
+        'course',
+        'status',
+        'sections',
+        'instructors',
+        'semester',
+    ]
+}
+
+const totalTableColumns = computed(
+    () => visibleColumns.value.length + 1,
+)
 
 const semesters = ref<Semester[]>([])
 const selectedSemesterId = ref<number | null>(null)
+
 const semesterOptions = computed(() =>
-    semesters.value.map((s) => ({ value: String(s.id), label: `Semester ${s.name} · ${s.academic_year}` })),
+    semesters.value.map((semester) => ({
+        value: String(semester.id),
+        label: `${semester.name} · ${semester.academic_year}`,
+    })),
 )
 
 const activeTab = ref<'active' | 'archived'>('active')
+
 const search = ref('')
 const statusFilter = ref<OfferingStatus | null>(null)
+
 const statusFilterOptions = [
     { value: null, label: 'All statuses' },
     { value: 'draft', label: 'Draft' },
@@ -63,7 +128,11 @@ const statusFilterOptions = [
     { value: 'rejected', label: 'Rejected' },
     { value: 'cancelled', label: 'Cancelled' },
 ]
-const hasActiveFilters = computed(() => statusFilter.value !== null)
+
+const hasActiveFilters = computed(
+    () => statusFilter.value !== null,
+)
+
 function clearFilters() {
     search.value = ''
     statusFilter.value = null
@@ -71,33 +140,56 @@ function clearFilters() {
 }
 
 const list = ref<CourseOffering[]>([])
-const pagination = ref<Pagination>({ current_page: 1, last_page: 1, per_page: 10, total: 0, from: 0, to: 0 })
+
+const pagination = ref<Pagination>({
+    current_page: 1,
+    last_page: 1,
+    per_page: 10,
+    total: 0,
+    from: 0,
+    to: 0,
+})
+
 const loading = ref(false)
 const error = ref('')
 
 const showSuggestions = ref(false)
 const suggestions = ref<OfferingSuggestion[]>([])
 const loadingSuggestions = ref(false)
-const creatingKey = ref<string | null>(null)
+const creatingCourseId = ref<number | null>(null)
 
 const detailOffering = ref<CourseOffering | null>(null)
 const showDetail = ref(false)
 
 const showArchiveModal = ref(false)
 const showRestoreModal = ref(false)
-const selected = ref<CourseOffering | null>(null)
+
+const selectedOffering = ref<CourseOffering | null>(null)
+
 const archiving = ref(false)
 const restoring = ref(false)
 
 async function load(page = 1) {
     if (!selectedSemesterId.value) return
+
     loading.value = true
     error.value = ''
+
     try {
-        const fetcher = activeTab.value === 'active' ? listOfferings : getArchivedOfferings
-        const res = await fetcher(selectedSemesterId.value, page, 10, statusFilter.value ?? undefined)
-        list.value = res.data
-        pagination.value = res.pagination
+        const fetcher =
+            activeTab.value === 'active'
+                ? listOfferings
+                : getArchivedOfferings
+
+        const response = await fetcher(
+            selectedSemesterId.value,
+            page,
+            10,
+            statusFilter.value ?? undefined,
+        )
+
+        list.value = response.data
+        pagination.value = response.pagination
     } catch {
         error.value = 'Failed to load course offerings.'
     } finally {
@@ -105,141 +197,272 @@ async function load(page = 1) {
     }
 }
 
-const filteredList = computed(() =>
-    list.value.filter((o) => {
-        if (!search.value) return true
-        const q = search.value.toLowerCase()
-        const hay = `${o.course?.code ?? ''} ${o.course?.name ?? ''}`.toLowerCase()
-        return hay.includes(q)
-    }),
-)
+const filteredList = computed(() => {
+    const query = search.value.trim().toLowerCase()
+
+    if (!query) return list.value
+
+    return list.value.filter((offering) => {
+        const haystack = [
+            offering.course?.code,
+            offering.course?.name,
+        ]
+            .filter(Boolean)
+            .join(' ')
+            .toLowerCase()
+
+        return haystack.includes(query)
+    })
+})
 
 watch(statusFilter, () => load(1))
 watch(activeTab, () => load(1))
 
-function onSemesterChange(id: string) {
-    selectedSemesterId.value = Number(id)
+function onSemesterChange(value: string) {
+    selectedSemesterId.value = Number(value)
     showSuggestions.value = false
+    suggestions.value = []
     load(1)
 }
+
 function changeTab(tab: 'active' | 'archived') {
     activeTab.value = tab
 }
+
 function retry() {
     load(pagination.value.current_page)
 }
 
 async function openSuggestions() {
     if (!selectedSemesterId.value) return
+
     loadingSuggestions.value = true
     showSuggestions.value = true
+
     try {
-        suggestions.value = await generateSuggestions(selectedSemesterId.value)
+        suggestions.value = await generateSuggestions(
+            selectedSemesterId.value,
+        )
     } catch {
-        uiStore.showToast('Failed to generate suggestions.', 'error')
+        suggestions.value = []
+        uiStore.showToast(
+            'Failed to generate suggestions.',
+            'error',
+        )
     } finally {
         loadingSuggestions.value = false
     }
 }
-async function createFromSuggestion(s: OfferingSuggestion) {
+
+async function createFromSuggestion(
+    suggestion: OfferingSuggestion,
+) {
     if (!selectedSemesterId.value) return
-    const key = `${s.course_id}-${s.program_id}`
-    creatingKey.value = key
+
+    creatingCourseId.value = suggestion.course_id
+
     try {
-        await createOffering(s.course_id, selectedSemesterId.value)
-        suggestions.value = suggestions.value.filter((x) => !(x.course_id === s.course_id && x.program_id === s.program_id))
-        uiStore.showToast(`${s.course_code} offering created.`, 'success')
+        await createOffering(
+            suggestion.course_id,
+            selectedSemesterId.value,
+        )
+
+        // One offering may satisfy multiple programs,
+        // so remove every suggestion belonging to this course.
+        suggestions.value = suggestions.value.filter(
+            (item) => item.course_id !== suggestion.course_id,
+        )
+
+        uiStore.showToast(
+            `${suggestion.course_code} offering created.`,
+            'success',
+        )
+
         await load(1)
     } catch (err: any) {
-        uiStore.showToast(err?.response?.data?.message || 'Failed to create offering.', 'error')
+        uiStore.showToast(
+            err?.response?.data?.message ||
+            'Failed to create offering.',
+            'error',
+        )
     } finally {
-        creatingKey.value = null
+        creatingCourseId.value = null
     }
 }
 
-function openDetail(offering: CourseOffering) {
-    detailOffering.value = offering
-    showDetail.value = true
-}
-function onUpdated(updated: CourseOffering) {
-    const idx = list.value.findIndex((o) => o.id === updated.id)
-    if (idx !== -1) list.value[idx] = updated
-}
-function onArchived(id: number) {
-    list.value = list.value.filter((o) => o.id !== id)
-    pagination.value.total = Math.max(0, pagination.value.total - 1)
+async function openDetail(offering: CourseOffering) {
+    try {
+        detailOffering.value = await getOffering(offering.id)
+        showDetail.value = true
+    } catch (err: any) {
+        uiStore.showToast(
+            err?.response?.data?.message ||
+            'Failed to load course offering.',
+            'error',
+        )
+    }
 }
 
-function openArchive(o: CourseOffering) {
-    selected.value = o
+function onUpdated(updated: CourseOffering) {
+    const index = list.value.findIndex(
+        (item) => item.id === updated.id,
+    )
+
+    if (index !== -1) {
+        list.value[index] = updated
+    }
+
+    detailOffering.value = updated
+}
+
+function onArchived(id: number) {
+    list.value = list.value.filter(
+        (item) => item.id !== id,
+    )
+
+    pagination.value.total = Math.max(
+        0,
+        pagination.value.total - 1,
+    )
+}
+
+function openArchive(offering: CourseOffering) {
+    selectedOffering.value = offering
     showArchiveModal.value = true
 }
+
 async function confirmArchive() {
-    if (!selected.value) return
+    if (!selectedOffering.value) return
+
     archiving.value = true
+
     try {
-        await archiveOffering(selected.value.id)
-        uiStore.showToast('Offering archived.', 'success')
+        await archiveOffering(selectedOffering.value.id)
+
+        uiStore.showToast(
+            'Offering archived.',
+            'success',
+        )
+
         showArchiveModal.value = false
-        selected.value = null
+        selectedOffering.value = null
+
         await load(pagination.value.current_page)
     } catch (err: any) {
-        uiStore.showToast(err?.response?.data?.message || 'Failed to archive offering.', 'error')
+        uiStore.showToast(
+            err?.response?.data?.message ||
+            'Failed to archive offering.',
+            'error',
+        )
     } finally {
         archiving.value = false
     }
 }
 
-function openRestore(o: CourseOffering) {
-    selected.value = o
+function openRestore(offering: CourseOffering) {
+    selectedOffering.value = offering
     showRestoreModal.value = true
 }
+
 async function confirmRestore() {
-    if (!selected.value) return
+    if (!selectedOffering.value) return
+
     restoring.value = true
+
     try {
-        await restoreOffering(selected.value.id)
-        uiStore.showToast('Offering restored.', 'success')
+        await restoreOffering(selectedOffering.value.id)
+
+        uiStore.showToast(
+            'Offering restored.',
+            'success',
+        )
+
         showRestoreModal.value = false
-        selected.value = null
+        selectedOffering.value = null
+
         await load(pagination.value.current_page)
-    } catch {
-        uiStore.showToast('Failed to restore offering.', 'error')
+    } catch (err: any) {
+        uiStore.showToast(
+            err?.response?.data?.message ||
+            'Failed to restore offering.',
+            'error',
+        )
     } finally {
         restoring.value = false
     }
 }
 
-function handleRowAction(key: string, o: CourseOffering) {
-    if (key === 'view') openDetail(o)
+function handleRowAction(
+    key: string,
+    offering: CourseOffering,
+) {
+    if (key === 'view') {
+        openDetail(offering)
+    }
 }
 
 function statusVariant(status: OfferingStatus) {
-    return status === 'approved' ? 'success' : status === 'rejected' ? 'danger' : status === 'cancelled' ? 'neutral' : 'info'
+    switch (status) {
+        case 'approved':
+            return 'success'
+        case 'rejected':
+            return 'danger'
+        case 'cancelled':
+            return 'neutral'
+        default:
+            return 'info'
+    }
 }
 
 const emptyStateText = computed(() => {
-    if (search.value || hasActiveFilters.value) return 'No matching offerings found'
-    return activeTab.value === 'archived' ? 'No archived offerings' : 'No offerings yet for this semester'
+    if (search.value || hasActiveFilters.value) {
+        return 'No matching offerings found'
+    }
+
+    return activeTab.value === 'archived'
+        ? 'No archived offerings'
+        : 'No offerings for this semester'
 })
 
 function handleDocumentClick(event: MouseEvent) {
     const target = event.target as HTMLElement
+
     if (!target.closest('[data-columns-container]')) {
         showColumns.value = false
     }
 }
 
 onMounted(async () => {
-    document.addEventListener('click', handleDocumentClick)
-    const res = await getSemesters(1, 100)
-    semesters.value = res.data
-    selectedSemesterId.value = semesters.value.find((s) => s.status === 'active')?.id ?? semesters.value[0]?.id ?? null
-    if (selectedSemesterId.value) await load(1)
+    document.addEventListener(
+        'click',
+        handleDocumentClick,
+    )
+
+    try {
+        const response = await getSemesters(1, 100)
+
+        semesters.value = response.data
+
+        selectedSemesterId.value =
+            semesters.value.find(
+                (semester) => semester.status === 'active',
+            )?.id ??
+            semesters.value[0]?.id ??
+            null
+
+        if (selectedSemesterId.value) {
+            await load(1)
+        }
+    } catch {
+        error.value = 'Failed to load semesters.'
+    }
 })
 
 onBeforeUnmount(() => {
-    document.removeEventListener('click', handleDocumentClick)
+    document.removeEventListener(
+        'click',
+        handleDocumentClick,
+    )
 })
 </script>
 
@@ -314,13 +537,32 @@ onBeforeUnmount(() => {
                 <table class="w-full min-w-190 border-collapse">
                     <thead>
                         <tr class="border-b border-border bg-text/2.5">
-                            <th v-if="isColumnVisible('course')" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-text/50">Course</th>
-                            <th v-if="isColumnVisible('status')" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-text/50">Status</th>
-                            <th v-if="isColumnVisible('sections')" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-text/50">Sections</th>
-                            <th v-if="isColumnVisible('instructors')" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-text/50">Instructors</th>
-                            <th v-if="isColumnVisible('semester')" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-text/50">Semester</th>
-                            <th v-if="isColumnVisible('updated_at')" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-text/50">Updated</th>
-                            <th class="w-20 px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-text/50">Actions</th>
+                            <th v-if="isColumnVisible('course')"
+                                class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-text/50">
+                                Course
+                            </th>
+                            <th v-if="isColumnVisible('status')"
+                                class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-text/50">
+                                Status
+                            </th>
+                            <th v-if="isColumnVisible('sections')"
+                                class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-text/50">
+                                Sections
+                            </th>
+                            <th v-if="isColumnVisible('instructors')"
+                                class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-text/50">
+                                Instructors</th>
+                            <th v-if="isColumnVisible('semester')"
+                                class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-text/50">
+                                Semester
+                            </th>
+                            <th v-if="isColumnVisible('updated_at')"
+                                class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-text/50">
+                                Updated
+                            </th>
+                            <th
+                                class="w-20 px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-text/50">
+                                Actions</th>
                         </tr>
                     </thead>
 
@@ -330,16 +572,19 @@ onBeforeUnmount(() => {
                                 <div class="h-3.5 animate-pulse rounded bg-text/5"
                                     :class="column === 'course' ? 'w-44' : 'w-20'" />
                             </td>
-                            <td class="px-4 py-4"><div class="ml-auto h-8 w-8 animate-pulse rounded-md bg-text/5" /></td>
+                            <td class="px-4 py-4">
+                                <div class="ml-auto h-8 w-8 animate-pulse rounded-md bg-text/5" />
+                            </td>
                         </tr>
                     </tbody>
 
                     <tbody v-else-if="filteredList.length" class="divide-y divide-border">
-                        <tr v-for="o in filteredList" :key="o.id" class="group cursor-pointer transition-colors hover:bg-text/2"
-                            @click="openDetail(o)">
+                        <tr v-for="o in filteredList" :key="o.id"
+                            class="group cursor-pointer transition-colors hover:bg-text/2" @click="openDetail(o)">
                             <td v-if="isColumnVisible('course')" class="px-4 py-3.5">
                                 <div class="flex items-center gap-3">
-                                    <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border bg-bg text-text/50">
+                                    <div
+                                        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border bg-bg text-text/50">
                                         <GraduationCap class="h-4 w-4" />
                                     </div>
                                     <div>
@@ -352,20 +597,24 @@ onBeforeUnmount(() => {
                                 <BaseBadge :variant="statusVariant(o.status)">{{ o.status }}</BaseBadge>
                             </td>
                             <td v-if="isColumnVisible('sections')" class="px-4 py-3.5">
-                                <span class="text-sm" :class="(o.sections?.length ?? 0) > 0 ? 'text-text/70' : 'text-text/35'">
+                                <span class="text-sm"
+                                    :class="(o.sections?.length ?? 0) > 0 ? 'text-text/70' : 'text-text/35'">
                                     {{ o.sections?.length ?? 0 }}
                                 </span>
                             </td>
                             <td v-if="isColumnVisible('instructors')" class="px-4 py-3.5">
-                                <span class="text-sm" :class="(o.instructors?.length ?? 0) > 0 ? 'text-text/70' : 'text-text/35'">
+                                <span class="text-sm"
+                                    :class="(o.instructors?.length ?? 0) > 0 ? 'text-text/70' : 'text-text/35'">
                                     {{ o.instructors?.length ?? 0 }}
                                 </span>
                             </td>
                             <td v-if="isColumnVisible('semester')" class="px-4 py-3.5">
-                                <span class="text-sm text-text/60">{{ o.semester?.name }} · {{ o.semester?.academic_year }}</span>
+                                <span class="text-sm text-text/60">{{ o.semester?.name }} · {{ o.semester?.academic_year
+                                    }}</span>
                             </td>
                             <td v-if="isColumnVisible('updated_at')" class="px-4 py-3.5">
-                                <span class="font-mono text-xs tabular-nums text-text/60">{{ o.updated_at || '—' }}</span>
+                                <span class="font-mono text-xs tabular-nums text-text/60">{{ o.updated_at || '—'
+                                    }}</span>
                             </td>
                             <td class="px-4 py-3.5 text-right" @click.stop>
                                 <TableRowActions :active-tab="activeTab" archive-permission="course_offering.archive"
@@ -381,7 +630,8 @@ onBeforeUnmount(() => {
                         <tr>
                             <td :colspan="totalTableColumns" class="px-6 py-16 text-center">
                                 <div class="mx-auto flex max-w-sm flex-col items-center">
-                                    <div class="flex h-10 w-10 items-center justify-center rounded-full bg-text/5 text-text/40">
+                                    <div
+                                        class="flex h-10 w-10 items-center justify-center rounded-full bg-text/5 text-text/40">
                                         <GraduationCap class="h-5 w-5" />
                                     </div>
                                     <p class="mt-3 text-sm font-medium text-text">{{ emptyStateText }}</p>
