@@ -21,17 +21,10 @@ class InstructorNavigation
                 'permission_mode' => 'any',
             ],
             [
-                'label' => 'Question Bank',
-                'to' => '/instructor/question-bank',
-                'icon' => 'HelpCircle',
-                'permissions' => ['question.create', 'question.view'],
-                'permission_mode' => 'any',
-            ],
-            [
                 'label' => 'Exams',
-                'to' => '/instructor/exams',
+                'to' => '/instructor/course-offerings',
                 'icon' => 'FileText',
-                'permissions' => ['exam.create', 'exam.update'],
+                'permissions' => ['exam.create', 'exam.update', 'exam.view'],
                 'permission_mode' => 'any',
             ],
             [
@@ -40,12 +33,6 @@ class InstructorNavigation
                 'icon' => 'ClipboardCheck',
                 'permissions' => ['grade.create'],
                 'permission_mode' => 'any',
-            ],
-            [
-                'label' => 'Flags',
-                'to' => '/instructor/flags',
-                'icon' => 'Flag',
-                'permissions' => [],
             ],
         ];
     }

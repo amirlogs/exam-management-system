@@ -23,11 +23,17 @@ class CourseOfferingController extends Controller
     {
         $request->validate(['semester_id' => ['required', Rule::exists('semesters', 'id')->withoutTrashed()]]);
         $semester = Semester::find($request->semester_id);
-        $termNumber = $semester->term_number;
 
+        if (! $semester) {
+            return $this->error(null, 'Semester not found', 404);
+        }
+
+        $termNumber = $semester->term_number;
         $activeCurriculums = Curriculum::where('status', 'active')->with('program', 'courses')->get();
         $suggestions = [];
 
+        // return $activeCurriculums;
+        
         foreach ($activeCurriculums as $curriculum) {
             $requiredCourses = CurriculumCourse::where('curriculum_id', $curriculum->id)
                 ->where('semester_number', $termNumber)

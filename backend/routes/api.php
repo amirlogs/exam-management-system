@@ -179,6 +179,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/course-offerings/{courseOffering}/exams', [ExamController::class, 'store'])->middleware('permission:exam.create');
     Route::patch('/exams/{exam}/composition', [ExamController::class, 'composition'])->middleware('permission:exam.update');
     Route::post('/exams/{exam}/questions', [ExamController::class, 'addQuestions'])->middleware('permission:exam.update');
+    Route::post('/exams/{exam}/questions/bulk', [ExamController::class, 'addQuestionsBulk'])->middleware('permission:exam.update');
     Route::get('/exams/{exam}/questions', [ExamController::class, 'questions'])->middleware('permission:exam.view');
     Route::delete('/exams/{exam}/questions/{examQuestion}', [ExamController::class, 'removeQuestion'])->middleware('permission:exam.update');
     Route::post('/exams/{exam}/submit-approval', [ExamController::class, 'submitApproval'])->middleware('permission:exam.submit');

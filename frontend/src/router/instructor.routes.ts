@@ -1,15 +1,14 @@
-import DashboardView from '@/modules/instructor/pages/DashboardView.vue'
-// import MyCoursesView from '@/modules/instructor/courses/pages/MyCoursesView.vue'
-// import QuestionBankListView from '@/modules/instructor/question-bank/pages/QuestionBankList.vue'
-
-// import ImportQuestionsView from '@/modules/instructor/question-bank/pages/ImportQuestions.vue'
-// import QuestionListView from '@/modules/instructor/question-bank/pages/QuestionListView.vue'
-// import ImportFlagsView from '@/modules/instructor/question-bank/pages/ImportFlagsView.vue'
-// import ExamsListView from '@/modules/instructor/exams/pages/ExamsListView.vue'
-// import ExamBuilderView from '@/modules/instructor/exams/pages/ExamBuilderView.vue'
+import CourseOfferingHubView from '@/modules/instructor/course-offerings/pages/CourseOfferingHubView.vue'
+import CourseOfferingsListView from '@/modules/instructor/course-offerings/pages/CourseOfferingsListView.vue'
+import ExamComposerView from '@/modules/instructor/exams/pages/ExamComposerView.vue'
+import ExamDetailView from '@/modules/instructor/exams/pages/ExamDetailView.vue'
+import ExamsListView from '@/modules/instructor/exams/pages/ExamsListView.vue'
 // import GradingQueueView from '@/modules/instructor/grading/pages/GradingQueueView.vue'
-// import GradingDetailView from '@/modules/instructor/grading/pages/GradingDetailView.vue'
-// import FlagsView from '@/modules/instructor/pages/FlagsView.vue'
+import GenericImportReviewView from '@/modules/instructor/imports/pages/GenericImportReviewView.vue'
+import DashboardView from '@/modules/instructor/pages/DashboardView.vue'
+import MyCoursesView from '@/modules/instructor/pages/MyCoursesView.vue'
+import QuestionBankListView from '@/modules/instructor/questions/pages/QuestionBankListView.vue'
+import { Component } from 'lucide-vue-next'
 
 export default [
   {
@@ -20,74 +19,73 @@ export default [
   {
     path: 'courses',
     name: 'instructor.courses.list',
-    // component: MyCoursesView,
-    meta: { permissions: ['course_offering.view'] },
-  },
-
-  // ---------------- Question Bank ----------------
-  {
-    path: 'question-bank',
-    name: 'instructor.question-bank.list',
-    // component: QuestionBankListView,
-    meta: { permissions: ['question.view'] },
+    component: MyCoursesView,
+    meta: { permissions: ['course_offering.view'], permissionMode: 'any' },
   },
   {
-    path: 'courses/:courseId/question-bank',
-    name: 'instructor.question-bank.list.byCourse',
-    // component: QuestionBankListView,
-    meta: { permissions: ['question.view'] },
+    path: 'courses/:courseId/questions',
+    name: 'instructor.questions.list',
+    component: QuestionBankListView,
+    meta: { permissions: ['question.create', 'question.view'], permissionMode: 'any' },
   },
   {
-    path: 'courses/:courseId/question-bank/import/:importId?',
-    name: 'instructor.question-bank.import',
-    // component: ImportQuestionsView,
-    meta: { permissions: ['question.create'] },
+    path: 'courses/:courseId/questions/import',
+    name: 'instructor.questions.import',
+    component: GenericImportReviewView,
+    meta: { permissions: ['question.create'], permissionMode: 'any' },
   },
   {
-    path: 'courses/:courseId/question-bank/imports/:importId/questions',
-    name: 'instructor.import.questions',
-    // component: QuestionListView,
-    meta: { permissions: ['question.view'] },
+    path: 'imports/new',
+    name: 'instructor.imports.new',
+    component: GenericImportReviewView,
+    meta: { permissions: ['question.create'], permissionMode: 'any' },
   },
   {
-    path: 'courses/:courseId/question-bank/imports/:importId/flags',
-    name: 'instructor.import.flags',
-    // component: ImportFlagsView,
-    meta: { permissions: ['question.update'] },
+    path: 'imports/:importId',
+    name: 'instructor.imports.review',
+    component: GenericImportReviewView,
+    meta: { permissions: ['question.create'], permissionMode: 'any' },
   },
-
-  // ---------------- Exams ----------------
   {
-    path: 'exams',
+    path: 'course-offerings',
+    name: 'instructor.course-offerings.list',
+    component: CourseOfferingsListView,
+    meta: { permissions: ['exam.create', 'exam.update', 'exam.view'], permissionMode: 'any' },
+  },
+  {
+    path: 'course-offerings/:courseOfferingId/exams',
     name: 'instructor.exams.list',
-    // component: ExamsListView,
-    meta: { permissions: ['exam.create', 'exam.update'] },
+    component: ExamsListView,
+    meta: { permissions: ['exam.view'], permissionMode: 'any' },
+  },
+  {
+    path: 'exams/:examId',
+    name: 'instructor.exams.detail',
+    component: ExamDetailView,
+    meta: { permissions: ['exam.view'], permissionMode: 'any' },
   },
   {
     path: 'exams/:examId/build',
     name: 'instructor.exams.build',
-    // component: ExamBuilderView,
-    meta: { permissions: ['exam.update'] },
+    component: ExamComposerView,
+    meta: { permissions: ['exam.update'], permissionMode: 'any' },
   },
-
-  // ---------------- Grading ----------------
   {
     path: 'grading',
     name: 'instructor.grading.list',
     // component: GradingQueueView,
-    meta: { permissions: ['grade.create'] },
+    meta: { permissions: ['grade.create'], permissionMode: 'any' },
   },
   {
-    path: 'grading/:examId',
-    name: 'instructor.grading.detail',
-    // component: GradingDetailView,
-    meta: { permissions: ['grade.create'] },
+    path: 'course-offerings',
+    name: 'instructor.course-offerings.list',
+    component:CourseOfferingsListView,
+    meta: { permissions: ['exam.create', 'exam.update', 'exam.view'], permissionMode: 'any' },
   },
-
-  // ---------------- Flags ----------------
   {
-    path: 'flags',
-    name: 'instructor.flags',
-    // component: FlagsView,
+    path: 'course-offerings/:courseOfferingId',
+    name: 'instructor.course-offerings.hub',
+    component: CourseOfferingHubView,
+    meta: { permissions: ['course_offering.view'], permissionMode: 'any' },
   },
 ]

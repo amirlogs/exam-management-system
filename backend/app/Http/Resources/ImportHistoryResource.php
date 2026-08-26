@@ -23,7 +23,7 @@ class ImportHistoryResource extends JsonResource
         'file_path' => $this->file_path,
         'created_at' => $this->created_at?->format('M d, Y'),
         'updated_at' => $this->updated_at?->format('M d, Y'),
-        'uploded_dy'=> [
+        'uploaded_by'=> [
                 'id' => $this->uploader->id,
                 'name' => $this->uploader->name,
                 'email' => $this->uploader->email,

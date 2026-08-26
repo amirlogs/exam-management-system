@@ -43,7 +43,7 @@ class QuestionController extends Controller
         $question = Question::create([
             'course_id' => $courseId,
             'created_by' => $request->user()->id,
-            'type' => $request->type,
+            'type' => strtolower($request->type),
             'chapter' => $request->chapter,
             'content' => $request->content,
             'difficulty' => $request->difficulty,
@@ -65,34 +65,30 @@ class QuestionController extends Controller
         }
 
         $question->update([
-            'type' => $request->type,
+            'type' => strtolower($request->type),
             'chapter' => $request->chapter,
             'content' => $request->content,
             'difficulty' => $request->difficulty,
         ]);
 
-        if (! in_array($request->type, ['MCQ', 'TRUE_FALSE'])) {
+        if (! in_array($request->type, ['mcq', 'true_false'])) {
             $question->options()->delete();
         } elseif ($request->has('options')) {
             $question->options()->delete();
-            foreach (QuestionValidator::buildOptions($request->type, $request->options, $request->correct_answer) as $option) {
+
+            foreach (
+                QuestionValidator::buildOptions(
+                    $request->type,
+                    $request->options,
+                    $request->correct_answer
+                ) as $option
+            ) {
                 $question->options()->create($option);
             }
         }
 
         return $this->success(new QuestionResource($question), 'Question updated successfully');
     }
-
-    // public function activate(Question $question)
-    // {
-    //     if ($question->status !== 'draft') {
-    //         return $this->error(null, 'Only draft questions can be activated.', 409);
-    //     }
-
-    //     $question->update(['status' => 'active']);
-
-    //     return $this->success($question, 'Question activated successfully');
-    // }
 
     public function destroy(Question $question)
     {

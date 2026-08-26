@@ -22,9 +22,6 @@ class StoreOnlineExamRequest extends FormRequest
      */
     public function rules(): array
     {
-        // "MCQ": { "marks_each": 1 },
-        //    "TRUE_FALSE": {"marks_each": 2 }
-
         return [
             'title' => ['required', 'string', 'max:255'],
             'type' => ['required', 'in:MIDTERM,FINAL'],

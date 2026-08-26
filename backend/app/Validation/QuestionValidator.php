@@ -7,7 +7,9 @@ use Illuminate\Support\Facades\Validator;
 class QuestionValidator
 {
     private static array $rules = [
-        'type' => ['required', 'in:MCQ,ESSAY,TRUE_FALSE,SHORT_ANSWER'],
+        //change the type to lower 
+        
+        'type'=> ['required', 'in:mcq,essay,true_false,short_answer'],
         'content' => ['required', 'string', 'min:5'],
         'chapter' => ['nullable', 'string', 'max:255'],
         'options' => ['required_if:type,MCQ,TRUE_FALSE', 'nullable'],
@@ -16,7 +18,7 @@ class QuestionValidator
     ];
 
     private static array $updateRules = [
-        'type' => ['sometimes', 'in:MCQ,ESSAY,TRUE_FALSE,SHORT_ANSWER'],
+        'type' => ['sometimes', 'in:mcq,essay,true_false,short_answer'],
         'content' => ['sometimes', 'string', 'min:5'],
         'chapter' => ['nullable', 'string', 'max:255'],
         'options' => ['required_if:type,MCQ,TRUE_FALSE', 'nullable'],

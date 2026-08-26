@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Commit\ExamQuestionCommitter;
 use App\Http\Filters\RequestFilters;
+use App\Http\Requests\AddQuestionsBulkRequest;
 use App\Http\Requests\AddQuestionsRequest;
 use App\Http\Requests\ExamCompositionRequest;
 use App\Http\Requests\StoreOnlineExamRequest;
@@ -14,15 +14,11 @@ use App\Models\CourseOffering;
 use App\Models\Exam;
 use App\Models\ExamAttempt;
 use App\Models\ExamQuestion;
-use App\Models\ImportHistory;
 use App\Models\Question;
-use App\Services\ImportCommitterFactory;
-use App\Services\ImportValidatorFactory;
 use App\Validation\GetRequestsValidator;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use LDAP\Result;
 
 class ExamController extends Controller
 {
@@ -111,8 +107,10 @@ class ExamController extends Controller
                 'total_marks' => $totalMarks,
                 'total_questions' => $totalQuestions,
             ]);
+
             return $question;
         });
+
         return $this->success(new ExamQuestionResource($question), 'Question added successfully', 201);
     }
 
@@ -131,12 +129,12 @@ class ExamController extends Controller
     {
         $per_page = GetRequestsValidator::validate($request);
         $query = $exam->questions()->with('options')->getQuery();
-        
+
         RequestFilters::apply($query, $request, ['type', 'status']);
 
         $questions = $query->paginate($per_page);
-        
-        return $this->paginate($questions , QuestionResource::class , "Exam Questions retrieved successfully");
+
+        return $this->paginate($questions, QuestionResource::class, 'Exam Questions retrieved successfully');
     }
 
     public function submitApproval(Exam $exam)
@@ -167,7 +165,7 @@ class ExamController extends Controller
 
         return $this->success(new ExamResource($exam->fresh()), 'Exam changed to draft successfully');
     }
-    
+
     public function approve(Exam $exam, Request $request)
     {
         if ($exam->status !== 'pending_approval') {
@@ -212,8 +210,8 @@ class ExamController extends Controller
                 'current_review_id' => $review->id,
             ]);
         });
-        
-        return $this->success(new ExamResource($exam->fresh()),'Exam rejected successfully');
+
+        return $this->success(new ExamResource($exam->fresh()), 'Exam rejected successfully');
     }
 
     public function schedule(Exam $exam, Request $request)
@@ -226,7 +224,7 @@ class ExamController extends Controller
             'scheduled_start' => 'required|date',
         ]);
 
-        $localDateTime = Carbon::parse($request->scheduled_start_time)->setTimezone('UTC');
+        $localDateTime = Carbon::parse($request->scheduled_start)->setTimezone('UTC');
         $scheduleEnd = $localDateTime->copy()->addMinutes($exam->duration_minutes);
 
         $exam->update([
@@ -249,7 +247,7 @@ class ExamController extends Controller
 
         ]);
         if ($request->scheduled_start_time) {
-            $localDateTime = Carbon::parse($request->scheduled_start_time)->setTimezone('UTC');
+            $localDateTime = Carbon::parse($request->scheduled_start)->setTimezone('UTC');
             $scheduleEnd = $localDateTime->copy()->addMinutes($exam->duration_minutes);
         }
         $exam->update([
@@ -310,8 +308,8 @@ class ExamController extends Controller
 
     public function archive(Exam $exam)
     {
-        if ($exam->status !== 'closed') {
-            return $this->error(null, 'Exam must be closed to be archived', 422);
+        if ($exam->status !== 'completed') {
+            return $this->error(null, 'Exam must be completed to be archived', 422);
         }
 
         $exam->update([
@@ -320,5 +318,75 @@ class ExamController extends Controller
 
         return $this->success(new ExamResource($exam->fresh()), 'Exam archived successfully');
     }
-}
 
+    public function cancel(Exam $exam)
+    {
+        if (! in_array($exam->status, ['approved', 'scheduled'])) {
+            return $this->error(null, 'Only approved or scheduled exams can be cancelled', 422);
+        }
+        $exam->update(['status' => 'cancelled']);
+
+        return $this->success(new ExamResource($exam->fresh()), 'Exam cancelled successfully');
+    }
+
+    public function addQuestionsBulk(Exam $exam, AddQuestionsBulkRequest $request)
+    {
+        if ($exam->status !== 'draft') {
+            return $this->error(null, 'Exam is not in draft state', 422);
+        }
+    
+        $validated = $request->validated();
+        $errors = [];
+        $created = [];
+    
+        DB::transaction(function () use ($exam, $validated, &$errors, &$created) {
+            foreach ($validated['questions'] as $index => $item) {
+                // Reject if already attached (mirrors the single-add unique constraint)
+                if ($exam->examQuestions()->where('question_id', $item['question_id'])->exists()) {
+                    $errors[$index] = ['The selected question is already added to the exam'];
+                    continue;
+                }
+    
+                $question = Question::find($item['question_id']);
+                $typeConfig = $exam->composition[$question->type] ?? null;
+    
+                if (in_array($question->type, ['mcq', 'true_false'])) {
+                    if (! $typeConfig || empty($typeConfig['marks_each'])) {
+                        $errors[$index] = ["No marks_each configured for type {$question->type} in this exam's composition."];
+                        continue;
+                    }
+                    $marks = $typeConfig['marks_each'];
+                } else {
+                    if (empty($item['marks'])) {
+                        $errors[$index] = ["marks is required when adding a {$question->type} question."];
+                        continue;
+                    }
+                    $marks = $item['marks'];
+                }
+    
+                $created[] = $exam->examQuestions()->create([
+                    'question_id' => $item['question_id'],
+                    'marks' => $marks,
+                ])->load('question');
+            }
+    
+            if (count($created)) {
+                $questions = $exam->examQuestions()->with('question')->get();
+                $exam->update([
+                    'total_marks' => $questions->sum('marks'),
+                    'total_questions' => $questions->count(),
+                ]);
+            }
+        });
+    
+        if (! empty($errors) && empty($created)) {
+            return $this->error($errors, 'None of the questions could be added', 422);
+        }
+    
+        return $this->success([
+            'created' => ExamQuestionResource::collection(collect($created)),
+            'errors' => $errors,
+        ], count($errors) ? 'Some questions could not be added' : 'Questions added successfully', 201);
+    }
+    
+}

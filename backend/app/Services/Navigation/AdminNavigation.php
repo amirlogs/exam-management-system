@@ -106,7 +106,8 @@ class AdminNavigation
                 'to' => '/admin/imports',
                 'icon' => 'Upload',
                 'permissions' => [
-                    'import.view',
+                    // 'import.view',
+                    'section.view'
                 ],
                 'permission_mode' => 'any',
             ],
