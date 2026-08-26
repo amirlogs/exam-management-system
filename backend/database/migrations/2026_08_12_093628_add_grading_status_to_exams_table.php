@@ -15,7 +15,6 @@ return new class extends Migration
             $table->string('grading_status')->default('not_started')->after('status');
         });
     }
-
     /**
      * Reverse the migrations.
      */

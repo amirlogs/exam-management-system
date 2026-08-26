@@ -10,6 +10,7 @@ use App\Http\Controllers\EnrollmentController;
 use App\Http\Controllers\ExamController;
 use App\Http\Controllers\GradingController;
 use App\Http\Controllers\ImportController;
+use App\Http\Controllers\InstructorController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ProgramController;
 use App\Http\Controllers\QuestionController;
@@ -137,24 +138,23 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/course-offerings', [CourseOfferingController::class, 'store'])->middleware('permission:course_offering.create');
     Route::get('/course-offerings/archived', [CourseOfferingController::class, 'archived'])->middleware('permission:course_offering.view');
     Route::get('/course-offerings', [CourseOfferingController::class, 'index'])->middleware('permission:course_offering.view');
+    Route::get('/course-offerings/{courseOffering}', [CourseOfferingController::class, 'show']); // ->middleware('permission:course_offering.view');
     Route::post('course-offerings/{courseOffering}/reopen', [CourseOfferingController::class, 'reopen'])->middleware('permission:course_offering.update');
-    Route::post('/course-offerings/{courseOffering}/sections', [CourseOfferingController::class, 'attachSections'])->middleware('permission:course_offering.section.assign');
-    Route::post('/course-offerings/{courseOffering}/instructors', [CourseOfferingController::class, 'attachInstructors'])->middleware('permission:course_offering.instructor.assign');
+    Route::post('/course-offerings/{courseOffering}/instructors', [CourseOfferingController::class, 'attachInstructor']); // ->middleware('permission:course_offering.assign_instructor');
 
     //
     Route::patch('/course-offerings/{courseOffering}', [CourseOfferingController::class, 'update'])->middleware('permission:course_offering.update');
-    Route::patch('/course-offerings/{courseOffering}/instructors', [CourseOfferingController::class, 'changeInstructor'])->middleware('permission:course_offering.instructor.assign');
+    Route::patch('/course-offerings/{courseOffering}/instructor-assignments/{assignment}', [CourseOfferingController::class, 'updateInstructorAssignment']); // ->middleware('permission:course_offering.change_instructor');
     Route::post('/course-offerings/{courseOffering}/approve', [CourseOfferingController::class, 'approve'])->middleware('permission:course_offering.approve');
     Route::post('/course-offerings/{courseOffering}/reject', [CourseOfferingController::class, 'reject'])->middleware('permission:course_offering.reject');
     Route::post('/course-offerings/{courseOffering}/cancel', [CourseOfferingController::class, 'cancel'])->middleware('permission:course_offering.cancel');
     Route::delete('/course-offerings/{courseOffering}', [CourseOfferingController::class, 'destroy'])->middleware('permission:course_offering.archive');
 
-    Route::delete('/course-offerings/{courseOffering}/sections/{section}', [CourseOfferingController::class, 'detachSection'])->middleware('permission:course_offering.section.remove');
-    Route::delete('/course-offerings/{courseOffering}/instructors/{instructorId}', [CourseOfferingController::class, 'removeInstructor'])->middleware('permission:course_offering.instructor.remove');
+    // Route::delete('/course-offerings/{courseOffering}/sections/{section}', [CourseOfferingController::class, 'detachSection'])->middleware('permission:course_offering.section.remove');
+    Route::delete('/course-offerings/{courseOffering}/instructor-assignments/{assignment}', [CourseOfferingController::class, 'removeInstructorAssignment']); // ->middleware('permission:course_offering.remove_instructor');
     Route::post('/course-offerings/{id}/restore', [CourseOfferingController::class, 'restore'])->middleware('permission:course_offering.restore');
 
     // ========================== ENROLLMENT =======================
-    Route::post('/course-offerings/{courseOffering}/enroll', [CourseOfferingController::class, 'enrollSection'])->middleware('permission:course_offering.section.enroll');
     Route::post('/enrollments', [EnrollmentController::class, 'store'])->middleware('permission:enrollment.create');
     Route::get('/enrollments', [EnrollmentController::class, 'index'])->middleware('permission:enrollment.view');
     Route::patch('/enrollments/{enrollment}', [EnrollmentController::class, 'update'])->middleware('permission:enrollment.update');
@@ -167,6 +167,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/questions/{question}', [QuestionController::class, 'update'])->middleware('permission:question.update');
     Route::delete('/questions/{question}', [QuestionController::class, 'destroy'])->middleware('permission:question.archive');
     Route::post('/questions/{question}/restore', [QuestionController::class, 'restore'])->middleware('permission:question.restore');
+    Route::get('/instructors', [InstructorController::class, 'index']);//->middleware('permission:instructor.view');
 
     // ======================== QUESTION FLAGS ========================
     Route::post('/questions/{question}/flags', [QuestionFlagController::class, 'store'])->middleware('permission:question.flag');

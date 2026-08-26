@@ -33,8 +33,12 @@ class CourseOffering extends Model
 
     public function instructors()
     {
-        return $this->belongsToMany(User::class, 'course_instructors', 'course_offering_id', 'instructor_id')
-            ->withPivot('type', 'assigned_at');
+        return $this->belongsToMany(Instructor::class, 'course_instructors', 'course_offering_id', 'instructor_id')->withPivot(['section_id', 'type', 'assigned_at']);
+    }
+
+    public function courseInstructors()
+    {
+        return $this->hasMany(CourseInstructor::class);
     }
 
     public function approve(): void

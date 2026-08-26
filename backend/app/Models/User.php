@@ -13,7 +13,7 @@ class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
 
-    protected $fillable = ['first_name', 'last_name', 'email', 'is_active' , 'password', 'is_first_login', 'default_workspace'];
+    protected $fillable = ['first_name', 'last_name', 'email', 'is_active', 'password', 'is_first_login', 'default_workspace'];
 
     protected $hidden = ['password'];
 
@@ -101,5 +101,10 @@ class User extends Authenticatable
         $permmisions = $this->permissionNames();
 
         return in_array($reqPermmision, $permmisions, true);
+    }
+
+    public function instructor(): HasOne
+    {
+        return $this->hasOne(Instructor::class);
     }
 }

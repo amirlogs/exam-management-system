@@ -1,0 +1,28 @@
+[90m= [39m[34;4mIlluminate\Database\Eloquent\Collection[39;24m {#8448
+    [34mall[39m: [
+      [34;4mApp\Models\Course[39;24m {#8444
+        [34mid[39m: [35m1[39m,
+        [34mcode[39m: [32m"[39m[32mMATH201[39m[32m"[39m,
+        [34mname[39m: [32m"[39m[32mDiscrete Mathematics[39m[32m"[39m,
+        [34mdepartment_id[39m: [35m3[39m,
+      },
+      [34;4mApp\Models\Course[39;24m {#8443
+        [34mid[39m: [35m2[39m,
+        [34mcode[39m: [32m"[39m[32mSE301[39m[32m"[39m,
+        [34mname[39m: [32m"[39m[32mDatabase Systems[39m[32m"[39m,
+        [34mdepartment_id[39m: [35m1[39m,
+      },
+      [34;4mApp\Models\Course[39;24m {#8446
+        [34mid[39m: [35m3[39m,
+        [34mcode[39m: [32m"[39m[32mEE201[39m[32m"[39m,
+        [34mname[39m: [32m"[39m[32mCircuit Analysis[39m[32m"[39m,
+        [34mdepartment_id[39m: [35m2[39m,
+      },
+      [34;4mApp\Models\Course[39;24m {#8447
+        [34mid[39m: [35m4[39m,
+        [34mcode[39m: [32m"[39m[32mCHEM101[39m[32m"[39m,
+        [34mname[39m: [32m"[39m[32mGeneral Chemistry[39m[32m"[39m,
+        [34mdepartment_id[39m: [35m4[39m,
+      },
+    ],
+  }
