@@ -25,7 +25,6 @@ export const permissionGuard: NavigationGuard = (to) => {
   
   if (mode === 'all') {
     const hasPermission = permissions.every((permission) => permissionsStore.hasPermission(permission))
-
     if (!hasPermission) {
       return { path: '/unauthorized' }
     }

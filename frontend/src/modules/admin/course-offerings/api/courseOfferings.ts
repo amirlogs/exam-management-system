@@ -52,7 +52,9 @@ export async function getOffering(offeringId: number): Promise<CourseOffering> {
 }
 
 export async function generateSuggestions(semesterId: number): Promise<OfferingSuggestion[]> {
-  const res = await api.post('/course-offerings/suggestions/generate', { semester_id: semesterId })
+  const res = await api.post('/course-offerings/suggestions/generate', {
+    semester_id: semesterId,
+  })
 
   return res.data.data
 }
@@ -64,6 +66,17 @@ export async function createOffering(courseId: number, semesterId: number): Prom
   })
 
   return res.data.data
+}
+
+export async function listInstructors(page = 1, perPage = 100): Promise<ListResponse<OfferingInstructorOption>> {
+  const res = await api.get('/instructors', {
+    params: {
+      page,
+      per_page: perPage,
+    },
+  })
+
+  return res.data
 }
 
 export async function assignInstructor(
@@ -97,17 +110,6 @@ export async function updateInstructorAssignment(
 
 export async function removeInstructorAssignment(offeringId: number, assignmentId: number): Promise<void> {
   await api.delete(`/course-offerings/${offeringId}/instructor-assignments/${assignmentId}`)
-}
-
-export async function listInstructors(page = 1, perPage = 100): Promise<ListResponse<OfferingInstructorOption>> {
-  const res = await api.get('/instructors', {
-    params: {
-      page,
-      per_page: perPage,
-    },
-  })
-
-  return res.data
 }
 
 export async function approveOffering(id: number): Promise<CourseOffering> {

@@ -4,6 +4,7 @@ namespace App\Validation;
 
 use App\Models\Program;
 use App\Models\Section;
+use App\Models\Student;
 use App\Traits\RequiresAtLeastOneField;
 use Illuminate\Support\Facades\Validator;
 
@@ -78,6 +79,13 @@ class StudentValidator
         $validator = Validator::make($data, self::$rules, self::$messages);
         $errors = $validator->errors()->all();
 
+        if (
+            empty($errors) &&
+            Student::where('student_number', $data['student_number'])->exists()
+        ) {
+            $errors[] = "Student number '{$data['student_number']}' already exists.";
+        }
+
         if (empty($errors)) {
             $program = Program::where('code', $data['program_code'])->first();
             $semesterId = $context['semester_id'] ?? null;
@@ -86,6 +94,7 @@ class StudentValidator
             if (! $semesterId) {
                 $errors[] = 'No semester_id was provided for this import batch.';
             }
+
             if (! $yearLevel) {
                 $errors[] = 'No year_level was provided for this import batch.';
             }
@@ -116,7 +125,6 @@ class StudentValidator
 
     public static function UpdateValidation(array $data, array $context = [])
     {
-
         $validator = Validator::make($data, self::$updateRules, self::$updateMessages);
 
         $validator->after(function ($validator) use ($data) {
@@ -127,8 +135,7 @@ class StudentValidator
                 );
             }
         });
-        $errors = $validator->errors()->all();
 
-        return $errors;
+        return $validator->errors()->all();
     }
 }

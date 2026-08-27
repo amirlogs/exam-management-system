@@ -1,6 +1,12 @@
-export type OfferingStatus = 'draft' | 'approved' | 'rejected' | 'cancelled'
+export type OfferingStatus =
+  | 'draft'
+  | 'approved'
+  | 'rejected'
+  | 'cancelled'
 
-export type InstructorAssignmentType = 'lead_instructor' | 'instructor'
+export type InstructorAssignmentType =
+  | 'lead_instructor'
+  | 'instructor'
 
 export interface OfferingCourse {
   id: number
@@ -70,6 +76,7 @@ export interface CourseOffering {
   rejection_reason: string | null
   created_at: string
   updated_at: string
+
   course?: OfferingCourse
   semester?: OfferingSemester
   sections?: OfferingSection[]
