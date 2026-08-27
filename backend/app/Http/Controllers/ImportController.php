@@ -170,17 +170,38 @@ class ImportController extends Controller
         if (! array_key_exists($rowNumber, $rows)) {
             return $this->error(null, 'Import row not found', 404);
         }
+
         $validatorClass = ImportValidatorFactory::create($importHistory->type);
+
         $updatedData = array_merge($rows[$rowNumber]['data'] ?? [], $request->all());
-        $errors = $validatorClass::validate($updatedData, $importHistory->context ?? []);
 
         $rows[$rowNumber] = [
             'data' => $updatedData,
-            'status' => empty($errors) ? 'valid' : 'invalid',
-            'errors' => $errors,
+            'status' => 'valid',
+            'errors' => [],
         ];
+
+        $batchErrors = $this->validateBatchDuplicates($importHistory->type, $rows);
+
+        foreach ($rows as $key => &$row) {
+            $errors = $validatorClass::validate($row['data'], $importHistory->context ?? []);
+
+            if (isset($batchErrors[$key])) {
+                $errors = array_merge($errors, $batchErrors[$key]);
+            }
+
+            $row['status'] = empty($errors) ? 'valid' : 'invalid';
+            $row['errors'] = $errors;
+        }
+
+        unset($row);
+
         $counts = $this->recalculateRowCounts($rows);
-        $importHistory->update(['validated_data' => $rows, ...$counts]);
+
+        $importHistory->update([
+            'validated_data' => $rows,
+            ...$counts,
+        ]);
 
         return $this->success(new ImportHistoryResource($importHistory->refresh()), 'Row updated successfully');
     }
