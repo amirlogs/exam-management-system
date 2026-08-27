@@ -10,7 +10,7 @@ class SectionCommitter
     public static function commit(array $data, $importHistory): void
     {
         $context = $importHistory['context'] ?? [];
-        $program = Program::where('code', $data['program_code'])->first();
+        $program = Program::where('code', $data['program_code'])->firstOrFail();
 
         Section::create([
             'program_id' => $program->id,

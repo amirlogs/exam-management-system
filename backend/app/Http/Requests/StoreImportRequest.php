@@ -31,7 +31,7 @@ class StoreImportRequest extends FormRequest
     {
         return [
             'file' => ['required', 'file', 'mimes:csv', 'max:2048'],
-            'type' => ['required', 'string', 'in:students,instructors,sections,questions,enrollments'],
+            'type' => ['required', 'string', 'in:students,instructors,sections,questions,users'],
             'context' => ['json', 'present'],
         ];
     }
@@ -41,7 +41,7 @@ class StoreImportRequest extends FormRequest
         return [
             'type.in' => 'The type parameter must be one of the following: students, instructors, sections, questions, enrollments',
             'context.required' => 'The context parameter is required.',
-            'context.json' => 'The context parameter must be a valid JSON string.'
+            'context.json' => 'The context parameter must be a valid JSON string.',
         ];
     }
 }

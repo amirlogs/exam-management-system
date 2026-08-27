@@ -127,7 +127,8 @@ class CourseOfferingController extends Controller
 
         $offering->sections()->sync($sectionIds->unique()->values()->all());
 
-        return $this->success(new CourseOfferingResource($offering->load('course', 'semester', 'sections')), 'Course offering created successfully', 201);
+        return $this->success(new CourseOfferingResource(
+            $offering->load(['course', 'semester', 'sections.program', 'courseInstructors.instructor.user', 'courseInstructors.instructor.department', 'courseInstructors.section'])), 'Course offering created successfully', 201);
 
     }
 
@@ -192,14 +193,21 @@ class CourseOfferingController extends Controller
         $query = CourseOffering::query();
 
         RequestFilters::apply($query, $request, ['course_id', 'semester_id', 'status']);
-        $offerings = $query->with(['course', 'semester', 'sections', 'instructors'])->paginate($perPage);
+        $offerings = $query->with(['course', 'semester', 'sections.program', 'courseInstructors.instructor.user', 'courseInstructors.instructor.department', 'courseInstructors.section'])->paginate($perPage);
 
         return $this->paginate($offerings, CourseOfferingResource::class, 'Course offerings fetched successfully');
     }
 
     public function show(CourseOffering $courseOffering)
     {
-        $courseOffering->load(['course', 'semester', 'sections.program', 'instructors.user', 'instructors.department']);
+        $courseOffering->load([
+            'course',
+            'semester',
+            'sections.program',
+            'courseInstructors.instructor.user',
+            'courseInstructors.instructor.department',
+            'courseInstructors.section',
+        ]);
 
         return $this->success(new CourseOfferingResource($courseOffering), 'Course offering fetched successfully');
     }
@@ -212,7 +220,7 @@ class CourseOfferingController extends Controller
 
         RequestFilters::apply($query, $request, ['course_id', 'semester_id', 'status']);
 
-        $offerings = $query->with(['course', 'semester', 'sections', 'instructors'])->paginate($perPage);
+        $offerings = $query->with(['course', 'semester', 'sections.program', 'courseInstructors.instructor.user', 'courseInstructors.instructor.department', 'courseInstructors.section'])->paginate($perPage);
 
         return $this->paginate($offerings, CourseOfferingResource::class, 'Archived course offerings fetched successfully');
     }
@@ -222,7 +230,8 @@ class CourseOfferingController extends Controller
         $offering = CourseOffering::onlyTrashed()->findOrFail($id);
         $offering->restore();
 
-        return $this->success(new CourseOfferingResource($offering->load('course', 'semester')), 'Course offering restored successfully');
+        return $this->success(
+            new CourseOfferingResource($offering->load(['course', 'semester', 'sections.program', 'courseInstructors.instructor.user', 'courseInstructors.instructor.department', 'courseInstructors.section'])), 'Course offering restored successfully');
     }
 
     public function update(CourseOffering $courseOffering, Request $request)
@@ -393,7 +402,6 @@ class CourseOfferingController extends Controller
 
         return $this->success(null, 'Course offering archived successfully');
     }
-
 
     public function reopen(CourseOffering $courseOffering)
     {

@@ -18,11 +18,11 @@ class CourseOfferingResource extends JsonResource
             'rejection_reason' => $this->rejection_reason,
             'created_at' => $this->created_at?->format('M d, Y'),
             'updated_at' => $this->updated_at?->format('M d, Y'),
-            
+
             'course' => new CourseResource($this->whenLoaded('course')),
             'semester' => new SemesterResource($this->whenLoaded('semester')),
             'sections' => SectionResource::collection($this->whenLoaded('sections')),
-            'instructors' => InstructorResource::collection($this->whenLoaded('instructors')),
+            'instructor_assignments' => CourseInstructorResource::collection($this->whenLoaded('courseInstructors')),
         ];
     }
 }

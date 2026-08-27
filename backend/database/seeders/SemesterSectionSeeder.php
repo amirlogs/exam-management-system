@@ -11,39 +11,95 @@ class SemesterSectionSeeder extends Seeder
 {
     public function run(): void
     {
-        // ---------------- Semesters ----------------
+        /*
+        |--------------------------------------------------------------------------
+        | Current semester
+        |--------------------------------------------------------------------------
+        */
+
         $current = Semester::updateOrCreate(
-            ['academic_year' => '2026', 'name' => 'Semester 1'],
-            ['term_number' => 1, 'start_date' => '2026-09-01', 'end_date' => '2027-01-15', 'status' => 'active']
+            [
+                'academic_year' => '2026',
+                'name' => 'Semester 1',
+            ],
+            [
+                'term_number' => 1,
+                'start_date' => '2026-09-01',
+                'end_date' => '2027-01-15',
+                'status' => 'active',
+            ]
         );
 
-        $past = Semester::updateOrCreate(
-            ['academic_year' => '2025', 'name' => 'Semester 2'],
-            ['term_number' => 2, 'start_date' => '2025-02-01', 'end_date' => '2025-06-15', 'status' => 'completed']
+        /*
+        |--------------------------------------------------------------------------
+        | Previous semester
+        |--------------------------------------------------------------------------
+        */
+
+        Semester::updateOrCreate(
+            [
+                'academic_year' => '2025',
+                'name' => 'Semester 2',
+            ],
+            [
+                'term_number' => 2,
+                'start_date' => '2025-02-01',
+                'end_date' => '2025-06-15',
+                'status' => 'completed',
+            ]
         );
 
-        // ---------------- Sections — multiple years, matching StudentValidator's
-        // (program + semester + year_level + name) lookup key ----------------
+        /*
+        |--------------------------------------------------------------------------
+        | Programs
+        |--------------------------------------------------------------------------
+        */
+
         $se = Program::where('code', 'SE')->firstOrFail();
+        $cs = Program::where('code', 'CS')->firstOrFail();
         $ee = Program::where('code', 'EE')->firstOrFail();
         $chem = Program::where('code', 'CHEM')->firstOrFail();
 
+        /*
+        |--------------------------------------------------------------------------
+        | Sections
+        |--------------------------------------------------------------------------
+        */
+
         $sections = [
-            // Software Engineering — 2 sections in year 1, 1 section in year 3
-            [$se->id, $current->id, 1, '1'],
-            [$se->id, $current->id, 1, '2'],
-            [$se->id, $current->id, 3, '1'],
+            // Software Engineering
+            [$se->id, $current->id, 1, 'A'],
+            [$se->id, $current->id, 1, 'B'],
+            [$se->id, $current->id, 3, 'A'],
 
-            // Electrical Engineering — year 1 only
-            [$ee->id, $current->id, 1, '1'],
+            // Computer Science
+            [$cs->id, $current->id, 1, 'A'],
+            [$cs->id, $current->id, 1, 'B'],
+            [$cs->id, $current->id, 2, 'A'],
 
-            // Applied Chemistry — year 1 only
-            [$chem->id, $current->id, 1, '1'],
+            // Electrical Engineering
+            [$ee->id, $current->id, 1, 'A'],
+            [$ee->id, $current->id, 1, 'B'],
+            [$ee->id, $current->id, 2, 'A'],
+
+            // Applied Chemistry
+            [$chem->id, $current->id, 1, 'A'],
+            [$chem->id, $current->id, 2, 'A'],
         ];
 
-        foreach ($sections as [$programId, $semesterId, $yearLevel, $name]) {
+        foreach ($sections as [
+            $programId,
+            $semesterId,
+            $yearLevel,
+            $name,
+        ]) {
             Section::updateOrCreate(
-                ['program_id' => $programId, 'semester_id' => $semesterId, 'year_level' => $yearLevel, 'name' => $name]
+                [
+                    'program_id' => $programId,
+                    'semester_id' => $semesterId,
+                    'year_level' => $yearLevel,
+                    'name' => $name,
+                ]
             );
         }
     }

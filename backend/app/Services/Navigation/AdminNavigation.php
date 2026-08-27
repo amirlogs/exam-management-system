@@ -24,7 +24,6 @@ class AdminNavigation
                 ],
                 'permission_mode' => 'any',
             ],
-
             [
                 'label' => 'Colleges',
                 'to' => '/admin/colleges',

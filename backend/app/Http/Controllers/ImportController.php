@@ -22,9 +22,91 @@ use Illuminate\Support\Facades\Storage;
 
 class ImportController extends Controller
 {
+    private function recalculateRowCounts(array $rows): array
+    {
+        $validCount = 0;
+        $errorCount = 0;
+
+        foreach ($rows as $row) {
+            if (($row['status'] ?? 'invalid') === 'valid') {
+                $validCount++;
+            } else {
+                $errorCount++;
+            }
+        }
+
+        return [
+            'total_rows' => count($rows),
+            'valid_count' => $validCount,
+            'error_count' => $errorCount,
+        ];
+    }
+
+    private function validateBatchDuplicates(string $type, array $rows): array
+    {
+        $errors = [];
+
+        $fields = match ($type) {
+            'students' => ['email', 'student_number'],
+            'instructors' => ['email', 'employee_number'],
+            'users' => ['email'],
+            default => [],
+        };
+
+        foreach ($fields as $field) {
+            $seen = [];
+
+            foreach ($rows as $rowNumber => $row) {
+                $value = $row['data'][$field] ?? null;
+
+                if ($value === null || trim((string) $value) === '') {
+                    continue;
+                }
+
+                $normalized = strtolower(trim((string) $value));
+
+                if (isset($seen[$normalized])) {
+                    $previousRow = $seen[$normalized];
+                    $errors[$rowNumber][] = "Duplicate {$field} '{$value}' found. It is also used in row {$previousRow}.";
+                } else {
+                    $seen[$normalized] = $rowNumber;
+                }
+            }
+        }
+
+        if ($type === 'sections') {
+            $seenSections = [];
+
+            foreach ($rows as $rowNumber => $row) {
+                $programCode = strtolower(trim((string) ($row['data']['program_code'] ?? '')));
+
+                $yearLevel = trim((string) ($row['data']['year_level'] ?? ''));
+
+                $name = strtolower(trim((string) ($row['data']['name'] ?? '')));
+
+                if ($programCode === '' || $yearLevel === '' || $name === '') {
+                    continue;
+                }
+
+                $key = "{$programCode}|{$yearLevel}|{$name}";
+
+                if (isset($seenSections[$key])) {
+                    $previousRow = $seenSections[$key];
+
+                    $errors[$rowNumber][] = "Duplicate section '{$row['data']['name']}' found for program {$row['data']['program_code']}, year {$yearLevel}. It is also used in row {$previousRow}.";
+                } else {
+                    $seenSections[$key] = $rowNumber;
+                }
+            }
+        }
+
+        return $errors;
+    }
+
     public function store(StoreImportRequest $request, string $type)
     {
         $validated = $request->validated();
+
         $context = json_decode($validated['context'], true);
         $context['uploaded_by'] = $request->user()->id;
 
@@ -47,7 +129,7 @@ class ImportController extends Controller
         // dispatch the job
         ImportCsv::dispatch($import);
 
-        return $this->success(new ImportHistoryResource($import), 'Student import started successfully');
+        return $this->success(new ImportHistoryResource($import), 'import started successfully');
     }
 
     public function cancel(ImportHistory $importHistory)
@@ -77,119 +159,108 @@ class ImportController extends Controller
         return $this->success($importHistory, 'Import history retrieved successfully');
     }
 
-    public function update(ImportHistory $importHistory, string $rowIndex, Request $request)
+    public function update(ImportHistory $importHistory, string $rowNumber, Request $request)
     {
-
         if ($importHistory->status !== 'ready_for_review') {
-            return $this->error([], "Import history is in {$importHistory->status} state, cannot update row", 400);
+            return $this->error(null, "Import history is in {$importHistory->status} state, cannot update row", 400);
         }
 
+        $rows = $importHistory->validated_data ?? [];
+
+        if (! array_key_exists($rowNumber, $rows)) {
+            return $this->error(null, 'Import row not found', 404);
+        }
         $validatorClass = ImportValidatorFactory::create($importHistory->type);
-        $errors = $validatorClass::UpdateValidation($request->all(), $importHistory->context);
+        $updatedData = array_merge($rows[$rowNumber]['data'] ?? [], $request->all());
+        $errors = $validatorClass::validate($updatedData, $importHistory->context ?? []);
 
-        if ($errors) {
-            return $this->error($errors, 'Validation error', 422);
-        }
-
-        // / loop and update only the comming rows
-        $rows = $importHistory['validated_data'];
-        $status = $rows[$rowIndex]['status'];
-        // merge the comming with the old one and prioritize the comming one
-        $updatedData = array_merge($rows[$rowIndex]['data'], $request->all());
-        $data = [
-            'row' => $rowIndex,
+        $rows[$rowNumber] = [
             'data' => $updatedData,
-            'status' => 'valid',
-            'errors' => [],
+            'status' => empty($errors) ? 'valid' : 'invalid',
+            'errors' => $errors,
         ];
-        $rows[$rowIndex] = $data;
+        $counts = $this->recalculateRowCounts($rows);
+        $importHistory->update(['validated_data' => $rows, ...$counts]);
 
-        if ($status === 'invalid') {
-            $validCount = $importHistory->valid_count + 1;
-            $errorCount = $importHistory->error_count - 1;
-        } else {
-            $validCount = $importHistory->valid_count;
-            $errorCount = $importHistory->error_count;
-        }
-
-        $importHistory->update([
-            'validated_data' => $rows,
-            'valid_count' => $validCount,
-            'error_count' => $errorCount,
-        ]);
-
-        return $this->success($importHistory, 'Row updated successfully');
+        return $this->success(new ImportHistoryResource($importHistory->refresh()), 'Row updated successfully');
     }
 
     public function confirm(ImportHistory $importHistory)
     {
+        if ($importHistory->status !== 'ready_for_review') {
+            return $this->error(null, "Import history is in {$importHistory->status} state, cannot confirm", 400);
+        }
+
+        // Check duplicate values inside this import batch
+        $batchErrors = $this->validateBatchDuplicates($importHistory->type, $importHistory->validated_data ?? []);
+
+        if ($batchErrors) {
+            return $this->error($batchErrors, 'Duplicate values were found in the import', 422);
+        }
+
+        // Validate every row again before committing
         $validatorClass = ImportValidatorFactory::create($importHistory->type);
-        foreach ($importHistory->validated_data as $row) {
-            $errors = $validatorClass::validate($row['data'], $importHistory->context);
+
+        foreach ($importHistory->validated_data ?? [] as $row) {
+            $errors = $validatorClass::validate($row['data'], $importHistory->context ?? []);
 
             if ($errors) {
                 return $this->error($errors, 'All rows must be valid before confirming', 422);
             }
         }
 
-        // transaction update and map the data
         $committerClass = ImportCommitterFactory::create($importHistory->type);
-        // $examId = $context['exam_id'] ?? null;
+
         $examId = $importHistory->context['exam_id'] ?? null;
         $exam = $examId ? Exam::find($examId) : null;
 
         DB::transaction(function () use ($importHistory, $committerClass, $exam) {
-            foreach ($importHistory->validated_data as $row) {
+            foreach ($importHistory->validated_data ?? [] as $row) {
                 $committerClass::commit($row['data'], $importHistory);
             }
 
-            $importHistory->update(['status' => 'confirmed']);
+            $importHistory->update([
+                'status' => 'confirmed',
+            ]);
 
             if ($exam) {
                 $questions = Question::where('import_history_id', $importHistory->id)->get();
                 foreach ($questions as $question) {
                     ExamQuestionCommitter::commit($question, $exam);
                 }
-
-                // updating exam count and total questions
                 $examQuestions = ExamQuestion::where('exam_id', $exam->id)->get();
-                $totalMarks = $examQuestions->sum('marks');
-                $totalQuestions = $examQuestions->count();
                 $exam->update([
-                    'total_marks' => $totalMarks,
-                    'total_questions' => $totalQuestions,
-                ], );
-
+                    'total_marks' => $examQuestions->sum('marks'),
+                    'total_questions' => $examQuestions->count(),
+                ]);
             }
         });
 
-        return $this->success($importHistory->refresh(), 'Import confirmed successfully');
+        return $this->success(new ImportHistoryResource($importHistory->refresh()), 'Import confirmed successfully');
     }
 
-    public function destroy(ImportHistory $importHistory, string $rowIndex, Request $request)
+    public function destroy(ImportHistory $importHistory, string $rowNumber, Request $request)
     {
         if ($importHistory->status !== 'ready_for_review') {
-            return $this->error([], "Import history is in {$importHistory->status} state, cannot delete row", 400);
+            return $this->error(null, "Import history is in {$importHistory->status} state, cannot delete row", 400);
         }
 
-        $data = $importHistory->validated_data;
-        $status = $data[$rowIndex]['status'];
-        unset($data[$rowIndex]);
+        $rows = $importHistory->validated_data ?? [];
 
-        if ($status === 'invalid') {
-            $errorCount = $importHistory->error_count - 1;
-            $validCount = $importHistory->valid_count;
-        } else {
-            $validCount = $importHistory->valid_count + 1;
-            $errorCount = $importHistory->error_count;
+        if (! array_key_exists($rowNumber, $rows)) {
+            return $this->error(null, 'Import row not found', 404);
         }
 
-        $importHistory->update([
-            'validated_data' => $data,
-            'valid_count' => $validCount,
-            'error_count' => $errorCount,
-        ]);
+        unset($rows[$rowNumber]);
 
-        return $this->success($importHistory, 'Row deleted successfully');
+        $counts = $this->recalculateRowCounts($rows);
+
+        $importHistory->update(
+            [
+                'validated_data' => $rows,
+                ...$counts,
+            ]);
+
+        return $this->success(new ImportHistoryResource($importHistory->refresh()), 'Row deleted successfully');
     }
 }

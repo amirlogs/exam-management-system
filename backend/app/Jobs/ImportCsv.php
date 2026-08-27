@@ -29,6 +29,7 @@ class ImportCsv implements ShouldQueue
 
         if (! $validatorClass) {
             $this->importHistory->update(['status' => 'failed']);
+
             return;
         }
 
@@ -56,6 +57,18 @@ class ImportCsv implements ShouldQueue
             ];
         }
 
+        $this->addBatchDuplicateErrors($result, $this->importHistory->type);
+        $validCount = 0;
+        $errorCount = 0;
+
+        foreach ($result as $row) {
+            if ($row['status'] === 'valid') {
+                $validCount++;
+            } else {
+                $errorCount++;
+            }
+        }
+
         $this->importHistory->update([
             'validated_data' => $result,
             'valid_count' => $validCount,
@@ -65,6 +78,79 @@ class ImportCsv implements ShouldQueue
         ]);
 
         Storage::delete($this->importHistory->file_path);
+    }
+
+    private function addBatchDuplicateErrors(array &$rows, string $type): void
+    {
+        $fields = match ($type) {
+            'students' => ['email', 'student_number'],
+            'instructors' => ['email', 'employee_number'],
+            'users' => ['email'],
+            default => [],
+        };
+
+        foreach ($fields as $field) {
+            $seen = [];
+
+            foreach ($rows as $rowNumber => &$row) {
+                $value = $row['data'][$field] ?? null;
+
+                if ($value === null || trim((string) $value) === '') {
+                    continue;
+                }
+
+                $normalized = strtolower(
+                    trim((string) $value)
+                );
+
+                if (isset($seen[$normalized])) {
+                    $previousRow = $seen[$normalized];
+
+                    $row['errors'][] = "Duplicate {$field} '{$value}' found. It is also used in row {$previousRow}.";
+                    $row['status'] = 'invalid';
+                } else {
+                    $seen[$normalized] = $rowNumber;
+                }
+            }
+
+            unset($row);
+        }
+
+        if ($type === 'sections') {
+            $seenSections = [];
+
+            foreach ($rows as $rowNumber => &$row) {
+                $programCode = strtolower(
+                    trim((string) ($row['data']['program_code'] ?? ''))
+                );
+
+                $yearLevel = trim(
+                    (string) ($row['data']['year_level'] ?? '')
+                );
+
+                $name = strtolower(
+                    trim((string) ($row['data']['name'] ?? ''))
+                );
+
+                if ($programCode === '' || $yearLevel === '' || $name === '') {
+                    continue;
+                }
+
+                $key = "{$programCode}|{$yearLevel}|{$name}";
+
+                if (isset($seenSections[$key])) {
+                    $previousRow = $seenSections[$key];
+
+                    $row['errors'][] = "Duplicate section '{$row['data']['name']}' found for program {$row['data']['program_code']}, year {$yearLevel}. It is also used in row {$previousRow}.";
+
+                    $row['status'] = 'invalid';
+                } else {
+                    $seenSections[$key] = $rowNumber;
+                }
+            }
+
+            unset($row);
+        }
     }
 
     // failed job

@@ -11,25 +11,112 @@ class CurriculumCourseSeeder extends Seeder
 {
     public function run(): void
     {
-        $seCurriculum = Curriculum::whereHas('program', fn ($q) => $q->where('code', 'SE'))->firstOrFail();
-        $eeCurriculum = Curriculum::whereHas('program', fn ($q) => $q->where('code', 'EE'))->firstOrFail();
-        $chemCurriculum = Curriculum::whereHas('program', fn ($q) => $q->where('code', 'CHEM'))->firstOrFail();
+        /*
+        |--------------------------------------------------------------------------
+        | Active curricula
+        |--------------------------------------------------------------------------
+        */
 
-        $math = Course::where('code', 'MATH201')->firstOrFail();
+        $se = Curriculum::whereHas(
+            'program',
+            fn ($query) => $query->where('code', 'SE')
+        )->where('status', 'active')->firstOrFail();
+
+        $cs = Curriculum::whereHas(
+            'program',
+            fn ($query) => $query->where('code', 'CS')
+        )->where('status', 'active')->firstOrFail();
+
+        $ee = Curriculum::whereHas(
+            'program',
+            fn ($query) => $query->where('code', 'EE')
+        )->where('status', 'active')->firstOrFail();
+
+        $chem = Curriculum::whereHas(
+            'program',
+            fn ($query) => $query->where('code', 'CHEM')
+        )->where('status', 'active')->firstOrFail();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Courses
+        |--------------------------------------------------------------------------
+        */
+
+        $math201 = Course::where('code', 'MATH201')->firstOrFail();
+        $math101 = Course::where('code', 'MATH101')->firstOrFail();
+
         $se301 = Course::where('code', 'SE301')->firstOrFail();
+        $se201 = Course::where('code', 'SE201')->firstOrFail();
+
+        $cs201 = Course::where('code', 'CS201')->firstOrFail();
+        $cs301 = Course::where('code', 'CS301')->firstOrFail();
+
         $ee201 = Course::where('code', 'EE201')->firstOrFail();
+        $ee301 = Course::where('code', 'EE301')->firstOrFail();
+
         $chem101 = Course::where('code', 'CHEM101')->firstOrFail();
+        $chem201 = Course::where('code', 'CHEM201')->firstOrFail();
 
-        // SE curriculum: MATH201 in year 1, SE301 in year 3 (Mathematics is service_only —
-        // it owns the course, but SE students take it via THEIR curriculum, not Math's)
-        CurriculumCourse::updateOrCreate(['curriculum_id' => $seCurriculum->id, 'course_id' => $math->id], ['year_level' => 1, 'semester_number' => 1]);
-        CurriculumCourse::updateOrCreate(['curriculum_id' => $seCurriculum->id, 'course_id' => $se301->id], ['year_level' => 3, 'semester_number' => 1]);
+        /*
+        |--------------------------------------------------------------------------
+        | Software Engineering
+        |--------------------------------------------------------------------------
+        */
 
-        // EE curriculum: also requires MATH201 (same course, reused across two curricula), plus EE201
-        CurriculumCourse::updateOrCreate(['curriculum_id' => $eeCurriculum->id, 'course_id' => $math->id], ['year_level' => 1, 'semester_number' => 1]);
-        CurriculumCourse::updateOrCreate(['curriculum_id' => $eeCurriculum->id, 'course_id' => $ee201->id], ['year_level' => 1, 'semester_number' => 1]);
+        $this->course($se, $math201, 1, 1);
+        $this->course($se, $math101, 1, 2);
+        $this->course($se, $se201, 2, 1);
+        $this->course($se, $se301, 3, 1);
 
-        // CHEM curriculum: CHEM101
-        CurriculumCourse::updateOrCreate(['curriculum_id' => $chemCurriculum->id, 'course_id' => $chem101->id], ['year_level' => 1, 'semester_number' => 1]);
+        /*
+        |--------------------------------------------------------------------------
+        | Computer Science
+        |--------------------------------------------------------------------------
+        */
+
+        $this->course($cs, $math201, 1, 1);
+        $this->course($cs, $cs201, 1, 2);
+        $this->course($cs, $cs301, 2, 1);
+        $this->course($cs, $math101, 2, 2);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Electrical Engineering
+        |--------------------------------------------------------------------------
+        */
+
+        $this->course($ee, $math201, 1, 1);
+        $this->course($ee, $ee201, 1, 1);
+        $this->course($ee, $ee301, 2, 1);
+        $this->course($ee, $math101, 1, 2);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Applied Chemistry
+        |--------------------------------------------------------------------------
+        */
+
+        $this->course($chem, $chem101, 1, 1);
+        $this->course($chem, $math101, 1, 2);
+        $this->course($chem, $chem201, 2, 1);
+    }
+
+    private function course(
+        Curriculum $curriculum,
+        Course $course,
+        int $yearLevel,
+        int $semesterNumber
+    ): void {
+        CurriculumCourse::updateOrCreate(
+            [
+                'curriculum_id' => $curriculum->id,
+                'course_id' => $course->id,
+            ],
+            [
+                'year_level' => $yearLevel,
+                'semester_number' => $semesterNumber,
+            ]
+        );
     }
 }
