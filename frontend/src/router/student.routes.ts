@@ -24,4 +24,4 @@ export default [
   //   name: 'student.results.list',
   //   component: () => import('@/modules/student/pages/results/MyResultsView.vue'),
   // },
-]
+];

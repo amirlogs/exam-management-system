@@ -1,4 +1,4 @@
-import { z } from 'zod'
+import { z } from 'zod';
 
 export const questionSchema = z.object({
   type: z.enum(['mcq', 'true_false', 'short_answer', 'essay']),
@@ -7,4 +7,4 @@ export const questionSchema = z.object({
   difficulty: z.enum(['easy', 'medium', 'hard']),
   options: z.array(z.string()).optional(),
   correct_answer: z.string().optional(),
-})
+});

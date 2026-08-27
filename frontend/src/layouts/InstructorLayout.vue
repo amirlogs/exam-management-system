@@ -1,17 +1,16 @@
 <script setup lang="ts">
-import { useRoute, useRouter } from 'vue-router'
-import { LayoutGrid, BookOpen, HelpCircle, CheckSquare, Flag , FileText } from 'lucide-vue-next'
-import AppSidebar from './partials/AppSidebar.vue'
-import AppTopbar from './partials/AppTopbar.vue'
-import WorkspaceSwitcherDropdown from './partials/WorkspaceSwitcherDropdown.vue'
-import { useAuthStore } from '@/stores/auth'
-import { useNavigationStore } from '@/stores/navigation'
+import { useRoute, useRouter } from 'vue-router';
+import { LayoutGrid, BookOpen, HelpCircle, CheckSquare, Flag, FileText } from 'lucide-vue-next';
+import AppSidebar from './partials/AppSidebar.vue';
+import AppTopbar from './partials/AppTopbar.vue';
+import WorkspaceSwitcherDropdown from './partials/WorkspaceSwitcherDropdown.vue';
+import { useAuthStore } from '@/stores/auth';
+import { useNavigationStore } from '@/stores/navigation';
 
-const route = useRoute()
-const router = useRouter()
-const authStore = useAuthStore()
-const navgationStore = useNavigationStore()
-
+const route = useRoute();
+const router = useRouter();
+const authStore = useAuthStore();
+const navgationStore = useNavigationStore();
 
 //  const navItems = [
 //   { label: 'Dashboard', to: '/instructor/dashboard', icon: LayoutGrid },
@@ -20,24 +19,22 @@ const navgationStore = useNavigationStore()
 //   { label: 'Exams', to: '/instructor/exams', icon: FileText },
 //   { label: 'Grading', to: '/instructor/grading', icon: CheckSquare },
 // ]
- 
 </script>
 
 <template>
-    <div class="flex min-h-screen bg-bg">
-        <AppSidebar brand-name="University Exam" brand-subtitle="Management Portal" :items="navgationStore.items"
-            :active-to="route.path" />
+  <div class="flex min-h-screen bg-bg">
+    <AppSidebar brand-name="University Exam" brand-subtitle="Management Portal" :items="navgationStore.items" :active-to="route.path" />
 
-        <div class="flex-1 flex flex-col min-w-0">
-            <AppTopbar :user-name="authStore.user?.first_name" :user-avatar="authStore.user?.avatar">
-                <template #workspace-switcher>
-                    <WorkspaceSwitcherDropdown />
-                </template>
-            </AppTopbar>
+    <div class="flex-1 flex flex-col min-w-0">
+      <AppTopbar :user-name="authStore.user?.first_name" :user-avatar="authStore.user?.avatar">
+        <template #workspace-switcher>
+          <WorkspaceSwitcherDropdown />
+        </template>
+      </AppTopbar>
 
-            <main class="p-8 flex-1">
-                <router-view :key="$route.fullPath" />
-            </main>
-        </div>
+      <main class="p-8 flex-1">
+        <router-view :key="$route.fullPath" />
+      </main>
     </div>
+  </div>
 </template>

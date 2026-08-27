@@ -1,10 +1,10 @@
-import { reactive, ref } from 'vue'
+import { reactive, ref } from 'vue';
 
 export function useResourceFilters<F extends Record<string, any>>(defaultFilters: F) {
-  const search = ref('')
-  const activeView = ref<'active' | 'archived'>('active')
-  const filters = reactive<F>({ ...defaultFilters })
-  const refreshing = ref(false)
+  const search = ref('');
+  const activeView = ref<'active' | 'archived'>('active');
+  const filters = reactive<F>({ ...defaultFilters });
+  const refreshing = ref(false);
 
   function toQuery(page = 1) {
     return {
@@ -12,8 +12,8 @@ export function useResourceFilters<F extends Record<string, any>>(defaultFilters
       archived: activeView.value === 'archived',
       page,
       filter: { ...filters },
-    }
+    };
   }
 
-  return { search, activeView, filters, refreshing, toQuery }
+  return { search, activeView, filters, refreshing, toQuery };
 }

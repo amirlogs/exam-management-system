@@ -11,4 +11,4 @@ export default [
     component: () => import('@/modules/workspace/pages/WorkspaceSelectView.vue'),
     meta: { requiresAuth: true },
   },
-]
+];

@@ -1,18 +1,18 @@
-import RolesView from '@/modules/admin/access/pages/RolesView.vue'
-import UsersView from '@/modules/admin/access/pages/UsersView.vue'
-import CollegesView from '@/modules/admin/colleges/pages/CollegesView.vue'
-import CourseOfferingsView from '@/modules/admin/course-offerings/pages/CourseOfferingsView.vue'
-import CoursesView from '@/modules/admin/courses/pages/CoursesView.vue'
-import CurriculumPlannerView from '@/modules/admin/curriculum/pages/CurriculumPlannerView.vue'
-import DepartmentsView from '@/modules/admin/departments/pages/DepartmentsView.vue'
-import ImportDetailView from '@/modules/admin/imports/pages/ImportDetailView.vue'
-import ImportsListView from '@/modules/admin/imports/pages/ImportsListView.vue'
-import NewImportView from '@/modules/admin/imports/pages/NewImportView.vue'
-import DashboardView from '@/modules/admin/pages/DashboardView.vue'
-import ProgramsView from '@/modules/admin/programs/pages/ProgramsView.vue'
-import SectionsView from '@/modules/admin/sections/pages/SectionsView.vue'
-import SemestersView from '@/modules/admin/semesters/pages/SemestersView.vue'
-import UniversitiesView from '@/modules/admin/universities/pages/UniversitiesView.vue'
+import RolesView from '@/modules/admin/access/pages/RolesView.vue';
+import UsersView from '@/modules/admin/access/pages/UsersView.vue';
+import CollegesView from '@/modules/admin/colleges/pages/CollegesView.vue';
+import CourseOfferingsView from '@/modules/admin/course-offerings/pages/CourseOfferingsView.vue';
+import CoursesView from '@/modules/admin/courses/pages/CoursesView.vue';
+import CurriculumPlannerView from '@/modules/admin/curriculum/pages/CurriculumPlannerView.vue';
+import DepartmentsView from '@/modules/admin/departments/pages/DepartmentsView.vue';
+import ImportDetailView from '@/modules/admin/imports/pages/ImportDetailView.vue';
+import ImportsListView from '@/modules/admin/imports/pages/ImportsListView.vue';
+import NewImportView from '@/modules/admin/imports/pages/NewImportView.vue';
+import DashboardView from '@/modules/admin/pages/DashboardView.vue';
+import ProgramsView from '@/modules/admin/programs/pages/ProgramsView.vue';
+import SectionsView from '@/modules/admin/sections/pages/SectionsView.vue';
+import SemestersView from '@/modules/admin/semesters/pages/SemestersView.vue';
+import UniversitiesView from '@/modules/admin/universities/pages/UniversitiesView.vue';
 
 export default [
   {
@@ -90,9 +90,31 @@ export default [
   },
 
   // // ---------------- Data Import ----------------
-  { path: 'imports', name: 'admin-imports', component: ImportsListView },
-  { path: 'imports/new', name: 'admin-import-new', component: NewImportView },
-  { path: 'imports/:id(\\d+)', name: 'admin-import-detail', component: ImportDetailView },
+  {
+    path: 'imports',
+    name: 'admin-imports',
+    component: ImportsListView,
+    meta: {
+      permissions: ['import.view'],
+    },
+  },
+  {
+    path: 'imports/new',
+    name: 'admin-import-new',
+    component: NewImportView,
+    meta: {
+      permissions: ['student.import', 'instructor.import', 'section.import', 'question.import', 'user.import'],
+      permission_mode: 'any',
+    },
+  },
+  {
+    path: 'imports/:id(\\d+)',
+    name: 'admin-import-detail',
+    component: ImportDetailView,
+    meta: {
+      permissions: ['import.view'],
+    },
+  },
   // // ---------------- Course Offerings ----------------
   {
     path: 'course-offerings',
@@ -113,4 +135,4 @@ export default [
   //   name: 'admin.results.list',
   //   component: () => import('@/modules/admin/pages/results/ResultsView.vue'),
   // },
-]
+];

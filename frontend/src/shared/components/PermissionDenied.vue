@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { ShieldX } from 'lucide-vue-next'
-import BaseCard from '@/shared/components/ui/BaseCard.vue'
+import { ShieldX } from 'lucide-vue-next';
+import BaseCard from '@/shared/components/ui/BaseCard.vue';
 
 defineProps<{
-  title?: string
-  message?: string
-}>()
+  title?: string;
+  message?: string;
+}>();
 </script>
 
 <template>

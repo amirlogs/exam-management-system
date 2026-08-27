@@ -4,13 +4,13 @@ export function handleApiError(
   applyServerErrors?: (errors: Record<string, string[] | string>) => void,
   fallback = 'Something went wrong.',
 ) {
-  const data = err?.response?.data
+  const data = err?.response?.data;
   if (data?.errors && typeof data.errors === 'object' && applyServerErrors) {
-    applyServerErrors(data.errors)
-    uiStore.showToast(data.message || 'Please fix the errors below.', 'error')
+    applyServerErrors(data.errors);
+    uiStore.showToast(data.message || 'Please fix the errors below.', 'error');
   } else if (data?.message) {
-    uiStore.showToast(data.message, 'error')
+    uiStore.showToast(data.message, 'error');
   } else {
-    uiStore.showToast(fallback, 'error')
+    uiStore.showToast(fallback, 'error');
   }
 }

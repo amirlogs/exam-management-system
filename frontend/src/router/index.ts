@@ -1,17 +1,17 @@
-import AdminLayout from '@/layouts/AdminLayout.vue'
-import AuthLayout from '@/layouts/AuthLayout.vue'
-import InstructorLayout from '@/layouts/InstructorLayout.vue'
-import StudentLayout from '@/layouts/StudentLayout.vue'
-import LoginView from '@/modules/auth/pages/LoginView.vue'
-import NoAccessView from '@/modules/workspace/pages/NoAccessView.vue'
-import WorkspaceSelectView from '@/modules/workspace/pages/WorkspaceSelectView.vue'
-import NotFoundView from '@/shared/pages/NotFoundView.vue'
-import UnauthorizedView from '@/shared/pages/UnauthorizedView.vue'
-import { createRouter, createWebHistory } from 'vue-router'
-import adminRoutes from './admin.routes'
-import { authGuard, permissionGuard } from './guards'
-import teachingRoutes from './instructor.routes'
-import studentRoutes from './student.routes'
+import AdminLayout from '@/layouts/AdminLayout.vue';
+import AuthLayout from '@/layouts/AuthLayout.vue';
+import InstructorLayout from '@/layouts/InstructorLayout.vue';
+import StudentLayout from '@/layouts/StudentLayout.vue';
+import LoginView from '@/modules/auth/pages/LoginView.vue';
+import NoAccessView from '@/modules/workspace/pages/NoAccessView.vue';
+import WorkspaceSelectView from '@/modules/workspace/pages/WorkspaceSelectView.vue';
+import NotFoundView from '@/shared/pages/NotFoundView.vue';
+import UnauthorizedView from '@/shared/pages/UnauthorizedView.vue';
+import { createRouter, createWebHistory } from 'vue-router';
+import adminRoutes from './admin.routes';
+import { authGuard, permissionGuard } from './guards';
+import teachingRoutes from './instructor.routes';
+import studentRoutes from './student.routes';
 const routes = [
   {
     path: '/',
@@ -84,13 +84,13 @@ const routes = [
     name: 'unauthorized',
     component: UnauthorizedView,
   },
-]
+];
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes,
-})
+});
 
-router.beforeEach(authGuard)
-router.beforeEach(permissionGuard)
-export default router
+router.beforeEach(authGuard);
+router.beforeEach(permissionGuard);
+export default router;

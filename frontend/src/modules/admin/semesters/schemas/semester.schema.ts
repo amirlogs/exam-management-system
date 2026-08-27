@@ -1,4 +1,4 @@
-import { z } from 'zod'
+import { z } from 'zod';
 
 export const semesterSchema = z
   .object({
@@ -10,4 +10,4 @@ export const semesterSchema = z
   .refine((d) => new Date(d.end_date) > new Date(d.start_date), {
     message: 'End date must be after start date',
     path: ['end_date'],
-  })
+  });
