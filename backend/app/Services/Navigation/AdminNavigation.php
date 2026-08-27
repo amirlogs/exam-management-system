@@ -99,18 +99,15 @@ class AdminNavigation
                 ],
                 'permission_mode' => 'any',
             ],
-
             [
                 'label' => 'Data Import',
                 'to' => '/admin/imports',
                 'icon' => 'Upload',
                 'permissions' => [
-                    // 'import.view',
-                    'section.view'
+                    'import.view',
                 ],
                 'permission_mode' => 'any',
             ],
-
             [
                 'label' => 'Course Offerings',
                 'to' => '/admin/course-offerings',
