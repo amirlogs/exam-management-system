@@ -109,8 +109,20 @@ const semesterOptions = computed(() =>
 // -----------------------------------------------------------------------------
 
 const activeTab = ref<'active' | 'archived'>('active');
-
 const search = ref('');
+let searchTimer: ReturnType<typeof setTimeout> | null = null;
+function setSearch(value: string) {
+  search.value = value;
+
+  if (searchTimer) {
+    clearTimeout(searchTimer);
+  }
+
+  searchTimer = setTimeout(() => {
+    load(1);
+    searchTimer = null;
+  }, 400);
+}
 const statusFilter = ref<OfferingStatus | null>(null);
 
 const statusFilterOptions = [
@@ -139,7 +151,6 @@ const statusFilterOptions = [
 const hasActiveFilters = computed(() => statusFilter.value !== null);
 
 function clearFilters() {
-  search.value = '';
   statusFilter.value = null;
 }
 
@@ -238,7 +249,7 @@ async function load(page = 1) {
   try {
     const fetcher = activeTab.value === 'active' ? listOfferings : getArchivedOfferings;
 
-    const response = await fetcher(selectedSemesterId.value, page, 10, statusFilter.value ?? undefined);
+    const response = await fetcher( selectedSemesterId.value, page, 10, statusFilter.value ?? undefined, search.value || undefined, );
 
     list.value = response.data;
     pagination.value = response.pagination;
@@ -249,23 +260,6 @@ async function load(page = 1) {
   }
 }
 
-// -----------------------------------------------------------------------------
-// Search
-// -----------------------------------------------------------------------------
-
-const filteredList = computed(() => {
-  const query = search.value.trim().toLowerCase();
-
-  if (!query) {
-    return list.value;
-  }
-
-  return list.value.filter((offering) => {
-    const searchableText = [offering.course?.code, offering.course?.name].filter(Boolean).join(' ').toLowerCase();
-
-    return searchableText.includes(query);
-  });
-});
 
 // -----------------------------------------------------------------------------
 // Watchers
@@ -496,6 +490,11 @@ onMounted(async () => {
 });
 
 onBeforeUnmount(() => {
+  if (searchTimer) {
+    clearTimeout(searchTimer);
+    searchTimer = null;
+  }
+
   document.removeEventListener('click', handleDocumentClick);
 });
 </script>
@@ -504,26 +503,27 @@ onBeforeUnmount(() => {
   <div class="mx-auto w-full max-w-360 space-y-6 px-6 py-6">
     <!-- Toolbar -->
     <div data-columns-container class="relative">
-      <ResourceToolbar
-        title="Course offerings"
-        description="Review and manage course offerings for the semester."
-        search-placeholder="Search by course code or name..."
-        :show-search="true"
-        :show-filter="true"
-        :show-refresh="true"
-        :show-columns="true"
-        :show-fullscreen="true"
-        :show-tabs="true"
-        :active-tab="activeTab"
-        :active-count="activeTab === 'active' ? pagination.total : undefined"
-        :archived-count="activeTab === 'archived' ? pagination.total : undefined"
-        :has-active-filters="hasActiveFilters"
-        :refreshing="loading"
-        @clear-filters="clearFilters"
-        @change-tab="changeTab"
-        @update:search="search = $event"
-        @refresh="retry"
-        @columns="showColumns = !showColumns">
+        <ResourceToolbar
+          title="Course offerings"
+          description="Review and manage course offerings for the semester."
+          search-placeholder="Search by course code or name..."
+          :search="search"
+          :show-search="true"
+          :show-filter="true"
+          :show-refresh="true"
+          :show-columns="true"
+          :show-fullscreen="true"
+          :show-tabs="true"
+          :active-tab="activeTab"
+          :active-count="activeTab === 'active' ? pagination.total : undefined"
+          :archived-count="activeTab === 'archived' ? pagination.total : undefined"
+          :has-active-filters="hasActiveFilters"
+          :refreshing="loading"
+          @clear-filters="clearFilters"
+          @change-tab="changeTab"
+          @update:search="setSearch"
+          @refresh="retry"
+          @columns="showColumns = !showColumns">
         <template #actions>
           <BaseSelect :model-value="String(selectedSemesterId ?? '')" :options="semesterOptions" placeholder="Select semester" @update:model-value="onSemesterChange" />
 
@@ -640,8 +640,8 @@ onBeforeUnmount(() => {
           </tbody>
 
           <!-- Data -->
-          <tbody v-else-if="filteredList.length" class="divide-y divide-border">
-            <tr v-for="offering in filteredList" :key="offering.id" class="group cursor-pointer transition-colors hover:bg-text/2" @click="openDetail(offering)">
+<tbody v-else-if="list.length" class="divide-y divide-border">
+            <tr v-for="offering in list" :key="offering.id" class="group cursor-pointer transition-colors hover:bg-text/2" @click="openDetail(offering)">
               <!-- Course -->
               <td v-if="isColumnVisible('course')" class="px-4 py-3.5">
                 <div class="flex items-center gap-3">

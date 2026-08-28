@@ -106,8 +106,6 @@ function handleColumnOutsideClick(event: MouseEvent) {
 
 const visibleColumnCount = computed(() => visibleColumns.value.length);
 
-const search = ref('');
-
 const filters = ref({
   department_id: null as number | null,
   credit_hours: null as number | null,
@@ -115,14 +113,14 @@ const filters = ref({
 
 const crud = useCrudResource<Course>(
   {
-    list: (page) =>
-      getCourses(page, 10, search.value, {
+    list: (params) =>
+      getCourses(params.page ?? 1, 10, params.search ?? '', {
         department_id: filters.value.department_id,
         credit_hours: filters.value.credit_hours,
       }),
 
-    listArchived: (page) =>
-      getArchivedCourses(page, 10, search.value, {
+    listArchived: (params) =>
+      getArchivedCourses(params.page ?? 1, 10, params.search ?? '', {
         department_id: filters.value.department_id,
         credit_hours: filters.value.credit_hours,
       }),
@@ -219,9 +217,6 @@ onBeforeUnmount(() => {
   document.removeEventListener('click', handleColumnOutsideClick);
 });
 
-watch(search, () => {
-  crud.load(1);
-});
 
 watch(
   filters,
@@ -238,13 +233,6 @@ function clearFilters() {
     department_id: null,
     credit_hours: null,
   };
-
-  if (search.value) {
-    search.value = '';
-    return;
-  }
-
-  crud.load(1);
 }
 
 function retry() {
@@ -363,7 +351,7 @@ async function confirmRestore() {
 }
 
 const emptyStateText = computed(() => {
-  if (search.value || hasActiveFilters.value) {
+  if (crud.search.value || hasActiveFilters.value) {
     return 'No matching courses found';
   }
 
@@ -373,27 +361,28 @@ const emptyStateText = computed(() => {
 
 <template>
   <div class="mx-auto w-full max-w-360 space-y-6 px-6 py-6">
-    <ResourceToolbar
-      title="Courses"
-      description="Manage courses offered under each department."
-      search-placeholder="Search courses..."
-      :show-search="true"
-      :show-filter="true"
-      :show-refresh="true"
-      :refreshing="crud.loading.value"
-      :show-columns="true"
-      :show-fullscreen="true"
-      :show-tabs="true"
-      :active-tab="crud.activeTab.value"
-      :active-count="crud.activePagination.value.total"
-      :archived-count="crud.archivedPagination.value.total"
-      :has-active-filters="hasActiveFilters"
-      :filter-count="filterCount"
-      @update:search="search = $event"
-      @refresh="retry"
-      @clear-filters="clearFilters"
-      @change-tab="crud.changeTab"
-      @columns="toggleColumnSelector">
+  <ResourceToolbar
+    title="Courses"
+    description="Manage courses offered under each department."
+    search-placeholder="Search courses..."
+    :search="crud.search.value"
+    :show-search="true"
+    :show-filter="true"
+    :show-refresh="true"
+    :refreshing="crud.loading.value"
+    :show-columns="true"
+    :show-fullscreen="true"
+    :show-tabs="true"
+    :active-tab="crud.activeTab.value"
+    :active-count="crud.activePagination.value.total"
+    :archived-count="crud.archivedPagination.value.total"
+    :has-active-filters="hasActiveFilters"
+    :filter-count="filterCount"
+    @update:search="crud.setSearch"
+    @refresh="retry"
+    @clear-filters="clearFilters"
+    @change-tab="crud.changeTab"
+    @columns="toggleColumnSelector">
       <template #actions>
         <BaseButton v-can="'course.create'" :icon="Plus" @click="openCreate"> Add course </BaseButton>
       </template>

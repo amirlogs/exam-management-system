@@ -6,7 +6,7 @@ type WorkspaceState = {
 
 const roles: (keyof WorkspaceState)[] = ['admin', 'instructor', 'student'];
 
-export default function trueCouter(workspaceState: WorkspaceState) {
+export function trueCouter(workspaceState: WorkspaceState) {
   let count = 0;
   let singleRoute = '';
   for (const role of roles) {
@@ -15,9 +15,17 @@ export default function trueCouter(workspaceState: WorkspaceState) {
       count = count + 1;
     }
   }
-  if (count === 1) {
-    return singleRoute;
-  } else {
-    return workspaceState;
+
+  return count;
+}
+
+export function getSingleRoute(workspaceState: WorkspaceState) {
+  let singleRoute = '';
+  for (const role of roles) {
+    if (workspaceState[role]) {
+      singleRoute = role;
+    }
   }
+
+  return singleRoute;
 }

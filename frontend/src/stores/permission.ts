@@ -1,6 +1,6 @@
 import { setWorkspace } from '@/api/auth';
 import type { WorkspaceState } from '@/modules/instructor/pages/question-bank/types';
-import trueCouter from '@/shared/utils/trueCounter';
+import { getSingleRoute, trueCouter } from '@/shared/utils/trueCounter';
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import type { Router } from 'vue-router';
@@ -35,25 +35,36 @@ export const usePermissionsStore = defineStore('permissions', () => {
   }
 
   const setActiveWorkspace = async (workspace: string) => {
-    const response = await setWorkspace(workspace);
+    await setWorkspace(workspace);
     activeWorkspace.value = workspace;
     useNavigationStore().fetchNavigation(workspace);
   };
 
   const routeToWorkspace = async (router: Router) => {
-    console.log('routeToWorkspace');
     if (!workspaces.value) {
       useAuthStore().initializeAuth(router);
     }
-    if (!workspaces.value) {
+    // if (!workspaces.value) {
+    //   return router.push({ name: 'no-access' });
+    // }
+
+    const workspaceNumber = trueCouter(workspaces.value);
+
+    console.log(workspaceNumber);
+    if (workspaceNumber === 0) {
       return router.push({ name: 'no-access' });
-    }
-    const workspace = trueCouter(workspaces.value);
-    if (typeof workspace === 'string') {
+    } else if (workspaceNumber === 1) {
+      if (activeWorkspace.value) {
+        return router.push(`/${activeWorkspace.value}/dashboard`);
+      }
+      const workspace = getSingleRoute(workspaces.value);
       setActiveWorkspace(workspace);
       return router.push(`/${workspace}/dashboard`);
     } else {
-      return router.replace('/select-workspace');
+      if (activeWorkspace.value) {
+        return router.push(`/${activeWorkspace.value}/dashboard`);
+      }
+      return router.push({ name: 'select-workspace' });
     }
   };
 

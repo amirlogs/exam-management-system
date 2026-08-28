@@ -7,26 +7,28 @@ interface ListResponse<T> {
   pagination: Pagination;
 }
 
-export async function listOfferings(semesterId: number, page = 1, perPage = 10, status?: OfferingStatus): Promise<ListResponse<CourseOffering>> {
+export async function listOfferings(semesterId: number, page = 1, perPage = 10, status?: OfferingStatus, search?: string): Promise<ListResponse<CourseOffering>> {
   const res = await api.get('/course-offerings', {
     params: {
       semester_id: semesterId,
       page,
       per_page: perPage,
       status,
+      search,
     },
   });
 
   return res.data;
 }
 
-export async function getArchivedOfferings(semesterId: number | null, page = 1, perPage = 10, status?: OfferingStatus): Promise<ListResponse<CourseOffering>> {
+export async function getArchivedOfferings( semesterId: number | null, page = 1, perPage = 10, status?: OfferingStatus, search?: string, ): Promise<ListResponse<CourseOffering>> {
   const res = await api.get('/course-offerings/archived', {
     params: {
       semester_id: semesterId ?? undefined,
       page,
       per_page: perPage,
       status,
+      search,
     },
   });
 

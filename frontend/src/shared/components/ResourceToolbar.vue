@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, computed } from 'vue';
+import { ref, onMounted, onBeforeUnmount, computed, watch } from 'vue';
 import { RefreshCw, Search, SlidersHorizontal, Columns3, Maximize2, Minimize2, X, Archive, Building, RotateCcw } from 'lucide-vue-next';
 
 const props = withDefaults(
@@ -7,6 +7,8 @@ const props = withDefaults(
     title: string;
     description?: string;
     searchPlaceholder?: string;
+    search?: string;
+    searchDebounce?: number;
 
     showSearch?: boolean;
     showFilter?: boolean;
@@ -39,6 +41,9 @@ const props = withDefaults(
 
     hasActiveFilters: false,
     filterCount: 0,
+
+    search: '',
+    searchDebounce: 400,
   },
 );
 
@@ -53,10 +58,34 @@ const emit = defineEmits<{
 
 const filterOpen = ref(false);
 const isFullscreen = ref(false);
+const localSearch = ref(props.search);
+let searchTimer: ReturnType<typeof setTimeout> | null = null;
 
 const filterButtonLabel = computed(() => {
   return filterOpen.value ? 'Hide Filter' : 'Filter';
 });
+
+watch(
+  () => props.search,
+  (value) => {
+    if (value !== localSearch.value) {
+      localSearch.value = value;
+    }
+  },
+);
+
+function handleSearch(value: string) {
+  localSearch.value = value;
+
+  if (searchTimer) {
+    clearTimeout(searchTimer);
+  }
+
+  searchTimer = setTimeout(() => {
+    emit('update:search', value);
+    searchTimer = null;
+  }, props.searchDebounce);
+}
 
 function toggleFilter() {
   filterOpen.value = !filterOpen.value;
@@ -111,6 +140,11 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
+  if (searchTimer) {
+    clearTimeout(searchTimer);
+    searchTimer = null;
+  }
+
   document.removeEventListener('fullscreenchange', handleFullscreenChange);
   document.removeEventListener('click', handleClickOutside);
   document.removeEventListener('keydown', handleKeydown);
@@ -177,9 +211,10 @@ onBeforeUnmount(() => {
 
         <input
           type="text"
+          :value="localSearch"
           :placeholder="searchPlaceholder || 'Search…'"
           class="w-full rounded-lg border border-border bg-surface py-2 pl-9 pr-4 text-sm text-text outline-none transition placeholder:text-text/40 focus:border-accent focus:ring-2 focus:ring-accent/10"
-          @input="emit('update:search', ($event.target as HTMLInputElement).value)" />
+          @input="handleSearch(($event.target as HTMLInputElement).value)" />
       </div>
 
       <div class="ml-auto flex shrink-0 items-center gap-2">

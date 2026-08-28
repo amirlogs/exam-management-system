@@ -31,11 +31,11 @@ const showDisableModal = ref(false);
 const selected = ref<User | null>(null);
 const saving = ref(false);
 const toggling = ref(false);
-
-async function load(page = 1) {
+const search = ref('');
+async function load(page = 1, search = '') {
   loading.value = true;
   try {
-    const res = await getUsers(page);
+    const res = await getUsers(page, 12, search);
     users.value = res.data;
     pagination.value = res.pagination;
   } catch (err) {
@@ -105,7 +105,7 @@ async function submitForm() {
     closeFormModal();
     saving.value = false;
     uiStore.showToast(isEditing.value ? 'User updated.' : 'User created.', 'success');
-    await load(pagination.value.current_page);
+await load(pagination.value.current_page, search.value);
   } catch (err: any) {
     saving.value = false;
     if (err?.response?.status === 422) {
@@ -158,36 +158,40 @@ function initials(u: User) {
   return combined || '—';
 }
 
-// Search and refresh
 
-const searchQuery = ref('');
 const refreshing = ref(false);
 
 //pass searchQuery.value to the serch
 const activeView = ref<'active' | 'archived'>('active');
 
-async function handleRefresh() {
-  refreshing.value = true;
-  await load(pagination.value.current_page);
-  refreshing.value = false;
-}
+
 function handleSearch(query: string) {
   searchQuery.value = query;
   load(1);
+}
+
+async function handleRefresh() {
+  refreshing.value = true;
+  await load(pagination.value.current_page, search.value);
+  refreshing.value = false;
 }
 </script>
 
 <template>
   <div class="mx-auto w-full max-w-360 space-y-6 px-6 py-6">
-    <ResourceToolbar
-      title="Users"
-      description="Manage institutional accounts and role assignments."
-      search-placeholder="Search by name or email…"
-      show-search
-      show-refresh
-      :refreshing="refreshing"
-      @update:search="handleSearch"
-      @refresh="handleRefresh">
+      <ResourceToolbar
+        title="Users"
+        description="Manage institutional accounts and role assignments."
+        search-placeholder="Search by name or email…"
+        :search="search"
+        :show-search="true"
+        :show-refresh="true"
+        :refreshing="refreshing"
+        @update:search="(value) => {
+          search = value;
+          load(1, value);
+        }"
+        @refresh="handleRefresh">
       <template #actions>
         <BaseButton @click="openCreate">
           <template #icon><Plus class="h-4 w-4" /></template>
@@ -284,7 +288,7 @@ function handleSearch(query: string) {
           </tbody>
         </table>
       </div>
-      <AppPagination :pagination="pagination" @change-page="load" />
+      <AppPagination :pagination="pagination" @change-page="(page) => load(page, search)" />
     </div>
   </div>
 

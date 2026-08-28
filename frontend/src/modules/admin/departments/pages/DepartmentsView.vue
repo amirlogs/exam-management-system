@@ -25,9 +25,7 @@ import type { College } from '@/modules/admin/colleges/types/college';
 
 const uiStore = useUiStore();
 
-// Search & Filters
-const search = ref('');
-
+//  Filters
 const filters = ref({
   college_id: null as number | null,
   type: '' as string,
@@ -36,24 +34,33 @@ const filters = ref({
 // CRUD
 const crud = useCrudResource<Department>(
   {
-    list: (page) =>
-      getDepartments(page, 10, search.value, {
-        college_id: filters.value.college_id,
-        type: filters.value.type,
-      }),
+    list: (params) =>
+      getDepartments(
+        params.page ?? 1,
+        10,
+        params.search ?? '',
+        {
+          college_id: filters.value.college_id,
+          type: filters.value.type,
+        },
+      ),
 
-    listArchived: (page) =>
-      getArchivedDepartments(page, 10, search.value, {
-        college_id: filters.value.college_id,
-        type: filters.value.type,
-      }),
+    listArchived: (params) =>
+      getArchivedDepartments(
+        params.page ?? 1,
+        10,
+        params.search ?? '',
+        {
+          college_id: filters.value.college_id,
+          type: filters.value.type,
+        },
+      ),
 
     remove: deleteDepartment,
     restore: restoreDepartment,
   },
   'name',
 );
-
 // UI State
 const showFormModal = ref(false);
 const showArchiveModal = ref(false);
@@ -124,11 +131,6 @@ async function loadCollegeOptions() {
 // Loading
 onMounted(() => {
   loadCollegeOptions();
-  crud.load(1);
-});
-
-// Search changes
-watch(search, () => {
   crud.load(1);
 });
 
@@ -266,7 +268,7 @@ async function confirmRestore() {
 // --------------------------------------------------
 
 const emptyStateText = computed(() => {
-  const hasSearch = search.value.trim().length > 0;
+  const hasSearch = crud.search.value.trim().length > 0;
 
   if (hasSearch || hasActiveFilters.value) {
     return 'No matching departments found';
@@ -296,6 +298,7 @@ function typeLabel(type: string) {
       title="Departments"
       description="Manage departments under each college."
       search-placeholder="Search departments..."
+      :search="crud.search.value"
       :show-search="true"
       :show-filter="true"
       :show-refresh="true"
@@ -308,7 +311,7 @@ function typeLabel(type: string) {
       :filter-count="filterCount"
       @clear-filters="clearFilters"
       @change-tab="crud.changeTab"
-      @update:search="search = $event"
+      @update:search="crud.setSearch"
       @refresh="retry">
       <!-- Primary Action -->
       <template #actions>

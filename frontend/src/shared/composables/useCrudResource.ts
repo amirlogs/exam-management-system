@@ -1,5 +1,5 @@
 import { useUiStore } from '@/stores/ui';
-import { ref } from 'vue';
+import { onBeforeUnmount, ref } from 'vue';
 
 export interface Pagination {
   current_page: number;
@@ -10,9 +10,15 @@ export interface Pagination {
   to: number | null;
 }
 
+export interface ResourceQuery {
+  page?: number;
+  per_page?: number;
+  search?: string;
+}
+
 interface CrudApi<T> {
-  list: (page: number) => Promise<{ data: T[]; pagination: Pagination }>;
-  listArchived: (page: number) => Promise<{ data: T[]; pagination: Pagination }>;
+  list: (params: ResourceQuery) => Promise<{ data: T[]; pagination: Pagination }>;
+  listArchived: (params: ResourceQuery) => Promise<{ data: T[]; pagination: Pagination }>;
   remove: (id: number) => Promise<void>;
   restore: (id: number) => Promise<T>;
 }
@@ -25,6 +31,9 @@ export function useCrudResource<T extends { id: number }>(api: CrudApi<T>, label
   const activeTab = ref<'active' | 'archived'>('active');
   const loading = ref(false);
   const error = ref<string | null>(null);
+  const search = ref('');
+
+  let searchTimer: ReturnType<typeof setTimeout> | null = null;
 
   const emptyPagination = (): Pagination => ({
     current_page: 1,
@@ -51,7 +60,16 @@ export function useCrudResource<T extends { id: number }>(api: CrudApi<T>, label
     try {
       if (isInitialLoad.value) {
         // Fetch BOTH active and archived on first render to get accurate initial tab counts
-        const [activeRes, archivedRes] = await Promise.all([api.list(page), api.listArchived(1)]);
+        const [activeRes, archivedRes] = await Promise.all([
+          api.list({
+            page,
+            search: search.value || undefined,
+          }),
+          api.listArchived({
+            page: 1,
+            search: search.value || undefined,
+          }),
+        ]);
 
         items.value = activeRes.data;
         activePagination.value = activeRes.pagination;
@@ -63,43 +81,79 @@ export function useCrudResource<T extends { id: number }>(api: CrudApi<T>, label
       } else {
         // Subsequent pagination / tab toggles only fetch the current tab's data
         if (activeTab.value === 'active') {
-          const response = await api.list(page);
+          const response = await api.list({
+            page,
+            search: search.value || undefined,
+          });
+
           items.value = response.data;
           activePagination.value = response.pagination;
         } else {
-          const response = await api.listArchived(page);
+          const response = await api.listArchived({
+            page,
+            search: search.value || undefined,
+          });
+
           archivedItems.value = response.data;
           archivedPagination.value = response.pagination;
         }
       }
     } catch (err: any) {
-      error.value = err?.response?.status === 401 || err?.response?.status === 403 ? 'You are not authorized to view this resource.' : 'Failed to load data. Please try again.';
+      error.value =
+        err?.response?.status === 401 || err?.response?.status === 403
+          ? 'You are not authorized to view this resource.'
+          : 'Failed to load data. Please try again.';
     } finally {
       loading.value = false;
     }
   }
 
+  function setSearch(value: string) {
+    search.value = value;
+
+    if (searchTimer) {
+      clearTimeout(searchTimer);
+    }
+
+    searchTimer = setTimeout(() => {
+      load(1);
+      searchTimer = null;
+    }, 400);
+  }
+
   function changeTab(tab: 'active' | 'archived') {
     if (activeTab.value === tab) return;
+
     activeTab.value = tab;
     load(1);
   }
 
   async function archive(item: T) {
     await api.remove(item.id);
+
     items.value = items.value.filter((i) => i.id !== item.id);
     activePagination.value.total = Math.max(0, activePagination.value.total - 1);
     archivedPagination.value.total += 1;
+
     uiStore.showToast(`${String(item[labelKey])} archived.`, 'success');
   }
 
   async function restore(item: T) {
     await api.restore(item.id);
+
     archivedItems.value = archivedItems.value.filter((i) => i.id !== item.id);
     archivedPagination.value.total = Math.max(0, archivedPagination.value.total - 1);
     activePagination.value.total += 1;
+
     uiStore.showToast(`${String(item[labelKey])} restored.`, 'success');
   }
+
+  onBeforeUnmount(() => {
+    if (searchTimer) {
+      clearTimeout(searchTimer);
+      searchTimer = null;
+    }
+  });
 
   return {
     items,
@@ -107,11 +161,13 @@ export function useCrudResource<T extends { id: number }>(api: CrudApi<T>, label
     activeTab,
     loading,
     error,
+    search,
     activePagination,
     archivedPagination,
     currentPagination,
     currentList,
     load,
+    setSearch,
     changeTab,
     archive,
     restore,

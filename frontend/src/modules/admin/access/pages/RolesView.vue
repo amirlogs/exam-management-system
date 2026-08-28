@@ -58,30 +58,49 @@ function closeFormModal() {
 
 async function submitForm() {
   if (!validate()) return;
+
+  const isEditing = !!editing.value;
+
   saving.value = true;
+
   try {
-    if (editing.value) {
-      const updated = await updateRole(editing.value.id, form);
+    if (isEditing) {
+      const updated = await updateRole(editing.value!.id, form);
+
       const idx = roles.value.findIndex((r) => r.id === updated.id);
-      if (idx !== -1) roles.value[idx] = updated;
+
+      if (idx !== -1) {
+        roles.value[idx] = updated;
+      }
+
+      uiStore.showToast('Role updated.', 'success');
     } else {
       const created = await createRole(form);
-      roles.value = [created, ...roles.value];
+
+      const newRole = {
+        ...created,
+        permissions: created.permissions ?? [],
+      };
+
+      roles.value = [newRole, ...roles.value];
+
+      selectedRoleId.value = newRole.id;
+
+      uiStore.showToast('Role created.', 'success');
     }
+
     closeFormModal();
-    saving.value = false;
-    uiStore.showToast(editing.value ? 'Role updated.' : 'Role created.', 'success');
   } catch (err: any) {
-    saving.value = false;
     if (err?.response?.status === 422) {
       applyServerErrors(err.response.data?.errors);
       uiStore.showToast('Please fix the errors below.', 'error');
     } else {
-      uiStore.showToast('Failed to save role.', 'error');
+      uiStore.showToast(err?.response?.data?.message || 'Failed to save role.', 'error');
     }
+  } finally {
+    saving.value = false;
   }
 }
-
 function openDelete(role: Role) {
   editing.value = role;
   showDeleteModal.value = true;

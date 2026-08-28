@@ -7,8 +7,10 @@ interface ListResponse<T> {
   pagination: Pagination;
 }
 
-export async function getUsers(page = 1, perPage = 12): Promise<ListResponse<User>> {
-  const res = await api.get('/users', { params: { page, per_page: perPage } });
+export async function getUsers(page = 1, perPage = 12, search = ''): Promise<ListResponse<User>> {
+  const res = await api.get('/users', { params: { page, per_page: perPage, search, },
+  });
+
   return res.data;
 }
 export async function createUser(data: { first_name: string; last_name: string; email: string; password: string }) {

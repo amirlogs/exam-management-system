@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { computed, ref } from 'vue';
 import { Archive, Building, Plus, RotateCcw } from 'lucide-vue-next';
 import ResourceToolbar from '@/shared/components/ResourceToolbar.vue';
 import BaseDialog from '@/shared/components/ui/BaseDialog.vue';
@@ -20,7 +20,6 @@ import TableRowActions from '@/shared/components/TableRowActions.vue';
 const uiStore = useUiStore();
 const crud = useCrudResource<College>({ list: getColleges, listArchived: getArchivedColleges, remove: deleteCollege, restore: restoreCollege }, 'name');
 
-const search = ref('');
 const showFormModal = ref(false);
 const showArchiveModal = ref(false);
 const showRestoreModal = ref(false);
@@ -110,11 +109,11 @@ async function confirmRestore() {
   }
 }
 
-const filteredList = computed(() => (search.value ? crud.currentList().filter((c) => c.name.toLowerCase().includes(search.value.toLowerCase())) : crud.currentList()));
-
 const emptyStateText = computed(() => {
-  if (search.value) return 'No colleges found';
-  return crud.activeTab.value === 'archived' ? 'No archived colleges' : 'No colleges yet';
+  if (crud.search.value) return 'No colleges found';
+  return crud.activeTab.value === 'archived'
+    ? 'No archived colleges'
+    : 'No colleges yet';
 });
 
 function retry() {
@@ -128,6 +127,7 @@ function retry() {
       title="Colleges"
       description="Manage the colleges in your institution."
       search-placeholder="Search colleges..."
+      :search="crud.search.value"
       :show-search="true"
       :show-refresh="true"
       :refreshing="crud.loading.value"
@@ -136,7 +136,7 @@ function retry() {
       :active-count="crud.activePagination.value.total"
       :archived-count="crud.archivedPagination.value.total"
       :show-fullscreen="true"
-      @update:search="search = $event"
+      @update:search="crud.setSearch"
       @refresh="retry"
       @change-tab="crud.changeTab">
       <template #actions>
@@ -182,8 +182,8 @@ function retry() {
             </tr>
           </tbody>
 
-          <tbody v-else-if="filteredList.length" class="divide-y divide-border">
-            <tr v-for="college in filteredList" :key="college.id" class="group transition-colors hover:bg-text/2">
+          <tbody v-else-if="crud.currentList().length" class="divide-y divide-border">
+            <tr v-for="college in crud.currentList()" :key="college.id" class="group transition-colors hover:bg-text/2">
               <td class="px-4 py-3.5">
                 <div class="flex items-center gap-3">
                   <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border bg-bg text-text/50">

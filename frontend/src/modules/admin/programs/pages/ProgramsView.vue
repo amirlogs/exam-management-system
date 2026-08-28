@@ -27,21 +27,19 @@ type ProgramColumn = 'program' | 'code' | 'department' | 'duration' | 'created_a
 
 const uiStore = useUiStore();
 
-const search = ref('');
-
 const filters = ref({
   department_id: null as number | null,
 });
 
 const crud = useCrudResource<Program>(
   {
-    list: (page) =>
-      getPrograms(page, 10, search.value, {
+    list: (params) =>
+      getPrograms(params.page ?? 1, 10, params.search ?? '', {
         department_id: filters.value.department_id,
       }),
 
-    listArchived: (page) =>
-      getArchivedPrograms(page, 10, search.value, {
+    listArchived: (params) =>
+      getArchivedPrograms(params.page ?? 1, 10, params.search ?? '', {
         department_id: filters.value.department_id,
       }),
 
@@ -50,7 +48,6 @@ const crud = useCrudResource<Program>(
   },
   'name',
 );
-
 const columns = [
   {
     key: 'program' as ProgramColumn,
@@ -157,12 +154,8 @@ async function loadDepartmentOptions() {
   }
 }
 
-watch([search, () => filters.value.department_id], () => {
-  crud.load(1);
-});
 
 function clearFilters() {
-  search.value = '';
   filters.value.department_id = null;
 }
 
@@ -288,7 +281,7 @@ async function confirmRestore() {
 }
 
 const emptyStateText = computed(() => {
-  if (search.value || hasActiveFilters.value) {
+  if (crud.search.value || hasActiveFilters.value) {
     return 'No matching programs found';
   }
 
@@ -310,25 +303,26 @@ onBeforeUnmount(() => {
 <template>
   <div class="mx-auto w-full max-w-360 space-y-6 px-6 py-6">
     <div data-columns-container class="relative">
-      <ResourceToolbar
-        title="Programs"
-        description="Manage academic programs under each department."
-        search-placeholder="Search programs..."
-        :show-search="true"
-        :show-filter="true"
-        :show-refresh="true"
-        :show-columns="true"
-        :show-fullscreen="true"
-        :show-tabs="true"
-        :active-tab="crud.activeTab.value"
-        :active-count="crud.activePagination.value.total"
-        :archived-count="crud.archivedPagination.value.total"
-        :has-active-filters="hasActiveFilters"
-        @clear-filters="clearFilters"
-        @change-tab="crud.changeTab"
-        @update:search="search = $event"
-        @refresh="retry"
-        @columns="showColumns = !showColumns">
+        <ResourceToolbar
+          title="Programs"
+          description="Manage academic programs under each department."
+          search-placeholder="Search programs..."
+          :search="crud.search.value"
+          :show-search="true"
+          :show-filter="true"
+          :show-refresh="true"
+          :show-columns="true"
+          :show-fullscreen="true"
+          :show-tabs="true"
+          :active-tab="crud.activeTab.value"
+          :active-count="crud.activePagination.value.total"
+          :archived-count="crud.archivedPagination.value.total"
+          :has-active-filters="hasActiveFilters"
+          @clear-filters="clearFilters"
+          @change-tab="crud.changeTab"
+          @update:search="crud.setSearch"
+          @refresh="retry"
+          @columns="showColumns = !showColumns">
         <template #actions>
           <BaseButton v-can="'program.create'" :icon="Plus" @click="openCreate"> Add program </BaseButton>
         </template>
@@ -502,7 +496,8 @@ onBeforeUnmount(() => {
                     {{ emptyStateText }}
                   </p>
 
-                  <p v-if="search || hasActiveFilters" class="mt-1 text-xs text-text/45">Try adjusting your search or filters.</p>
+<p v-if="crud.search.value || hasActiveFilters" class="mt-1 text-xs text-text/45">
+                      Try adjusting your search or filters.</p>
                 </div>
               </td>
             </tr>

@@ -29,8 +29,6 @@ type SectionColumn = 'section' | 'year_level' | 'program' | 'semester' | 'create
 
 const uiStore = useUiStore();
 
-const search = ref('');
-
 const filters = ref({
   semester_id: null as number | null,
   program_id: null as number | null,
@@ -39,15 +37,15 @@ const filters = ref({
 
 const crud = useCrudResource<Section>(
   {
-    list: (page) =>
-      getSections(page, 12, search.value, {
+    list: (params) =>
+      getSections(params.page ?? 1, 12, params.search ?? '', {
         semester_id: filters.value.semester_id,
         program_id: filters.value.program_id,
         year_level: filters.value.year_level,
       }),
 
-    listArchived: (page) =>
-      getArchivedSections(page, 12, search.value, {
+    listArchived: (params) =>
+      getArchivedSections(params.page ?? 1, 12, params.search ?? '', {
         semester_id: filters.value.semester_id,
         program_id: filters.value.program_id,
         year_level: filters.value.year_level,
@@ -342,17 +340,19 @@ async function confirmRestore() {
 }
 
 const emptyStateText = computed(() => {
-  if (search.value || hasActiveFilters.value) {
+  if (crud.search.value || hasActiveFilters.value) {
     return 'No matching sections found';
   }
 
   return crud.activeTab.value === 'archived' ? 'No archived sections' : 'No sections yet';
 });
 
-watch([search, () => filters.value.semester_id, () => filters.value.program_id, () => filters.value.year_level], () => {
-  crud.load(1);
-});
-
+watch(
+  [() => filters.value.semester_id, () => filters.value.program_id, () => filters.value.year_level],
+  () => {
+    crud.load(1);
+  },
+);
 onMounted(async () => {
   document.addEventListener('click', handleDocumentClick);
 
@@ -368,25 +368,26 @@ onBeforeUnmount(() => {
 <template>
   <div class="mx-auto w-full max-w-360 space-y-6 px-6 py-6">
     <div data-columns-container class="relative">
-      <ResourceToolbar
-        title="Sections"
-        description="Manage student sections across programs and semesters."
-        search-placeholder="Search sections..."
-        :show-search="true"
-        :show-filter="true"
-        :show-refresh="true"
-        :show-columns="true"
-        :show-fullscreen="true"
-        :show-tabs="true"
-        :active-tab="crud.activeTab.value"
-        :active-count="crud.activePagination.value.total"
-        :archived-count="crud.archivedPagination.value.total"
-        :has-active-filters="hasActiveFilters"
-        @clear-filters="clearFilters"
-        @change-tab="crud.changeTab"
-        @update:search="search = $event"
-        @refresh="retry"
-        @columns="showColumns = !showColumns">
+        <ResourceToolbar
+          title="Sections"
+          description="Manage student sections across programs and semesters."
+          search-placeholder="Search sections..."
+          :search="crud.search.value"
+          :show-search="true"
+          :show-filter="true"
+          :show-refresh="true"
+          :show-columns="true"
+          :show-fullscreen="true"
+          :show-tabs="true"
+          :active-tab="crud.activeTab.value"
+          :active-count="crud.activePagination.value.total"
+          :archived-count="crud.archivedPagination.value.total"
+          :has-active-filters="hasActiveFilters"
+          @clear-filters="clearFilters"
+          @change-tab="crud.changeTab"
+          @update:search="crud.setSearch"
+          @refresh="retry"
+          @columns="showColumns = !showColumns">
         <template #actions>
           <BaseButton v-can="'section.create'" :icon="Plus" @click="openCreate"> Add section </BaseButton>
         </template>
@@ -565,7 +566,9 @@ onBeforeUnmount(() => {
                     {{ emptyStateText }}
                   </p>
 
-                  <p v-if="search || hasActiveFilters" class="mt-1 text-xs text-text/45">Try adjusting your search or filters.</p>
+                <p v-if="crud.search.value || hasActiveFilters" class="mt-1 text-xs text-text/45">
+                      Try adjusting your search or filters.
+                      </p>
                 </div>
               </td>
             </tr>

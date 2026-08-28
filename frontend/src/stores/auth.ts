@@ -23,6 +23,7 @@ export const useAuthStore = defineStore('userAuth', () => {
       console.log(response.data.data, 'response is came');
       usePermissionsStore().setPermissions(response.data.data.permissions);
       usePermissionsStore().setWorkspaces(response.data.data.workspaces);
+      usePermissionsStore().setActiveWorkspace(response.data.data.user.default_workspace);
       localStorage.setItem('auth_token', authToken);
       return true;
     } catch (err) {
