@@ -6,6 +6,7 @@ use App\Http\Filters\RequestFilters;
 use App\Http\Requests\StoreProgramRequest;
 use App\Http\Requests\UpdateProgramRequest;
 use App\Http\Resources\ProgramResource;
+use App\Http\Search\RequestSearch;
 use App\Models\Program;
 use App\Validation\GetRequestsValidator;
 use Illuminate\Http\Request;
@@ -25,6 +26,7 @@ class ProgramController extends Controller
 
         $per_page = GetRequestsValidator::validate($request);
         $query = Program::query();
+        RequestSearch::apply($query, $request, ['name']);
         RequestFilters::apply($query, $request, ['department_id']);
         $programs = $query->paginate($per_page);
 
@@ -61,6 +63,7 @@ class ProgramController extends Controller
     {
         $per_page = GetRequestsValidator::validate($request);
         $query = Program::query();
+        RequestSearch::apply($query, $request, ['name']);
         RequestFilters::apply($query, $request, ['department_id']);
         $programs = $query->onlyTrashed()->paginate($per_page);
 

@@ -6,6 +6,7 @@ use App\Http\Filters\RequestFilters;
 use App\Http\Requests\StoreCourseRequest;
 use App\Http\Requests\UpdateCourseRequest;
 use App\Http\Resources\CourseResource;
+use App\Http\Search\RequestSearch;
 use App\Models\Course;
 use App\Models\Department;
 use App\Validation\GetRequestsValidator;
@@ -25,7 +26,8 @@ class CourseController extends Controller
     {
         $per_page = GetRequestsValidator::validate($request);
         $query = Course::query();
-        RequestFilters::apply($query, $request, ['department_id' , 'credit_hours']);
+        RequestFilters::apply($query, $request, ['department_id', 'credit_hours']);
+        RequestSearch::apply($query, $request, ['name', 'code']);
         $courses = $query->with('department')->paginate($per_page);
 
         return $this->paginate($courses, CourseResource::class, 'Courses retrieved successfully');
@@ -78,7 +80,8 @@ class CourseController extends Controller
     {
         $per_page = GetRequestsValidator::validate($request);
         $query = Course::query();
-        RequestFilters::apply($query, $request, ['department_id' , 'credit_hours']);
+        RequestSearch::apply($query, $request, ['name', 'code']);
+        RequestFilters::apply($query, $request, ['department_id', 'credit_hours']);
         $courses = $query->onlyTrashed()->paginate($per_page);
 
         return $this->paginate($courses, CourseResource::class, 'Archived courses retrieved successfully');

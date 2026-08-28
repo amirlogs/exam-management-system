@@ -6,6 +6,7 @@ use App\Http\Filters\RequestFilters;
 use App\Http\Requests\StoreSectionRequest;
 use App\Http\Requests\UpdateSectionRequest;
 use App\Http\Resources\SectionResource;
+use App\Http\Search\RequestSearch;
 use App\Models\Section;
 use App\Models\Semester;
 use App\Validation\GetRequestsValidator;
@@ -31,6 +32,7 @@ class SectionController extends Controller
     {
         $per_page = GetRequestsValidator::validate($request);
         $query = Section::query();
+        RequestSearch::apply($query, $request, ['name']);
         RequestFilters::apply($query, $request, ['semester_id', 'program_id', 'year_level']);
         $sections = $query->with('program', 'semester')->paginate($per_page);
 
@@ -74,6 +76,7 @@ class SectionController extends Controller
     {
         $per_page = GetRequestsValidator::validate($request);
         $query = Section::query();
+        RequestSearch::apply($query, $request, ['name']);
         RequestFilters::apply($query, $request, ['semester_id', 'program_id', 'year_level']);
         $sections = $query->with('program', 'semester')->onlyTrashed()->paginate($per_page);
         return $this->paginate($sections, SectionResource::class, 'archived sections fetched successfully');

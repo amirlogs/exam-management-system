@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreCollegeRequest;
 use App\Http\Requests\UpdateCollegeRequest;
 use App\Http\Resources\CollegeResource;
+use App\Http\Search\RequestSearch;
 use App\Models\College;
 use App\Services\CurrentUniversity;
+use App\Validation\GetRequestsValidator;
 use Illuminate\Http\Request;
 
 class CollegeController extends Controller
@@ -29,12 +31,10 @@ class CollegeController extends Controller
 
     public function index(Request $request)
     {
-        $request->validate([
-            'per_page' => ['nullable', 'integer', 'min:1'],
-        ]);
-
-        $per_page = min($request->per_page ?? 12, 100);
-        $colleges = College::paginate($per_page);
+        $per_page = GetRequestsValidator::validate($request);
+        $query = College::query();
+        RequestSearch::apply($query, $request, ['name']);
+        $colleges = $query->paginate($per_page);
 
         return $this->paginate($colleges, CollegeResource::class, 'Colleges retrieved successfully');
 
@@ -42,12 +42,10 @@ class CollegeController extends Controller
 
     public function archived(Request $request)
     {
-        $request->validate([
-            'per_page' => ['nullable', 'integer', 'min:1'],
-        ]);
-
-        $per_page = min($request->per_page ?? 12, 100);
-        $colleges = College::onlyTrashed()->paginate($per_page);
+        $per_page = GetRequestsValidator::validate($request);
+        $query = College::query();
+        RequestSearch::apply($query, $request, ['name']);
+        $colleges = $query->onlyTrashed()->paginate($per_page);
 
         return $this->paginate($colleges, CollegeResource::class, 'Archived colleges retrieved successfully');
 

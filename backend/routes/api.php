@@ -93,7 +93,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/me/allowed-routes', [UserController::class, 'allowedRoutes']);
     Route::post('/me/workspace', [UserController::class, 'setWorkspace']);
-
     // =====================PERMISSIONS=====================
     Route::get('/permissions', [PermissionController::class, 'index'])->middleware('permission:permission.view');
 
@@ -125,7 +124,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/sections/{section}/restore', [SectionController::class, 'restore'])->middleware('permission:section.restore');
 
     // ===================== IMPORT (students, sections, instructors, users, questions)
-    //
     Route::get('/imports', [ImportController::class, 'index'])->middleware('permission:import.view');
     Route::post('/imports/{type}', [ImportController::class, 'store'])->middleware('import.permission');
     Route::get('/imports/{importHistory}', [ImportController::class, 'show'])->middleware('import.permission');

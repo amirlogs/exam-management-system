@@ -189,8 +189,15 @@ class CourseOfferingController extends Controller
     public function index(Request $request)
     {
         $perPage = GetRequestsValidator::validate($request);
-
         $query = CourseOffering::query();
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+
+            $query->whereHas('course', function ($query) use ($search) {
+                $query->where('name', 'ILIKE', "%{$search}%")
+                    ->orWhere('code', 'ILIKE', "%{$search}%");
+            });
+        }
 
         RequestFilters::apply($query, $request, ['course_id', 'semester_id', 'status']);
         $offerings = $query->with(['course', 'semester', 'sections.program', 'courseInstructors.instructor.user', 'courseInstructors.instructor.department', 'courseInstructors.section'])->paginate($perPage);
@@ -217,7 +224,13 @@ class CourseOfferingController extends Controller
         $perPage = GetRequestsValidator::validate($request);
 
         $query = CourseOffering::onlyTrashed();
-
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->whereHas('course', function ($query) use ($search) {
+                $query->where('name', 'ILIKE', "%{$search}%")
+                    ->orWhere('code', 'ILIKE', "%{$search}%");
+            });
+        }
         RequestFilters::apply($query, $request, ['course_id', 'semester_id', 'status']);
 
         $offerings = $query->with(['course', 'semester', 'sections.program', 'courseInstructors.instructor.user', 'courseInstructors.instructor.department', 'courseInstructors.section'])->paginate($perPage);

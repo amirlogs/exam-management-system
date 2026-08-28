@@ -6,6 +6,7 @@ use App\Http\Filters\RequestFilters;
 use App\Http\Requests\StoreDepartmentRequest;
 use App\Http\Requests\UpdateDepartmentRequest;
 use App\Http\Resources\DepartmentResource;
+use App\Http\Search\RequestSearch;
 use App\Models\College;
 use App\Models\Department;
 use App\Validation\GetRequestsValidator;
@@ -26,6 +27,7 @@ class DepartmentController extends Controller
 
         $per_page = GetRequestsValidator::validate($request);
         $query = Department::query();
+        RequestSearch::apply( $query, $request, ['name'] ); 
         RequestFilters::apply($query, $request, ['college_id', 'type']);
         $departments = $query->with('college')->paginate($per_page);
 
@@ -36,6 +38,7 @@ class DepartmentController extends Controller
     {
         $per_page = GetRequestsValidator::validate($request);
         $query = Department::query();
+        RequestSearch::apply( $query, $request, ['name'] ); 
         RequestFilters::apply($query, $request, ['college_id', 'type']);
         $departments = $query->onlyTrashed()->with('college')->paginate($per_page);
 

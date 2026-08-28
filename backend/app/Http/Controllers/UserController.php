@@ -8,6 +8,7 @@ use App\Http\Requests\SetWorkspaceRequest;
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
 use App\Http\Resources\UserResource;
+use App\Http\Search\RequestSearch;
 use App\Models\User;
 use App\Models\UserRole;
 use App\Services\Navigation\NavigationService;
@@ -72,6 +73,7 @@ class UserController extends Controller
     {
         $per_page = GetRequestsValidator::validate($request);
         $query = User::query();
+        RequestSearch::apply($query, $request, ['first_name', 'last_name', 'email']);
         RequestFilters::apply($query, $request, ['first_name', 'email']);
         $user = $query->with('userRoles.role')->paginate($per_page);
 
