@@ -82,14 +82,12 @@ class UserSeeder extends Seeder
                 'email' => 'instructor.se2@uems.test',
                 'roles' => ['instructor'],
             ],
-
             [
                 'first_name' => 'Liya',
                 'last_name' => 'Desta',
                 'email' => 'instructor.cs2@uems.test',
                 'roles' => ['instructor'],
             ],
-
             [
                 'first_name' => 'Ahmed',
                 'last_name' => 'Nur',
@@ -99,28 +97,24 @@ class UserSeeder extends Seeder
                     'dept_head',
                 ],
             ],
-
             [
                 'first_name' => 'Bethlehem',
                 'last_name' => 'Yosef',
                 'email' => 'student.se1@uems.test',
                 'roles' => ['student'],
             ],
-
             [
                 'first_name' => 'Tewodros',
                 'last_name' => 'Mengistu',
                 'email' => 'student.se2@uems.test',
                 'roles' => ['student'],
             ],
-
             [
                 'first_name' => 'Eden',
                 'last_name' => 'Kifle',
                 'email' => 'student.cs1@uems.test',
                 'roles' => ['student'],
             ],
-
             [
                 'first_name' => 'Ruth',
                 'last_name' => 'Bekele',

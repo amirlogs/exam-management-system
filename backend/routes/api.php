@@ -18,8 +18,9 @@ use App\Http\Controllers\QuestionFlagController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SectionController;
 use App\Http\Controllers\SemesterController;
-use App\Http\Controllers\Student\StudentResultController;
+// use App\Http\Controllers\Student\StudentResultController;
 use App\Http\Controllers\StudentExamController;
+use App\Http\Controllers\TeachingController;
 use App\Http\Controllers\UniversityController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -83,6 +84,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/roles/{role}', [RoleController::class, 'destroy'])->middleware('permission:role.archive');
     Route::post('/roles/{role}/restore', [RoleController::class, 'restore'])->middleware('permission:role.restore');
 
+    Route::get('/permissions', [PermissionController::class, 'index'])->middleware('permission:permission.view');
+
     Route::post('/users', [UserController::class, 'store'])->middleware('permission:user.create');
     Route::get('/users', [UserController::class, 'index'])->middleware('permission:user.view');
     Route::patch('/users/{user}', [UserController::class, 'update'])->middleware('permission:user.update');
@@ -93,8 +96,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/me/allowed-routes', [UserController::class, 'allowedRoutes']);
     Route::post('/me/workspace', [UserController::class, 'setWorkspace']);
-    // =====================PERMISSIONS=====================
-    Route::get('/permissions', [PermissionController::class, 'index'])->middleware('permission:permission.view');
+
 
     // =================== CURRICULUM ===================
     Route::post('/curriculums', [CurriculumController::class, 'store'])->middleware('permission:curriculum.create');
@@ -150,7 +152,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/course-offerings/{courseOffering}/restore', [CourseOfferingController::class, 'restore'])->middleware('permission:course_offering.restore');
 
     // ============================ ENROLLMENTS ============================
-
     Route::post('/enrollments', [EnrollmentController::class, 'store'])->middleware('permission:enrollment.create');
     Route::get('/enrollments', [EnrollmentController::class, 'index'])->middleware('permission:enrollment.view');
     Route::patch('/enrollments/{enrollment}', [EnrollmentController::class, 'update'])->middleware('permission:enrollment.update');
@@ -165,10 +166,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/questions/{question}/restore', [QuestionController::class, 'restore'])->middleware('permission:question.restore');
     Route::get('/instructors', [InstructorController::class, 'index']); // ->middleware('permission:instructor.view');
 
-    // ======================== QUESTION FLAGS ========================
-    Route::post('/questions/{question}/flags', [QuestionFlagController::class, 'store'])->middleware('permission:question.flag');
-    Route::get('/questions/{question}/flags', [QuestionFlagController::class, 'index'])->middleware('permission:question.view');
-    Route::patch('/question-flags/{flag}/resolve', [QuestionFlagController::class, 'resolve'])->middleware('permission:question.update');
+
+    //========================== Teachers ========================
+    Route::get('/me/teaching', [TeachingController::class,'index']);//->middleware('permission:teaching.view');
+    Route::get('/me/teaching/{courseOffering}', [TeachingController::class, 'show']);//->middleware('permission:course_offering.view');
+
 
     // ======================== EXAMS(admin/instructor side) ========================
     Route::get('/course-offerings/{courseOffering}/exams', [ExamController::class, 'index'])->middleware('permission:exam.view');
@@ -198,6 +200,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/course-offerings/{courseOffering}/grades/submit-verification', [GradingController::class, 'submitVerification'])->middleware('permission:grade.submit');
     Route::post('/grades/{grade}/verify', [GradingController::class, 'verify'])->middleware('permission:grade.verify');
     Route::post('/grades/publish', [GradingController::class, 'publish'])->middleware('permission:grade.publish');
+
+
+
+    // ======================== QUESTION FLAGS ========================
+    Route::post('/questions/{question}/flags', [QuestionFlagController::class, 'store'])->middleware('permission:question.flag');
+    Route::get('/questions/{question}/flags', [QuestionFlagController::class, 'index'])->middleware('permission:question.view');
+    Route::patch('/question-flags/{flag}/resolve', [QuestionFlagController::class, 'resolve'])->middleware('permission:question.update');
+
 
     // ====================== RESULTS =============================
     // Route::post('/results/generate', [ResultController::class, 'generate'])->middleware('permission:result.generate');

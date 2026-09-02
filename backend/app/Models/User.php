@@ -11,7 +11,9 @@ use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens;
+    use HasFactory;
+    use Notifiable;
 
     protected $fillable = ['first_name', 'last_name', 'email', 'is_active', 'password', 'is_first_login', 'default_workspace'];
 
@@ -107,5 +109,5 @@ class User extends Authenticatable
     {
         return $this->hasOne(Instructor::class);
     }
-    
+
 }

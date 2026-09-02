@@ -334,11 +334,11 @@ class ExamController extends Controller
         if ($exam->status !== 'draft') {
             return $this->error(null, 'Exam is not in draft state', 422);
         }
-    
+
         $validated = $request->validated();
         $errors = [];
         $created = [];
-    
+
         DB::transaction(function () use ($exam, $validated, &$errors, &$created) {
             foreach ($validated['questions'] as $index => $item) {
                 // Reject if already attached (mirrors the single-add unique constraint)
@@ -346,10 +346,10 @@ class ExamController extends Controller
                     $errors[$index] = ['The selected question is already added to the exam'];
                     continue;
                 }
-    
+
                 $question = Question::find($item['question_id']);
                 $typeConfig = $exam->composition[$question->type] ?? null;
-    
+
                 if (in_array($question->type, ['mcq', 'true_false'])) {
                     if (! $typeConfig || empty($typeConfig['marks_each'])) {
                         $errors[$index] = ["No marks_each configured for type {$question->type} in this exam's composition."];
@@ -363,13 +363,13 @@ class ExamController extends Controller
                     }
                     $marks = $item['marks'];
                 }
-    
+
                 $created[] = $exam->examQuestions()->create([
                     'question_id' => $item['question_id'],
                     'marks' => $marks,
                 ])->load('question');
             }
-    
+
             if (count($created)) {
                 $questions = $exam->examQuestions()->with('question')->get();
                 $exam->update([
@@ -378,15 +378,14 @@ class ExamController extends Controller
                 ]);
             }
         });
-    
+
         if (! empty($errors) && empty($created)) {
             return $this->error($errors, 'None of the questions could be added', 422);
         }
-    
+
         return $this->success([
             'created' => ExamQuestionResource::collection(collect($created)),
             'errors' => $errors,
         ], count($errors) ? 'Some questions could not be added' : 'Questions added successfully', 201);
     }
-    
 }

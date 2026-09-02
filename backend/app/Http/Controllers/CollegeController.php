@@ -37,7 +37,6 @@ class CollegeController extends Controller
         $colleges = $query->paginate($per_page);
 
         return $this->paginate($colleges, CollegeResource::class, 'Colleges retrieved successfully');
-
     }
 
     public function archived(Request $request)
@@ -48,7 +47,6 @@ class CollegeController extends Controller
         $colleges = $query->onlyTrashed()->paginate($per_page);
 
         return $this->paginate($colleges, CollegeResource::class, 'Archived colleges retrieved successfully');
-
     }
 
     public function update(UpdateCollegeRequest $request, College $college)
@@ -78,6 +76,5 @@ class CollegeController extends Controller
         $college->restore();
 
         return $this->success(new CollegeResource($college), 'College restored successfully');
-
     }
 }

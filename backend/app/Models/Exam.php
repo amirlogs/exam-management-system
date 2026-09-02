@@ -8,13 +8,14 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Exam extends Model
 {
     use SoftDeletes;
+
     protected $fillable = [
         'course_offering_id', 'title', 'type', 'duration_minutes',
         'composition', 'status', 'review_cycle', 'current_review_id',
         'created_by', 'submitted_at', 'scheduled_start', 'scheduled_end',
-        'total_marks', 'total_questions'
+        'total_marks', 'total_questions',
     ];
-    
+
     protected $casts = [
         'composition' => 'array',
         'submitted_at' => 'datetime',

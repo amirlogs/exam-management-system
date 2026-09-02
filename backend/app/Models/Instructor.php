@@ -32,6 +32,8 @@ class Instructor extends Model
         return $this->belongsToMany(CourseOffering::class, 'course_instructors', 'instructor_id', 'course_offering_id')->withPivot(['section_id', 'type', 'assigned_at']);
     }
 
+
+
     public function assignments()
     {
         return $this->hasMany(CourseInstructor::class);

@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class CourseOffering extends Model
@@ -11,9 +13,14 @@ class CourseOffering extends Model
 
     protected $fillable = ['course_id', 'semester_id', 'created_by', 'status', 'rejection_reason'];
 
-    public function course()
+    public function course(): BelongsTo
     {
         return $this->belongsTo(Course::class);
+    }
+
+    public function enrollments(): HasMany
+    {
+        return $this->hasMany(Enrollment::class);
     }
 
     public function semester()
@@ -54,5 +61,10 @@ class CourseOffering extends Model
     public function cancel(): void
     {
         $this->update(['status' => 'cancelled']);
+    }
+
+    public function exams(): HasMany
+    {
+        return $this->hasMany(Exam::class);
     }
 }

@@ -41,7 +41,6 @@ class UniversityController extends Controller
         $university->update($data);
 
         return $this->success($university, 'University updated successfully');
-
     }
 
     public function destroy(University $university)

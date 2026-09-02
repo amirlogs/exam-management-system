@@ -10,9 +10,7 @@ class CourseInstructor extends Model
 
     protected $fillable = ['course_offering_id', 'instructor_id', 'section_id', 'type', 'assigned_at'];
 
-    protected $casts = [
-        'assigned_at' => 'datetime',
-    ];
+    protected $casts = [ 'assigned_at' => 'datetime', ];
 
     public function courseOffering()
     {
