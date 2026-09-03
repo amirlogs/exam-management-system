@@ -157,20 +157,19 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/enrollments/{enrollment}', [EnrollmentController::class, 'update'])->middleware('permission:enrollment.update');
 
     // ========================== QUESTION BANK ===================
-    Route::post('/courses/{courseId}/questions', [QuestionController::class, 'store'])->middleware('permission:question.create');
+    Route::post('/courses/{course}/questions', [QuestionController::class, 'store'])->middleware('permission:question.create');
     Route::get('/questions', [QuestionController::class, 'index'])->middleware('permission:question.view');
     Route::get('/questions/archived', [QuestionController::class, 'archived'])->middleware('permission:question.view');
+    Route::get('/questions/archived/{question}', [QuestionController::class, 'showArchived'])->middleware('permission:question.view');
     Route::get('/questions/{question}', [QuestionController::class, 'show'])->middleware('permission:question.view');
     Route::patch('/questions/{question}', [QuestionController::class, 'update'])->middleware('permission:question.update');
     Route::delete('/questions/{question}', [QuestionController::class, 'destroy'])->middleware('permission:question.archive');
     Route::post('/questions/{question}/restore', [QuestionController::class, 'restore'])->middleware('permission:question.restore');
-    Route::get('/instructors', [InstructorController::class, 'index']); // ->middleware('permission:instructor.view');
-
 
     //========================== Teachers ========================
-    Route::get('/me/teaching', [TeachingController::class,'index']);//->middleware('permission:teaching.view');
-    Route::get('/me/teaching/{courseOffering}', [TeachingController::class, 'show']);//->middleware('permission:course_offering.view');
-
+    Route::get('/instructors', [InstructorController::class, 'index']); // ->middleware('permission:instructor.view');
+    Route::get('/me/teaching', [TeachingController::class, 'index']) ->middleware('permission:course_offering.view');
+    Route::get('/me/teaching/{courseOffering}', [TeachingController::class, 'show']) ->middleware('permission:course_offering.view');
 
     // ======================== EXAMS(admin/instructor side) ========================
     Route::get('/course-offerings/{courseOffering}/exams', [ExamController::class, 'index'])->middleware('permission:exam.view');

@@ -11,7 +11,6 @@ class CheckPermission
     public function handle(Request $request, Closure $next, string $permission): Response
     {
         $user = $request->user();
-
         if (! $user) {
             abort(401, 'Unauthenticated.');
         }
@@ -20,6 +19,7 @@ class CheckPermission
             abort(403, "Missing permission: {$permission}");
         }
 
+        logger('pass  the first check');
         return $next($request);
     }
 }

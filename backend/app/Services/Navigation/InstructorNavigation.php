@@ -13,25 +13,54 @@ class InstructorNavigation
                 'icon' => 'LayoutGrid',
                 'permissions' => [],
             ],
+
             [
-                'label' => 'My Courses',
-                'to' => '/instructor/courses',
+                'label' => 'My Teaching',
+                'to' => '/instructor/teaching',
                 'icon' => 'BookOpen',
-                'permissions' => ['course_offering.view'],
+                'permissions' => [
+                    'course_offering.view',
+                ],
                 'permission_mode' => 'any',
             ],
+
+            [
+                'label' => 'Question Bank',
+                'to' => '/instructor/questions',
+                'icon' => 'LibraryBig',
+                'permissions' => [
+                    'question.view',
+                ],
+                'permission_mode' => 'any',
+            ],
+
             [
                 'label' => 'Exams',
-                'to' => '/instructor/course-offerings',
-                'icon' => 'FileText',
-                'permissions' => ['exam.create', 'exam.update', 'exam.view'],
+                'to' => '/instructor/exams',
+                'icon' => 'FileQuestion',
+                'permissions' => [
+                    'exam.view',
+                ],
                 'permission_mode' => 'any',
             ],
+
             [
                 'label' => 'Grading',
                 'to' => '/instructor/grading',
                 'icon' => 'ClipboardCheck',
-                'permissions' => ['grade.create'],
+                'permissions' => [
+                    'grade.create',
+                ],
+                'permission_mode' => 'any',
+            ],
+
+            [
+                'label' => 'Results',
+                'to' => '/instructor/results',
+                'icon' => 'BarChart3',
+                'permissions' => [
+                    'result.view',
+                ],
                 'permission_mode' => 'any',
             ],
         ];

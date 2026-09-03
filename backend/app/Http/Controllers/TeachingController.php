@@ -7,6 +7,7 @@ use App\Http\Filters\RequestFilters;
 use App\Http\Resources\TeachingDetailResource;
 use App\Http\Resources\TeachingResource;
 use App\Models\CourseOffering;
+use App\Models\Student;
 use App\Validation\GetRequestsValidator;
 use Illuminate\Http\Request;
 
@@ -39,7 +40,6 @@ class TeachingController extends Controller
         $teaching = $query ->latest() ->paginate($perPage);
         return $this->paginate($teaching, TeachingResource::class, 'Teaching assignments fetched successfully');
     }
-
     public function show(Request $request, CourseOffering $courseOffering)
     {
         $instructor = $request->user()->instructor;
@@ -56,7 +56,11 @@ class TeachingController extends Controller
 
         $courseOffering->load([ 'course', 'semester', 'courseInstructors' => function ($query) use ($instructor) {
             $query ->where('instructor_id', $instructor->id) ->with('section.program');
-        }, 'enrollments.student.user', 'enrollments.student.section', 'exams.courseOffering', ]);
+        }, 'exams.courseOffering', ]);
+
+        $sectionIds = $courseOffering ->courseInstructors ->pluck('section_id') ->filter() ->unique();
+        $students = Student::with([ 'user', 'section', ]) ->whereIn('section_id', $sectionIds) ->get();
+        $courseOffering->setRelation('students', $students);
 
         return $this->success(new TeachingDetailResource($courseOffering), 'Teaching assignment fetched successfully');
     }

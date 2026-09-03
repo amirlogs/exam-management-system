@@ -32,8 +32,9 @@ class StudentCommitter
             'is_first_login' => true,
             'is_active' => true,
         ]);
+
         $studentRole = Role::where('name', 'student')->firstOrFail();
-        
+
         UserRole::create([
             'user_id' => $user->id,
             'role_id' => $studentRole->id,

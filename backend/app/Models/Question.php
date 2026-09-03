@@ -43,4 +43,21 @@ class Question extends Model
     {
         return $this->hasMany(ExamQuestion::class);
     }
+    public function scopeForUser($query, User $user)
+    {
+        if ($user->hasPermission('question.view_all')) {
+            return $query;
+        }
+
+        $instructor = $user->instructor;
+
+        if (! $instructor) {
+            return $query->whereRaw('1 = 0');
+        }
+
+        return $query->whereHas(
+            'course.courseOfferings.courseInstructors',
+            fn($query) => $query->where('instructor_id', $instructor->id)
+        );
+    }
 }

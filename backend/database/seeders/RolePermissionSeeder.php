@@ -162,10 +162,14 @@ class RolePermissionSeeder extends Seeder
             ['import.view', 'import'],
 
             // Question
-            ['question.create', 'question'],
             ['question.view', 'question'],
+            ['question.view_all', 'question'],
+            ['question.create', 'question'],
+            ['question.create_all', 'question'],
             ['question.update', 'question'],
+            ['question.update_all', 'question'],
             ['question.archive', 'question'],
+            ['question.archive_all', 'question'],
             ['question.restore', 'question'],
             ['question.import', 'question'],
             ['question.export', 'question'],
@@ -245,12 +249,14 @@ class RolePermissionSeeder extends Seeder
 
         $instructorShared = [
             'course_offering.view',
+
             'question.create',
             'question.view',
             'question.update',
             'question.archive',
             'question.restore',
             'question.flag',
+
             'exam.view',
             'grade.autograde',
             'grade.create',

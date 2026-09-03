@@ -25,6 +25,6 @@ class ImportCommitterFactory
             throw new InvalidArgumentException("Invalid import type: {$type}");
         }
 
-        return new self::$map[$type];
+        return new (self::$map[$type]);
     }
 }
