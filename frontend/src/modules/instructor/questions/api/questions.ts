@@ -1,33 +1,48 @@
-import apiClient from '@/api/axios';
-import type { Question } from '../../exams/types/exam';
+import api from '@/api/axios';
 
-function unwrap<T>(res: { data: any }): T {
-  if (res.data?.success === false) throw new Error(res.data?.message || 'Request failed');
-  return res.data?.data ?? res.data;
-}
-function unwrapPaginated<T>(res: { data: any }) {
-  if (res.data?.success === false) throw new Error(res.data?.message || 'Request failed');
-  return { data: res.data.data as T[], pagination: res.data.pagination };
+import type { Question, QuestionFilters, QuestionListResponse, QuestionPayload } from '../types/question';
+
+export async function listQuestions(page = 1, perPage = 12, archived = false, filters: QuestionFilters = {}): Promise<QuestionListResponse> {
+  const endpoint = archived ? '/questions/archived' : '/questions';
+
+  const res = await api.get(endpoint, {
+    params: {
+      page,
+      per_page: perPage,
+      ...filters,
+    },
+  });
+
+  return {
+    data: res.data.data,
+    pagination: res.data.pagination,
+  };
 }
 
-export function getQuestions(filters: Record<string, any> = {}, page = 1) {
-  return apiClient.get('/questions', { params: { page, ...filters } }).then(unwrapPaginated<Question>);
+export async function getQuestion(id: number): Promise<Question> {
+  const res = await api.get(`/questions/${id}`);
+
+  return res.data.data;
 }
-export function getArchivedQuestions(filters: Record<string, any> = {}, page = 1) {
-  return apiClient.get('/questions/archived', { params: { page, ...filters } }).then(unwrapPaginated<Question>);
+
+export async function createQuestion(courseId: number, payload: QuestionPayload): Promise<Question> {
+  const res = await api.post(`/courses/${courseId}/questions`, payload);
+
+  return res.data.data;
 }
-export function getQuestion(id: number) {
-  return apiClient.get(`/questions/${id}`).then(unwrap<Question>);
+
+export async function updateQuestion(id: number, payload: Partial<QuestionPayload>): Promise<Question> {
+  const res = await api.patch(`/questions/${id}`, payload);
+
+  return res.data.data;
 }
-export function createQuestion(courseId: number, payload: any) {
-  return apiClient.post(`/courses/${courseId}/questions`, payload).then(unwrap<Question>);
+
+export async function archiveQuestion(id: number): Promise<void> {
+  await api.delete(`/questions/${id}`);
 }
-export function updateQuestion(id: number, payload: any) {
-  return apiClient.patch(`/questions/${id}`, payload).then(unwrap<Question>);
-}
-export function archiveQuestion(id: number) {
-  return apiClient.delete(`/questions/${id}`).then(unwrap<null>);
-}
-export function restoreQuestion(id: number) {
-  return apiClient.post(`/questions/${id}/restore`).then(unwrap<Question>);
+
+export async function restoreQuestion(id: number): Promise<Question> {
+  const res = await api.post(`/questions/${id}/restore`);
+
+  return res.data.data;
 }
