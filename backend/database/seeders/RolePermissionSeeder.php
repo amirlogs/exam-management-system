@@ -116,6 +116,7 @@ class RolePermissionSeeder extends Seeder
 
             // Student
             ['student.import', 'student'],
+            ['student.view', 'student'],
 
             // Course Offering
             ['course_offering.create', 'course_offering'],
@@ -239,6 +240,7 @@ class RolePermissionSeeder extends Seeder
             'semester.view',
             'section.view',
             'instructor.view',
+            'student.view',
             'course_offering.view',
             'enrollment.view',
             'user.view',
@@ -334,6 +336,7 @@ class RolePermissionSeeder extends Seeder
                     'instructor.import',
 
                     'student.import',
+                    'student.view',
 
                     'course_offering.create',
                     'course_offering.update',
@@ -400,6 +403,7 @@ class RolePermissionSeeder extends Seeder
                     'instructor.import',
 
                     'student.import',
+                    'student.view',
 
                     'section.import',
 
@@ -426,6 +430,7 @@ class RolePermissionSeeder extends Seeder
                     'semester.view',
                     'section.view',
                     'instructor.view',
+                    'student.view',
                     'course_offering.view',
                     'enrollment.view',
                 ],
@@ -453,6 +458,7 @@ class RolePermissionSeeder extends Seeder
                     'instructor.import',
 
                     'student.import',
+                    'student.view',
 
                     'course_offering.create',
                     'course_offering.update',
@@ -487,6 +493,8 @@ class RolePermissionSeeder extends Seeder
                 'exam.cancel',
                 'exam.archive',
                 'result.view',
+
+                'student.view',
             ],
 
             /*
@@ -501,6 +509,8 @@ class RolePermissionSeeder extends Seeder
                     'exam.submit',
                     'exam.revert',
                     'exam.archive',
+
+                    'student.view',
                 ]
             ),
 
@@ -511,6 +521,7 @@ class RolePermissionSeeder extends Seeder
                 $instructorShared,
                 [
                     'question.import',
+                    'student.view',
                 ]
             ),
 

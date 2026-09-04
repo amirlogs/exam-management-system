@@ -49,7 +49,6 @@ class StudentExamController extends Controller
         }
 
         return $this->success(new ExamResource($exam), 'Exam started successfully');
-
     }
 
     public function questions(Exam $exam, Request $request)

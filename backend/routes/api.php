@@ -18,6 +18,7 @@ use App\Http\Controllers\QuestionFlagController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SectionController;
 use App\Http\Controllers\SemesterController;
+use App\Http\Controllers\StudentController;
 // use App\Http\Controllers\Student\StudentResultController;
 use App\Http\Controllers\StudentExamController;
 use App\Http\Controllers\TeachingController;
@@ -170,6 +171,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/instructors', [InstructorController::class, 'index']); // ->middleware('permission:instructor.view');
     Route::get('/me/teaching', [TeachingController::class, 'index']) ->middleware('permission:course_offering.view');
     Route::get('/me/teaching/{courseOffering}', [TeachingController::class, 'show']) ->middleware('permission:course_offering.view');
+
+    //========================== Students ========================
+    Route::get('/students', [StudentController::class, 'index'])->middleware('permission:student.view');
 
     // ======================== EXAMS(admin/instructor side) ========================
     Route::get('/course-offerings/{courseOffering}/exams', [ExamController::class, 'index'])->middleware('permission:exam.view');

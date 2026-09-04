@@ -3,18 +3,18 @@
 namespace App\Http\Controllers;
 
 use App\Http\Filters\RequestFilters;
-use App\Http\Resources\InstructorResource;
-use App\Models\Instructor;
+use App\Http\Resources\StudentResource;
+use App\Models\Student;
 use App\Validation\GetRequestsValidator;
 use Illuminate\Http\Request;
 
-class InstructorController extends Controller
+class StudentController extends Controller
 {
     public function index(Request $request)
     {
         $perPage = GetRequestsValidator::validate($request);
-        $query = Instructor::query();
-        RequestFilters::apply($query, $request, ['department_id', 'status']);
+        $query = Student::query();
+        RequestFilters::apply($query, $request, ['section_id', 'status', 'program_id']);
 
         if ($request->filled('search')) {
             $search = $request->input('search');
@@ -25,8 +25,8 @@ class InstructorController extends Controller
                       ->orWhere('email', 'ILIKE', "%{$search}%");
             });
         }
-        $instructors = $query->with(['user', 'department'])->paginate($perPage);
+        $students = $query->with(['user', 'section'])->paginate($perPage);
 
-        return $this->paginate($instructors, InstructorResource::class, 'Instructors fetched successfully');
+        return $this->paginate($students, StudentResource::class, 'Students fetched successfully');
     }
 }

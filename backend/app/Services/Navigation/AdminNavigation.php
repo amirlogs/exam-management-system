@@ -109,6 +109,15 @@ class AdminNavigation
                 'permission_mode' => 'any',
             ],
             [
+                'label' => 'Question Bank',
+                'to' =>  '/admin/questions',
+                'icon' => 'LibraryBig',
+                'permissions' => [
+                    'question.view_all',
+                ],
+                'permission_mode' => 'any',
+            ],
+            [
                 'label' => 'Course Offerings',
                 'to' => '/admin/course-offerings',
                 'icon' => 'ClipboardList',
@@ -117,17 +126,27 @@ class AdminNavigation
                 ],
                 'permission_mode' => 'any',
             ],
-
             [
                 'label' => 'Users',
                 'to' => '/admin/users',
                 'icon' => 'Users2',
-                'permissions' => [
-                    'user.view',
-                ],
+                'permissions' => ['user.view'],
                 'permission_mode' => 'any',
             ],
-
+            [
+                'label' => 'Instructors',
+                'to' => '/admin/instructors',
+                'icon' => 'UserCog',
+                'permissions' => ['instructor.view'],
+                'permission_mode' => 'any',
+            ],
+            [
+                'label' => 'Students',
+                'to' => '/admin/students',
+                'icon' => 'GraduationCap',
+                'permissions' => ['student.view'],
+                'permission_mode' => 'any',
+            ],
             [
                 'label' => 'Roles & Permissions',
                 'to' => '/admin/roles',

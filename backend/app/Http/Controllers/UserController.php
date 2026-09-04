@@ -86,7 +86,6 @@ class UserController extends Controller
         $user->update($validated);
 
         return $this->success(new UserResource($user->refresh()), 'User updated successfully');
-
     }
 
     public function disable(User $user)
@@ -95,13 +94,13 @@ class UserController extends Controller
 
         return $this->success(new UserResource($user->refresh()), 'User disabled successfully');
     }
+
     public function activate(User $user)
     {
         $user->update(['is_active' => true]);
 
         return $this->success(new UserResource($user->refresh()), 'User activated successfully');
     }
-
 
     public function allowedRoutes(SetWorkspaceRequest $request, NavigationService $navigationService)
     {
@@ -121,7 +120,7 @@ class UserController extends Controller
         if (! $request->user()->hasWorkspace($request->workspace)) {
             return $this->error(null, 'You are not allowed to access this workspace', 403);
         }
-        
+
         $request->user()->update(['default_workspace' => $validated['workspace']]);
 
         return $this->success(new UserResource($request->user()->refresh()), 'Workspace set successfully');
