@@ -1,12 +1,49 @@
-export type ExamType = 'MIDTERM' | 'FINAL';
-export type ExamStatus = 'draft' | 'pending_approval' | 'approved' | 'rejected' | 'scheduled' | 'active' | 'completed' | 'cancelled';
-export type QuestionType = 'mcq' | 'true_false' | 'short_answer' | 'essay';
-export type Difficulty = 'easy' | 'medium' | 'hard';
+export type ExamType = 'MIDTERM' | 'FINAL' | string;
 
-export interface CompositionEntry {
+export type ExamStatus = 'draft' | 'pending_approval' | 'approved' | 'rejected' | 'scheduled' | 'active' | 'completed' | 'archived' | 'cancelled';
+
+export type GradingStatus = 'not_started' | 'in_progress' | 'submitted' | 'verified' | 'published' | string;
+
+export type QuestionType = 'mcq' | 'true_false' | 'short_answer' | 'essay';
+
+export interface ExamCompositionItem {
   marks_each?: number;
 }
-export type Composition = Partial<Record<'mcq' | 'true_false', CompositionEntry>>;
+
+export type ExamComposition = Record<string, ExamCompositionItem>;
+
+export interface ExamCreator {
+  id: number;
+  name: string;
+  email: string;
+}
+
+export interface ExamQuestionOption {
+  id: number;
+  option_text: string;
+  is_correct: boolean;
+}
+
+export interface ExamQuestion {
+  id: number;
+  exam_id: number;
+  marks: number;
+  created_at: string | null;
+  updated_at: string | null;
+
+  question: {
+    id: number;
+    course_id: number;
+    type: QuestionType;
+    chapter: string | null;
+    content: string;
+    difficulty: string | null;
+    status: string;
+    created_at: string | null;
+    updated_at: string | null;
+    options?: ExamQuestionOption[];
+  };
+}
 
 export interface Exam {
   id: number;
@@ -14,58 +51,75 @@ export interface Exam {
   course_offering_id: number;
   type: ExamType;
   duration_minutes: number;
-  composition: Composition;
+  composition: ExamComposition;
+
   status: ExamStatus;
+
   scheduled_start: string | null;
   scheduled_end: string | null;
-  review_cycle: number;
-  current_review_id: number | null;
-  grading_status: string;
+
   total_marks: number;
   total_questions: number;
-  creator: { id: number; name: string; email: string };
-  created_at: string;
-  updated_at: string;
+
+  review_cycle?: number;
+  current_review_id?: number | null;
+
+  creator?: ExamCreator;
+
+  created_by?: number;
+  activated_at?: string | null;
+  ended_at?: string | null;
+  grading_status?: GradingStatus;
+
+  created_at: string | null;
+  updated_at: string | null;
 }
 
-export interface QuestionOption {
-  id: number;
-  option_text: string;
-  is_correct: boolean;
+export interface Pagination {
+  current_page: number;
+  last_page: number;
+  per_page: number;
+  total: number;
+  from: number | null;
+  to: number | null;
 }
 
-export interface Question {
-  id: number;
-  course_id: number;
-  type: QuestionType;
-  chapter: string | null;
-  content: string;
-  difficulty: Difficulty;
-  status: 'active' | 'archived';
-  options: QuestionOption[];
-  created_at: string;
-  updated_at?: string;
-  exam_id?: number;
+export interface PaginatedResponse<T> {
+  success: boolean;
+  message: string;
+  data: T[];
+  pagination: Pagination;
+  errors: unknown;
+}
+
+export interface ApiResponse<T> {
+  success: boolean;
+  message: string;
+  data: T;
+  errors: unknown;
+}
+
+export interface CreateExamPayload {
+  title: string;
+  type: ExamType;
+  duration_minutes: number;
+  composition: ExamComposition;
+}
+
+export interface AddExamQuestionPayload {
+  question_id: number;
   marks?: number;
 }
 
-export interface ImportRow {
-  data: Record<string, any>;
-  status: 'valid' | 'invalid';
-  errors: string[];
+export interface BulkExamQuestionPayload {
+  questions: AddExamQuestionPayload[];
 }
 
-export interface ImportHistory {
-  id: number;
-  uploaded_by: number;
-  type: string;
-  file_path: string;
-  context: { course_id?: number; exam_id?: number; uploaded_by?: number };
-  total_rows: number;
-  valid_count: number;
-  error_count: number;
-  validated_data: Record<string, ImportRow> | null;
-  status: 'pending' | 'ready_for_review' | 'confirmed' | 'failed';
-  created_at: string;
-  updated_at: string;
+export interface ScheduleExamPayload {
+  scheduled_start: string;
+}
+
+export interface UpdateSchedulePayload {
+  scheduled_start?: string;
+  duration_minutes?: number;
 }

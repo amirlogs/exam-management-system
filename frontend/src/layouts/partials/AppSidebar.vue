@@ -14,12 +14,15 @@ import {
   Users2,
   Upload,
   ClipboardList,
+  UserCog,
   ShieldCheck,
   BarChart3,
   HelpCircle,
   FileText,
   ClipboardCheck,
   Flag,
+  LibraryBig,
+  FileQuestion,
 } from 'lucide-vue-next';
 
 import type { Component } from 'vue';
@@ -29,6 +32,7 @@ import {} from 'lucide-vue-next';
 const icons = {
   LayoutGrid,
   Landmark,
+  UserCog,
   Building2,
   GraduationCap,
   BookOpen,
@@ -43,6 +47,8 @@ const icons = {
   FileText,
   ClipboardCheck,
   Flag,
+  LibraryBig,
+  FileQuestion,
 };
 
 defineProps<{

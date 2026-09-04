@@ -8,10 +8,13 @@ import DepartmentsView from '@/modules/admin/departments/pages/DepartmentsView.v
 import ImportDetailView from '@/modules/admin/imports/pages/ImportDetailView.vue';
 import ImportsListView from '@/modules/admin/imports/pages/ImportsListView.vue';
 import NewImportView from '@/modules/admin/imports/pages/NewImportView.vue';
+import InstructorsView from '@/modules/admin/instructors/pages/InstructorsView.vue';
 import DashboardView from '@/modules/admin/pages/DashboardView.vue';
 import ProgramsView from '@/modules/admin/programs/pages/ProgramsView.vue';
+import QuestionBankView from '@/modules/admin/questions/pages/QuestionBankView.vue';
 import SectionsView from '@/modules/admin/sections/pages/SectionsView.vue';
 import SemestersView from '@/modules/admin/semesters/pages/SemestersView.vue';
+import StudentsView from '@/modules/admin/students/pages/StudentsView.vue';
 import UniversitiesView from '@/modules/admin/universities/pages/UniversitiesView.vue';
 
 export default [
@@ -125,9 +128,45 @@ export default [
     },
   },
 
-  // // ---------------- Users & Roles ----------------
-  { path: 'users', name: 'admin-users', component: UsersView },
-  { path: 'roles', name: 'admin-roles', component: RolesView },
+  // // ---------------- Users  ----------------
+  {
+    path: 'users',
+    name: 'admin-users',
+    component: UsersView,
+  },
+  {
+    path: 'instructors',
+    name: 'admin-instructors',
+    component: InstructorsView,
+    meta: {
+      permissions: ['instructor.view'],
+    },
+  },
+  {
+    path: 'students',
+    name: 'admin-students',
+    component: StudentsView,
+    meta: {
+      permissions: ['student.view'],
+    },
+  },
+  {
+    path: 'questions',
+    name: 'admin-questions',
+    component: QuestionBankView,
+    meta: {
+      permissions: ['question.view_all'],
+    },
+  },
+  // // ---------------- Roles  ----------------
+  {
+    path: 'roles',
+    name: 'admin-roles',
+    component: RolesView,
+    meta: {
+      permissions: ['role.view'],
+    },
+  },
 
   // // ---------------- Results ----------------
   // {
