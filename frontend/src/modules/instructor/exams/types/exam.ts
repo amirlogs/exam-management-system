@@ -1,10 +1,25 @@
 export type ExamType = 'MIDTERM' | 'FINAL' | string;
 
-export type ExamStatus = 'draft' | 'pending_approval' | 'approved' | 'rejected' | 'scheduled' | 'active' | 'completed' | 'archived' | 'cancelled';
+export type ExamStatus =
+  | 'draft'
+  | 'pending_approval'
+  | 'approved'
+  | 'rejected'
+  | 'scheduled'
+  | 'active'
+  | 'completed'
+  | 'archived'
+  | 'cancelled';
 
-export type GradingStatus = 'not_started' | 'in_progress' | 'submitted' | 'verified' | 'published' | string;
+export type GradingStatus =
+  | 'not_started'
+  | 'in_progress'
+  | 'submitted'
+  | 'verified'
+  | 'published'
+  | string;
 
-export type QuestionType = 'mcq' | 'true_false' | 'short_answer' | 'essay';
+export type QuestionType = 'mcq' | 'true_false' | 'short_answer' | 'essay' | 'MCQ' | 'TRUE_FALSE' | 'SHORT_ANSWER' | 'ESSAY';
 
 export interface ExamCompositionItem {
   marks_each?: number;
@@ -14,34 +29,48 @@ export type ExamComposition = Record<string, ExamCompositionItem>;
 
 export interface ExamCreator {
   id: number;
-  name: string;
+  name: string | null;
   email: string;
 }
 
-export interface ExamQuestionOption {
+export interface QuestionOption {
   id: number;
   option_text: string;
   is_correct: boolean;
 }
 
-export interface ExamQuestion {
+export interface ExamQuestionItem {
   id: number;
-  exam_id: number;
-  marks: number;
-  created_at: string | null;
-  updated_at: string | null;
-
-  question: {
+  course_id?: number;
+  exam_id?: number;
+  exam_question_id?: number;
+  type: QuestionType;
+  chapter?: string | null;
+  content: string;
+  difficulty?: string | null;
+  status: string;
+  marks?: number | string;
+  options?: QuestionOption[];
+  created_at?: string | null;
+  updated_at?: string | null;
+  pivot?: {
+    id: number;
+    exam_id: number;
+    question_id: number;
+    order_number?: number;
+    marks: number;
+  };
+  question?: {
     id: number;
     course_id: number;
     type: QuestionType;
-    chapter: string | null;
+    chapter?: string | null;
     content: string;
-    difficulty: string | null;
+    difficulty?: string | null;
     status: string;
-    created_at: string | null;
-    updated_at: string | null;
-    options?: ExamQuestionOption[];
+    options?: QuestionOption[];
+    created_at?: string | null;
+    updated_at?: string | null;
   };
 }
 
@@ -52,27 +81,20 @@ export interface Exam {
   type: ExamType;
   duration_minutes: number;
   composition: ExamComposition;
-
   status: ExamStatus;
-
-  scheduled_start: string | null;
-  scheduled_end: string | null;
-
-  total_marks: number;
-  total_questions: number;
-
+  scheduled_start?: string | null;
+  scheduled_end?: string | null;
+  total_marks?: number;
+  total_questions?: number;
   review_cycle?: number;
   current_review_id?: number | null;
-
   creator?: ExamCreator;
-
   created_by?: number;
   activated_at?: string | null;
   ended_at?: string | null;
   grading_status?: GradingStatus;
-
-  created_at: string | null;
-  updated_at: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
 }
 
 export interface Pagination {
@@ -116,10 +138,13 @@ export interface BulkExamQuestionPayload {
 }
 
 export interface ScheduleExamPayload {
-  scheduled_start: string;
+  scheduled_start?: string;
+  scheduled_start_time?: string;
 }
 
 export interface UpdateSchedulePayload {
   scheduled_start?: string;
+  scheduled_start_time?: string;
   duration_minutes?: number;
 }
+

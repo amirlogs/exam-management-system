@@ -131,13 +131,27 @@ export async function rejectExam(examId: number, reason: string) {
 }
 
 export async function scheduleExam(examId: number, payload: ScheduleExamPayload) {
-  const response = await api.post<ApiResponse<Exam>>(`/exams/${examId}/schedule`, payload);
+  const start = payload.scheduled_start || payload.scheduled_start_time;
+  const response = await api.post<ApiResponse<Exam>>(`/exams/${examId}/schedule`, {
+    scheduled_start: start,
+    scheduled_start_time: start,
+  });
 
   return response.data;
 }
 
 export async function updateExamSchedule(examId: number, payload: UpdateSchedulePayload) {
-  const response = await api.patch<ApiResponse<Exam>>(`/exams/${examId}/schedule`, payload);
+  const start = payload.scheduled_start || payload.scheduled_start_time;
+  const body: Record<string, any> = {};
+  if (start) {
+    body.scheduled_start = start;
+    body.scheduled_start_time = start;
+  }
+  if (payload.duration_minutes) {
+    body.duration_minutes = payload.duration_minutes;
+  }
+
+  const response = await api.patch<ApiResponse<Exam>>(`/exams/${examId}/schedule`, body);
 
   return response.data;
 }

@@ -97,11 +97,28 @@ function getExamStatusVariant(status: string): 'neutral' | 'info' | 'danger' | '
 }
 
 function goToQuestions() {
-  router.push(`/instructor/courses/${courseOfferingId.value}/questions`);
+  router.push({
+    name: 'instructor.questions.list',
+    query: teaching.value?.course?.id ? { course_id: String(teaching.value.course.id) } : undefined,
+  });
 }
 
 function goToExams() {
-  router.push(`/instructor/course-offerings/${courseOfferingId.value}/exams`);
+  router.push({
+    name: 'instructor.exams.list',
+    query: {
+      courseOfferingId: String(courseOfferingId.value),
+    },
+  });
+}
+
+function openExam(exam: TeachingExam) {
+  router.push({
+    name: 'instructor.exams.detail',
+    params: {
+      examId: exam.id,
+    },
+  });
 }
 
 function examLabel(exam: TeachingExam) {
@@ -392,7 +409,7 @@ onMounted(() => {
             :key="exam.id"
             type="button"
             class="rounded-xl border border-border bg-surface p-5 text-left shadow-sm transition-all hover:border-accent/40 hover:shadow-md"
-            @click="goToExams">
+            @click="openExam(exam)">
             <div class="flex items-start justify-between gap-4">
               <div class="flex min-w-0 items-start gap-3">
                 <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent/10">

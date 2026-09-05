@@ -1,30 +1,94 @@
 <script setup lang="ts">
-import { CalendarDays, ChevronRight, ClipboardCheck, Plus, RefreshCw, Search } from 'lucide-vue-next';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { Archive, CalendarDays, Eye, FileQuestion, Plus } from 'lucide-vue-next';
+import { useRoute, useRouter } from 'vue-router';
 
-import { computed, onMounted, ref } from 'vue';
-import { useRouter } from 'vue-router';
-
+import ResourceToolbar from '@/shared/components/ResourceToolbar.vue';
+import TableRowActions from '@/shared/components/TableRowActions.vue';
+import ConfirmModal from '@/shared/components/ConfirmModal.vue';
 import BaseButton from '@/shared/components/ui/BaseButton.vue';
 import BaseSelect from '@/shared/components/ui/BaseSelect.vue';
-
+import AppPagination from '@/shared/components/AppPagination.vue';
 import ExamStatusBadge from '../components/ExamStatusBadge.vue';
-import { listExams } from '../api/exams';
 
+import { archiveExam, listExams } from '../api/exams';
 import { getTeaching } from '@/modules/instructor/teaching/api/teaching';
+import { useUiStore } from '@/stores/ui';
+import { handleApiError } from '@/shared/utils/apiError';
 
 import type { Exam } from '../types/exam';
+import type { Pagination } from '@/shared/composables/useCrudResource';
+
+type ExamColumn = 'title' | 'course' | 'type' | 'questions' | 'marks' | 'duration' | 'status' | 'created_at';
 
 const router = useRouter();
+const route = useRoute();
+const uiStore = useUiStore();
 
 const loading = ref(false);
-const error = ref<string | null>(null);
+const refreshing = ref(false);
+const actionLoading = ref(false);
 
 const teachings = ref<any[]>([]);
 const exams = ref<Exam[]>([]);
 
-const selectedTeachingId = ref<number | null>(null);
+const selectedTeachingId = ref<string | number | null>(null);
 const search = ref('');
-const status = ref('');
+const filterStatus = ref('');
+const filterType = ref('');
+
+const showArchiveModal = ref(false);
+const selectedExamForArchive = ref<Exam | null>(null);
+
+const pagination = ref<Pagination>({
+  current_page: 1,
+  last_page: 1,
+  per_page: 15,
+  total: 0,
+  from: null,
+  to: null,
+});
+
+const columns = [
+  { key: 'title' as ExamColumn, label: 'Exam Title', required: true },
+  { key: 'course' as ExamColumn, label: 'Course', required: false },
+  { key: 'type' as ExamColumn, label: 'Type', required: false },
+  { key: 'questions' as ExamColumn, label: 'Questions', required: false },
+  { key: 'marks' as ExamColumn, label: 'Total Marks', required: false },
+  { key: 'duration' as ExamColumn, label: 'Duration', required: false },
+  { key: 'status' as ExamColumn, label: 'Status', required: false },
+  { key: 'created_at' as ExamColumn, label: 'Created', required: false },
+];
+
+const showColumns = ref(false);
+const visibleColumns = ref<ExamColumn[]>(['title', 'type', 'questions', 'marks', 'duration', 'status']);
+
+const isColumnVisible = (column: ExamColumn) => visibleColumns.value.includes(column);
+
+const toggleColumn = (column: ExamColumn) => {
+  const config = columns.find((item) => item.key === column);
+  if (config?.required) return;
+
+  if (isColumnVisible(column)) {
+    visibleColumns.value = visibleColumns.value.filter((item) => item !== column);
+  } else {
+    visibleColumns.value = [...visibleColumns.value, column];
+  }
+};
+
+const resetColumns = () => {
+  visibleColumns.value = ['title', 'type', 'questions', 'marks', 'duration', 'status'];
+};
+
+const visibleColumnCount = computed(() => visibleColumns.value.length);
+const totalTableColumns = computed(() => visibleColumnCount.value + 1);
+
+function handleDocumentClick(event: MouseEvent) {
+  const target = event.target as HTMLElement;
+  if (!target.closest('[data-columns-container]')) {
+    showColumns.value = false;
+  }
+}
 
 const statusOptions = [
   { value: '', label: 'All statuses' },
@@ -35,6 +99,13 @@ const statusOptions = [
   { value: 'scheduled', label: 'Scheduled' },
   { value: 'active', label: 'Active' },
   { value: 'completed', label: 'Completed' },
+  { value: 'cancelled', label: 'Cancelled' },
+];
+
+const typeOptions = [
+  { value: '', label: 'All types' },
+  { value: 'MIDTERM', label: 'Midterm' },
+  { value: 'FINAL', label: 'Final' },
 ];
 
 const teachingOptions = computed(() =>
@@ -42,19 +113,36 @@ const teachingOptions = computed(() =>
     .filter((item) => item?.id && item?.course)
     .map((item) => ({
       value: String(item.id),
-      label: `${item.course.code} — ${item.course.name}`,
+      label: `${item.course.code} — ${item.course.name} (${item.semester?.name || 'Current'})`,
     })),
 );
+
+const selectedTeaching = computed(() =>
+  teachings.value.find((teaching) => Number(teaching.id) === Number(selectedTeachingId.value)),
+);
+
+const hasActiveFilters = computed(() => Boolean(filterStatus.value || filterType.value));
+
+const filterCount = computed(() => {
+  let count = 0;
+  if (filterStatus.value) count++;
+  if (filterType.value) count++;
+  return count;
+});
 
 const filteredExams = computed(() => {
   const query = search.value.trim().toLowerCase();
 
   return exams.value.filter((exam) => {
-    if (query && !exam.title.toLowerCase().includes(query) && !exam.type.toLowerCase().includes(query)) {
+    if (query && !exam.title?.toLowerCase().includes(query) && !exam.type?.toLowerCase().includes(query)) {
       return false;
     }
 
-    if (status.value && exam.status !== status.value) {
+    if (filterType.value && exam.type !== filterType.value) {
+      return false;
+    }
+
+    if (filterStatus.value && exam.status !== filterStatus.value) {
       return false;
     }
 
@@ -62,51 +150,83 @@ const filteredExams = computed(() => {
   });
 });
 
-const selectedTeaching = computed(() => teachings.value.find((teaching) => teaching.id === selectedTeachingId.value));
-
 async function loadTeaching() {
-  const response = await getTeaching(1, 1000);
+  try {
+    const response = await getTeaching(1, 1000);
+    teachings.value = response.data ?? [];
 
-  teachings.value = response.data ?? [];
-
-  if (!selectedTeachingId.value && teachings.value.length) {
-    selectedTeachingId.value = teachings.value[0].id;
+    const queryId = route.query.courseOfferingId ? Number(route.query.courseOfferingId) : null;
+    if (queryId && teachings.value.some((t) => Number(t.id) === queryId)) {
+      selectedTeachingId.value = String(queryId);
+    } else if (!selectedTeachingId.value && teachings.value.length) {
+      selectedTeachingId.value = String(teachings.value[0].id);
+    }
+  } catch (err) {
+    handleApiError(err, uiStore, undefined, 'Unable to load your teaching assignments.');
   }
 }
 
-async function loadExams() {
+async function loadExams(page = 1) {
   if (!selectedTeachingId.value) {
     exams.value = [];
     return;
   }
 
   loading.value = true;
-  error.value = null;
 
   try {
+    const filters: Record<string, string> = {};
+    if (filterStatus.value) filters.status = filterStatus.value;
+    if (filterType.value) filters.type = filterType.value;
+
     const response = await listExams(
-      selectedTeachingId.value,
-      1,
-      100,
-      status.value
-        ? {
-            status: status.value,
-          }
-        : {},
+      Number(selectedTeachingId.value),
+      page,
+      pagination.value.per_page,
+      filters,
     );
 
     exams.value = response.data ?? [];
-  } catch {
+    if (response.pagination) {
+      pagination.value = response.pagination;
+    }
+  } catch (err) {
     exams.value = [];
-    error.value = 'Unable to load your exams.';
+    handleApiError(err, uiStore, undefined, 'Unable to load exams for the selected course.');
   } finally {
     loading.value = false;
   }
 }
 
+async function handleRefresh() {
+  refreshing.value = true;
+  try {
+    await loadTeaching();
+    await loadExams(pagination.value.current_page);
+  } finally {
+    refreshing.value = false;
+  }
+}
+
+function clearFilters() {
+  filterStatus.value = '';
+  filterType.value = '';
+  search.value = '';
+  loadExams(1);
+}
+
 function openExam(exam: Exam) {
   router.push({
     name: 'instructor.exams.detail',
+    params: {
+      examId: exam.id,
+    },
+  });
+}
+
+function openQuestions(exam: Exam) {
+  router.push({
+    name: 'instructor.exams.questions',
     params: {
       examId: exam.id,
     },
@@ -126,194 +246,355 @@ function createExam() {
   });
 }
 
-async function changeTeaching() {
-  await loadExams();
+function getRowExtraActions(exam: Exam) {
+  return [
+    {
+      key: 'view',
+      label: 'View details',
+      icon: Eye,
+    },
+    {
+      key: 'questions',
+      label: 'Manage questions',
+      icon: FileQuestion,
+    },
+  ];
 }
 
-onMounted(async () => {
-  try {
-    await loadTeaching();
-    await loadExams();
-  } catch {
-    error.value = 'Unable to load your teaching assignments.';
+function handleRowAction(key: string, exam: Exam) {
+  if (key === 'view') {
+    openExam(exam);
+  } else if (key === 'questions') {
+    openQuestions(exam);
   }
+}
+
+function openArchive(exam: Exam) {
+  selectedExamForArchive.value = exam;
+  showArchiveModal.value = true;
+}
+
+async function confirmArchive() {
+  if (!selectedExamForArchive.value) return;
+
+  actionLoading.value = true;
+  try {
+    await archiveExam(selectedExamForArchive.value.id);
+    uiStore.showToast('Exam archived successfully.', 'success');
+    showArchiveModal.value = false;
+    selectedExamForArchive.value = null;
+    await loadExams(pagination.value.current_page);
+  } catch (error) {
+    handleApiError(error, uiStore, undefined, 'Failed to archive exam.');
+  } finally {
+    actionLoading.value = false;
+  }
+}
+
+function formatDate(value: string | null | undefined) {
+  if (!value) return '—';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat('en-US', {
+    dateStyle: 'medium',
+  }).format(date);
+}
+
+watch([filterStatus, filterType], () => {
+  loadExams(1);
+});
+
+onMounted(async () => {
+  document.addEventListener('click', handleDocumentClick);
+  await loadTeaching();
+  await loadExams(1);
+});
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', handleDocumentClick);
 });
 </script>
 
 <template>
-  <div class="mx-auto w-full max-w-[1200px] px-6 py-6">
-    <div class="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-      <div>
-        <p class="text-xs font-bold uppercase tracking-wide text-text/45">Instructor workspace</p>
-
-        <h1 class="mt-1 text-2xl font-semibold tracking-tight text-text">Exams</h1>
-
-        <p class="mt-1 max-w-2xl text-sm leading-6 text-text/55">Create, prepare, submit, schedule, and manage exams for your assigned course offerings.</p>
-      </div>
-
-      <BaseButton :disabled="!selectedTeachingId" @click="createExam">
-        <template #icon>
-          <Plus class="h-4 w-4" />
+  <div class="mx-auto w-full max-w-360 space-y-6 px-6 py-6 min-h-[calc(100vh-68px)]">
+    <div data-columns-container class="relative">
+      <ResourceToolbar
+        title="Exams"
+        :description="selectedTeaching ? `Manage exams for ${selectedTeaching.course?.code} — ${selectedTeaching.course?.name}` : 'Create, schedule, and manage exams for your assigned course offerings.'"
+        search-placeholder="Search exams by title or type…"
+        :search="search"
+        :show-search="true"
+        :show-filter="true"
+        :show-refresh="true"
+        :show-columns="true"
+        :show-fullscreen="true"
+        :refreshing="refreshing"
+        :has-active-filters="hasActiveFilters"
+        :filter-count="filterCount"
+        @update:search="(val) => (search = val)"
+        @clear-filters="clearFilters"
+        @refresh="handleRefresh"
+        @columns="showColumns = !showColumns">
+        <template #actions>
+          <BaseButton :disabled="!selectedTeachingId" @click="createExam">
+            <template #icon>
+              <Plus class="h-4 w-4" />
+            </template>
+            Create exam
+          </BaseButton>
         </template>
-        Create exam
-      </BaseButton>
-    </div>
 
-    <div class="mb-5 rounded-md border border-border bg-surface p-4">
-      <div class="grid grid-cols-1 gap-3 lg:grid-cols-[1fr_180px_auto]">
-        <div>
-          <BaseSelect v-model="selectedTeachingId" label="Course" :options="teachingOptions" placeholder="Select course" @update:model-value="changeTeaching" />
-        </div>
+        <template #filters>
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <BaseSelect
+              v-model="selectedTeachingId"
+              label="Course Offering"
+              :options="teachingOptions"
+              placeholder="Select course offering"
+              @update:model-value="loadExams(1)" />
 
-        <BaseSelect v-model="status" label="Status" :options="statusOptions" placeholder="Status" @update:model-value="loadExams" />
+            <BaseSelect
+              v-model="filterType"
+              label="Exam Type"
+              :options="typeOptions"
+              placeholder="All types" />
 
-        <div class="flex items-end">
+            <BaseSelect
+              v-model="filterStatus"
+              label="Exam Status"
+              :options="statusOptions"
+              placeholder="All statuses" />
+          </div>
+        </template>
+      </ResourceToolbar>
+
+      <!-- Customize Columns Dropdown -->
+      <div
+        v-if="showColumns"
+        class="absolute right-0 top-full z-40 mt-2 w-64 rounded-lg border border-border bg-surface p-2 shadow-xl"
+        @click.stop>
+        <div class="flex items-center justify-between px-2 py-2">
+          <div>
+            <p class="text-sm font-semibold text-text">Columns</p>
+            <p class="mt-0.5 text-xs text-text/45">Choose what appears in the table</p>
+          </div>
+
           <button
             type="button"
-            class="inline-flex h-10 w-10 items-center justify-center rounded-md border border-border text-text/55 hover:border-accent/40 hover:text-accent"
-            title="Refresh"
-            @click="loadExams">
-            <RefreshCw class="h-4 w-4" :class="{ 'animate-spin': loading }" />
+            class="rounded-md px-2 py-1 text-xs font-medium text-text/50 transition-colors hover:bg-text/5 hover:text-accent"
+            @click="resetColumns">
+            Reset
           </button>
         </div>
-      </div>
-    </div>
 
-    <div v-if="selectedTeaching" class="mb-5 flex items-center gap-2 rounded-md border border-border bg-bg px-4 py-3">
-      <ClipboardCheck class="h-4 w-4 text-accent" />
+        <div class="my-1 border-t border-border" />
 
-      <div class="min-w-0">
-        <p class="truncate text-sm font-medium text-text">
-          {{ selectedTeaching.course.code }} —
-          {{ selectedTeaching.course.name }}
-        </p>
+        <div class="space-y-0.5">
+          <button
+            v-for="column in columns"
+            :key="column.key"
+            type="button"
+            class="flex w-full items-center gap-3 rounded-md px-2 py-2 text-left transition-colors hover:bg-text/5"
+            @click="toggleColumn(column.key)">
+            <span
+              class="flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors"
+              :class="isColumnVisible(column.key) ? 'border-accent bg-accent text-white' : 'border-border bg-surface'">
+              <svg
+                v-if="isColumnVisible(column.key)"
+                viewBox="0 0 12 12"
+                class="h-3 w-3"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2">
+                <path d="M2 6l2.5 2.5L10 3" />
+              </svg>
+            </span>
 
-        <p class="text-xs text-text/45">{{ selectedTeaching.assignments?.length || 0 }} teaching assignment(s)</p>
-      </div>
-    </div>
+            <span class="flex-1 text-sm text-text/80">
+              {{ column.label }}
+            </span>
 
-    <div v-if="error" class="mb-5 rounded-md border border-error/20 bg-error/5 p-4">
-      <p class="text-sm text-error">
-        {{ error }}
-      </p>
+            <span v-if="column.required" class="text-[10px] font-medium text-text/35"> Always </span>
+          </button>
+        </div>
 
-      <button type="button" class="mt-2 text-xs font-medium text-error underline" @click="loadExams">Try again</button>
-    </div>
-
-    <div class="rounded-md border border-border bg-surface">
-      <div class="border-b border-border p-4">
-        <div class="relative max-w-sm">
-          <Search class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text/30" />
-
-          <input
-            v-model="search"
-            type="text"
-            placeholder="Search exams…"
-            class="w-full rounded-md border border-border bg-bg py-2 pl-9 pr-3 text-sm text-text outline-none focus:border-accent" />
+        <div class="mt-1 border-t border-border px-2 pt-2">
+          <p class="text-[11px] text-text/40">
+            {{ visibleColumnCount }} columns visible
+          </p>
         </div>
       </div>
+    </div>
 
+    <!-- Exam Table -->
+    <div class="overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
       <div class="overflow-x-auto">
-        <table class="w-full min-w-[820px]">
+        <table class="w-full border-collapse">
           <thead>
-            <tr class="border-b border-border bg-bg text-left">
-              <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-text/50">Exam</th>
+            <tr class="border-b border-border bg-bg/40">
+              <th
+                v-if="isColumnVisible('title')"
+                class="px-6 py-3.5 text-left text-xs font-bold uppercase tracking-wide text-text/45">
+                Exam
+              </th>
 
-              <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-text/50">Type</th>
+              <th
+                v-if="isColumnVisible('course')"
+                class="px-6 py-3.5 text-left text-xs font-bold uppercase tracking-wide text-text/45">
+                Course
+              </th>
 
-              <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-text/50">Questions</th>
+              <th
+                v-if="isColumnVisible('type')"
+                class="px-6 py-3.5 text-left text-xs font-bold uppercase tracking-wide text-text/45">
+                Type
+              </th>
 
-              <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-text/50">Marks</th>
+              <th
+                v-if="isColumnVisible('questions')"
+                class="px-6 py-3.5 text-left text-xs font-bold uppercase tracking-wide text-text/45">
+                Questions
+              </th>
 
-              <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-text/50">Status</th>
+              <th
+                v-if="isColumnVisible('marks')"
+                class="px-6 py-3.5 text-left text-xs font-bold uppercase tracking-wide text-text/45">
+                Marks
+              </th>
 
-              <th class="w-12 px-4 py-3" />
+              <th
+                v-if="isColumnVisible('duration')"
+                class="px-6 py-3.5 text-left text-xs font-bold uppercase tracking-wide text-text/45">
+                Duration
+              </th>
+
+              <th
+                v-if="isColumnVisible('status')"
+                class="px-6 py-3.5 text-left text-xs font-bold uppercase tracking-wide text-text/45">
+                Status
+              </th>
+
+              <th
+                v-if="isColumnVisible('created_at')"
+                class="px-6 py-3.5 text-left text-xs font-bold uppercase tracking-wide text-text/45">
+                Created
+              </th>
+
+              <th class="w-16 px-6 py-3.5 text-right text-xs font-bold uppercase tracking-wide text-text/45">
+                Actions
+              </th>
             </tr>
           </thead>
 
           <tbody v-if="loading" class="divide-y divide-border">
-            <tr v-for="item in 5" :key="item">
-              <td class="px-4 py-4">
-                <div class="h-4 w-56 animate-pulse rounded bg-text/5" />
+            <tr v-for="i in 5" :key="i">
+              <td :colspan="totalTableColumns" class="px-6 py-4">
+                <div class="h-4 w-full animate-pulse rounded bg-bg" />
               </td>
-
-              <td class="px-4 py-4">
-                <div class="h-4 w-20 animate-pulse rounded bg-text/5" />
-              </td>
-
-              <td class="px-4 py-4">
-                <div class="h-4 w-8 animate-pulse rounded bg-text/5" />
-              </td>
-
-              <td class="px-4 py-4">
-                <div class="h-4 w-8 animate-pulse rounded bg-text/5" />
-              </td>
-
-              <td class="px-4 py-4">
-                <div class="h-6 w-20 animate-pulse rounded-full bg-text/5" />
-              </td>
-
-              <td />
             </tr>
           </tbody>
 
           <tbody v-else-if="filteredExams.length" class="divide-y divide-border">
-            <tr v-for="exam in filteredExams" :key="exam.id" class="group cursor-pointer transition-colors hover:bg-text/2" @click="openExam(exam)">
-              <td class="px-4 py-4">
-                <div>
-                  <p class="text-sm font-medium text-text">
-                    {{ exam.title }}
-                  </p>
-
-                  <p class="mt-1 text-xs text-text/45">Created {{ exam.created_at || '—' }}</p>
-                </div>
+            <tr
+              v-for="exam in filteredExams"
+              :key="exam.id"
+              class="group cursor-pointer transition-colors hover:bg-text/[0.02]"
+              @click="openExam(exam)">
+              <td v-if="isColumnVisible('title')" class="px-6 py-4">
+                <p class="font-medium text-text text-sm group-hover:text-accent transition-colors">
+                  {{ exam.title }}
+                </p>
+                <p class="mt-0.5 text-xs text-text/45">
+                  ID: #{{ exam.id }}
+                </p>
               </td>
 
-              <td class="px-4 py-4">
-                <span class="font-mono text-xs uppercase text-text/60">
+              <td v-if="isColumnVisible('course')" class="px-6 py-4">
+                <span class="font-mono text-xs text-text/70">
+                  {{ selectedTeaching?.course?.code || '—' }}
+                </span>
+              </td>
+
+              <td v-if="isColumnVisible('type')" class="px-6 py-4">
+                <span class="inline-flex rounded-md bg-bg border border-border px-2.5 py-1 font-mono text-xs font-medium uppercase text-text/70">
                   {{ exam.type }}
                 </span>
               </td>
 
-              <td class="px-4 py-4">
-                <span class="font-mono text-sm tabular-nums text-text/70">
-                  {{ exam.total_questions }}
-                </span>
+              <td v-if="isColumnVisible('questions')" class="px-6 py-4 font-mono text-sm tabular-nums text-text/80">
+                {{ exam.total_questions }}
               </td>
 
-              <td class="px-4 py-4">
-                <span class="font-mono text-sm tabular-nums text-text/70">
-                  {{ exam.total_marks }}
-                </span>
+              <td v-if="isColumnVisible('marks')" class="px-6 py-4 font-mono text-sm tabular-nums text-text/80">
+                {{ exam.total_marks }}
               </td>
 
-              <td class="px-4 py-4">
+              <td v-if="isColumnVisible('duration')" class="px-6 py-4 text-sm text-text/70">
+                {{ exam.duration_minutes }} min
+              </td>
+
+              <td v-if="isColumnVisible('status')" class="px-6 py-4">
                 <ExamStatusBadge :status="exam.status" />
               </td>
 
-              <td class="px-4 py-4 text-right">
-                <ChevronRight class="ml-auto h-4 w-4 text-text/25 transition group-hover:text-accent" />
+              <td v-if="isColumnVisible('created_at')" class="px-6 py-4 text-xs text-text/50">
+                {{ formatDate(exam.created_at) }}
+              </td>
+
+              <td class="px-6 py-4 text-right" @click.stop>
+                <TableRowActions
+                  :row="exam"
+                  :extra-actions="getRowExtraActions(exam)"
+                  :show-edit="false"
+                  :show-archive="exam.status === 'draft' || exam.status === 'completed'"
+                  @action="handleRowAction($event, exam)"
+                  @archive="openArchive(exam)" />
               </td>
             </tr>
           </tbody>
 
           <tbody v-else>
             <tr>
-              <td colspan="6" class="px-6 py-16 text-center">
-                <div class="mx-auto max-w-sm">
-                  <div class="mx-auto flex h-10 w-10 items-center justify-center rounded-md border border-border bg-bg text-text/40">
-                    <CalendarDays class="h-5 w-5" />
+              <td :colspan="totalTableColumns" class="px-6 py-16 text-center">
+                <div class="mx-auto flex max-w-sm flex-col items-center">
+                  <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-bg">
+                    <CalendarDays class="h-6 w-6 text-text/30" />
                   </div>
-
-                  <p class="mt-3 text-sm font-medium text-text">No exams found</p>
-
-                  <p class="mt-1 text-sm text-text/45">Create an exam for this course offering to get started.</p>
+                  <p class="text-sm font-medium text-text">No exams found</p>
+                  <p class="mt-1 text-sm text-text/45">
+                    {{ hasActiveFilters || search ? 'Try adjusting your filters or search query.' : 'Create your first exam for this course offering to get started.' }}
+                  </p>
+                  <BaseButton
+                    v-if="!hasActiveFilters && !search && selectedTeachingId"
+                    class="mt-4"
+                    @click="createExam">
+                    <template #icon>
+                      <Plus class="h-4 w-4" />
+                    </template>
+                    Create exam
+                  </BaseButton>
                 </div>
               </td>
             </tr>
           </tbody>
         </table>
       </div>
+
+      <AppPagination
+        :pagination="pagination"
+        @change-page="loadExams" />
     </div>
+
+    <!-- Confirm Archive Modal -->
+    <ConfirmModal
+      :show="showArchiveModal"
+      title="Archive Exam"
+      :description="`Are you sure you want to archive '${selectedExamForArchive?.title}'?`"
+      confirm-text="Archive exam"
+      variant="danger"
+      :icon="Archive"
+      :loading="actionLoading"
+      @close="showArchiveModal = false"
+      @confirm="confirmArchive" />
   </div>
 </template>

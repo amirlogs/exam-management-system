@@ -25,11 +25,15 @@ const props = withDefaults(
       value: string;
       label: string;
     }[];
+    fixedContext?: Record<string, any>;
+    fixedCourseLabel?: string;
   }>(),
   {
     uploading: false,
     error: null,
     courseOptions: undefined,
+    fixedContext: undefined,
+    fixedCourseLabel: undefined,
   },
 );
 
@@ -72,12 +76,37 @@ const localError = ref<string | null>(null);
 watch(
   () => props.type,
   () => {
-    context.value = {};
+    context.value = props.fixedContext ? { ...props.fixedContext } : {};
     selectedFile.value = null;
     localError.value = null;
 
     if (fileInput.value) {
       fileInput.value.value = '';
+    }
+  },
+  {
+    immediate: true,
+  },
+);
+
+watch(
+  () => props.fixedContext,
+  (fc) => {
+    if (fc) {
+      context.value = { ...context.value, ...fc };
+    }
+  },
+  {
+    immediate: true,
+    deep: true,
+  },
+);
+
+watch(
+  availableCourseOptions,
+  (opts) => {
+    if (opts && opts.length === 1 && !context.value.course_id) {
+      context.value.course_id = opts[0].value;
     }
   },
   {
@@ -214,7 +243,14 @@ function downloadSample() {
 
         <BaseSelect v-if="field.kind === 'semester_select'" v-model="context[field.key]" :options="semesterOptions" placeholder="Select semester" />
 
-        <BaseSelect v-else-if="field.kind === 'course_select'" v-model="context[field.key]" :options="availableCourseOptions" placeholder="Select course" />
+        <div v-else-if="field.kind === 'course_select'">
+          <div
+            v-if="props.fixedCourseLabel"
+            class="flex h-10 w-full items-center rounded-lg border border-border bg-bg/70 px-3 text-sm font-medium text-text">
+            {{ props.fixedCourseLabel }}
+          </div>
+          <BaseSelect v-else v-model="context[field.key]" :options="availableCourseOptions" placeholder="Select course" />
+        </div>
 
         <BaseInput v-else v-model="context[field.key]" :type="field.kind === 'number' ? 'number' : 'text'" />
       </div>

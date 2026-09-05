@@ -74,22 +74,24 @@ function submit() {
   const composition: ExamComposition = {};
 
   if (mcqEnabled.value) {
-    composition.MCQ = {
-      marks_each: Number(mcqMarks.value),
-    };
+    const marks = Number(mcqMarks.value);
+    composition.mcq = { marks_each: marks };
+    composition.MCQ = { marks_each: marks };
   }
 
   if (trueFalseEnabled.value) {
-    composition.TRUE_FALSE = {
-      marks_each: Number(trueFalseMarks.value),
-    };
+    const marks = Number(trueFalseMarks.value);
+    composition.true_false = { marks_each: marks };
+    composition.TRUE_FALSE = { marks_each: marks };
   }
 
   if (shortAnswerEnabled.value) {
+    composition.short_answer = {};
     composition.SHORT_ANSWER = {};
   }
 
   if (essayEnabled.value) {
+    composition.essay = {};
     composition.ESSAY = {};
   }
 
@@ -103,86 +105,72 @@ function submit() {
 </script>
 
 <template>
-  <form class="space-y-8" @submit.prevent="submit">
-    <div class="rounded-md border border-border bg-surface p-6">
+  <form class="space-y-6" @submit.prevent="submit">
+    <div class="rounded-xl border border-border bg-surface p-6 shadow-sm">
       <div class="mb-5">
-        <h2 class="text-base font-semibold text-text">Exam details</h2>
-
-        <p class="mt-1 text-sm text-text/55">Set the basic information for this exam.</p>
+        <h2 class="text-base font-semibold text-text">Exam Details</h2>
+        <p class="mt-0.5 text-sm text-text/50">Set the basic information for this exam paper.</p>
       </div>
 
       <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
         <div class="md:col-span-2">
-          <BaseInput v-model="title" label="Exam title" placeholder="e.g. Discrete Mathematics final" />
+          <BaseInput v-model="title" label="Exam title" placeholder="e.g. Midterm Examination — Spring 2026" />
         </div>
 
         <BaseSelect v-model="type" label="Exam type" :options="typeOptions" />
-
         <BaseInput v-model="duration" label="Duration (minutes)" type="number" min="30" />
       </div>
     </div>
 
-    <div class="rounded-md border border-border bg-surface p-6">
+    <div class="rounded-xl border border-border bg-surface p-6 shadow-sm">
       <div class="mb-5">
-        <h2 class="text-base font-semibold text-text">Question composition</h2>
-
-        <p class="mt-1 text-sm text-text/55">Select the question types that will be used in this exam.</p>
+        <h2 class="text-base font-semibold text-text">Question Composition</h2>
+        <p class="mt-0.5 text-sm text-text/50">Select the question types allowed in this exam and configure marks for auto-graded types.</p>
       </div>
 
       <div class="space-y-3">
-        <label class="flex items-center justify-between rounded-md border border-border bg-bg p-4">
+        <label class="flex items-center justify-between rounded-xl border border-border bg-bg/50 p-4 transition hover:bg-bg">
           <div class="flex items-center gap-3">
-            <input v-model="mcqEnabled" type="checkbox" class="h-4 w-4 accent-accent" />
-
+            <input v-model="mcqEnabled" type="checkbox" class="h-4 w-4 rounded accent-accent" />
             <div>
-              <p class="text-sm font-medium text-text">Multiple Choice</p>
-
-              <p class="text-xs text-text/50">Configure marks for each MCQ.</p>
+              <p class="text-sm font-medium text-text">Multiple Choice (MCQ)</p>
+              <p class="text-xs text-text/50">Marks each question receives upon correct answer.</p>
             </div>
           </div>
-
           <BaseInput v-if="mcqEnabled" v-model="mcqMarks" class="w-28" type="number" min="1" />
         </label>
 
-        <label class="flex items-center justify-between rounded-md border border-border bg-bg p-4">
+        <label class="flex items-center justify-between rounded-xl border border-border bg-bg/50 p-4 transition hover:bg-bg">
           <div class="flex items-center gap-3">
-            <input v-model="trueFalseEnabled" type="checkbox" class="h-4 w-4 accent-accent" />
-
+            <input v-model="trueFalseEnabled" type="checkbox" class="h-4 w-4 rounded accent-accent" />
             <div>
               <p class="text-sm font-medium text-text">True / False</p>
-
-              <p class="text-xs text-text/50">Configure marks for each question.</p>
+              <p class="text-xs text-text/50">Marks each question receives upon correct answer.</p>
             </div>
           </div>
-
           <BaseInput v-if="trueFalseEnabled" v-model="trueFalseMarks" class="w-28" type="number" min="1" />
         </label>
 
-        <label class="flex items-center gap-3 rounded-md border border-border bg-bg p-4">
-          <input v-model="shortAnswerEnabled" type="checkbox" class="h-4 w-4 accent-accent" />
-
+        <label class="flex items-center gap-3 rounded-xl border border-border bg-bg/50 p-4 transition hover:bg-bg">
+          <input v-model="shortAnswerEnabled" type="checkbox" class="h-4 w-4 rounded accent-accent" />
           <div>
             <p class="text-sm font-medium text-text">Short Answer</p>
-
-            <p class="text-xs text-text/50">Marks are supplied when questions are added.</p>
+            <p class="text-xs text-text/50">Custom marks allocated when questions are attached.</p>
           </div>
         </label>
 
-        <label class="flex items-center gap-3 rounded-md border border-border bg-bg p-4">
-          <input v-model="essayEnabled" type="checkbox" class="h-4 w-4 accent-accent" />
-
+        <label class="flex items-center gap-3 rounded-xl border border-border bg-bg/50 p-4 transition hover:bg-bg">
+          <input v-model="essayEnabled" type="checkbox" class="h-4 w-4 rounded accent-accent" />
           <div>
             <p class="text-sm font-medium text-text">Essay</p>
-
-            <p class="text-xs text-text/50">Marks are supplied when questions are added.</p>
+            <p class="text-xs text-text/50">Custom marks allocated when questions are attached.</p>
           </div>
         </label>
       </div>
     </div>
 
-    <div class="flex justify-end gap-2 border-t border-border pt-6">
+    <div class="flex justify-end gap-3 pt-2">
       <BaseButton type="button" variant="secondary" @click="emit('cancel')"> Cancel </BaseButton>
-
       <BaseButton type="submit" :loading="props.loading" :disabled="!canSubmit"> Create exam </BaseButton>
     </div>
   </form>
