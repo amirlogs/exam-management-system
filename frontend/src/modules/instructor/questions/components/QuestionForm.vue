@@ -1,60 +1,59 @@
 <script setup lang="ts">
-import { computed, reactive, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
+import { Plus, Trash2, Check } from 'lucide-vue-next';
 
 import BaseButton from '@/shared/components/ui/BaseButton.vue';
 import BaseInput from '@/shared/components/ui/BaseInput.vue';
 import BaseSelect from '@/shared/components/ui/BaseSelect.vue';
 
-import type { Question, QuestionPayload, QuestionType } from '../types/question';
+import type { Question, QuestionDifficulty, QuestionType } from '../types/question';
 
 const props = withDefaults(
   defineProps<{
     question?: Question | null;
-    edit?: boolean;
-    courseOptions?: {
+    courses?: {
       value: string;
       label: string;
     }[];
+    saving?: boolean;
   }>(),
   {
     question: null,
-    edit: false,
-    courseOptions: () => [],
+    courses: () => [],
+    saving: false,
   },
 );
 
 const emit = defineEmits<{
-  saved: [];
+  submit: [
+    {
+      courseId: number;
+      type: QuestionType;
+      chapter: string;
+      content: string;
+      difficulty: QuestionDifficulty;
+      options: string[];
+      correctAnswer: string;
+    },
+  ];
+
   cancel: [];
 }>();
 
-const form = reactive<{
-  course_id: string;
-  type: QuestionType | '';
-  chapter: string;
-  content: string;
-  difficulty: string;
-  options: {
-    option_text: string;
-    is_correct: boolean;
-  }[];
-}>({
-  course_id: '',
-  type: '',
-  chapter: '',
-  content: '',
-  difficulty: '',
-  options: [],
-});
+const courseId = ref('');
+const type = ref<QuestionType>('mcq');
+const content = ref('');
+const chapter = ref('');
+const difficulty = ref<QuestionDifficulty>('easy');
 
-const errors = reactive<Record<string, string>>({});
+const options = ref<string[]>(['', '']);
 
-const saving = ref(false);
+const correctAnswer = ref('');
 
 const typeOptions = [
   {
     value: 'mcq',
-    label: 'Multiple Choice',
+    label: 'Multiple choice',
   },
   {
     value: 'true_false',
@@ -62,7 +61,7 @@ const typeOptions = [
   },
   {
     value: 'short_answer',
-    label: 'Short Answer',
+    label: 'Short answer',
   },
   {
     value: 'essay',
@@ -85,287 +84,236 @@ const difficultyOptions = [
   },
 ];
 
-const isChoiceQuestion = computed(() => form.type === 'mcq' || form.type === 'true_false');
+const isEditing = computed(() => !!props.question);
 
-const isTrueFalse = computed(() => form.type === 'true_false');
+const requiresOptions = computed(() => {
+  return type.value === 'mcq' || type.value === 'true_false';
+});
 
-const canSave = computed(() => Boolean(form.type && form.content.trim() && form.difficulty));
+const canSubmit = computed(() => {
+  if (!content.value.trim()) {
+    return false;
+  }
 
-function clearErrors() {
-  Object.keys(errors).forEach((key) => delete errors[key]);
-}
+  if (!difficulty.value) {
+    return false;
+  }
 
-function initializeForm() {
-  clearErrors();
+  if (!isEditing.value && !courseId.value) {
+    return false;
+  }
 
-  form.course_id = props.question?.course_id ? String(props.question.course_id) : '';
+  if (!requiresOptions.value) {
+    return true;
+  }
 
-  form.type = props.question?.type ? (String(props.question.type).toLowerCase() as QuestionType) : '';
+  const validOptions = options.value.filter((option) => option.trim());
 
-  form.chapter = props.question?.chapter ?? '';
+  if (validOptions.length < 2) {
+    return false;
+  }
 
-  form.content = props.question?.content ?? '';
+  if (!correctAnswer.value.trim()) {
+    return false;
+  }
 
-  form.difficulty = props.question?.difficulty ?? '';
+  return validOptions.includes(correctAnswer.value);
+});
 
-  if (props.question?.options?.length) {
-    form.options = props.question.options.map((option) => ({
-      option_text: option.option_text,
-      is_correct: option.is_correct,
-    }));
-  } else if (form.type === 'true_false') {
-    form.options = [
-      {
-        option_text: 'True',
-        is_correct: false,
-      },
-      {
-        option_text: 'False',
-        is_correct: false,
-      },
-    ];
-  } else if (form.type === 'mcq') {
-    form.options = [
-      {
-        option_text: '',
-        is_correct: false,
-      },
-      {
-        option_text: '',
-        is_correct: false,
-      },
-    ];
+function loadQuestion(question: Question) {
+  courseId.value = String(question.course_id);
+  type.value = question.type;
+  content.value = question.content;
+  chapter.value = question.chapter || '';
+  difficulty.value = question.difficulty;
+
+  const questionOptions = question.options?.map((option) => option.option_text) ?? [];
+
+  if (type.value === 'true_false') {
+    options.value = ['True', 'False'];
+  } else if (questionOptions.length) {
+    options.value = questionOptions;
   } else {
-    form.options = [];
+    options.value = ['', ''];
   }
+
+  const correct = question.options?.find((option) => option.is_correct);
+
+  correctAnswer.value = correct?.option_text || '';
 }
 
-function handleTypeChange() {
-  clearErrors();
+watch(
+  () => props.question,
+  (question) => {
+    if (question) {
+      loadQuestion(question);
+    }
+  },
+  {
+    immediate: true,
+  },
+);
 
-  if (form.type === 'true_false') {
-    form.options = [
-      {
-        option_text: 'True',
-        is_correct: false,
-      },
-      {
-        option_text: 'False',
-        is_correct: false,
-      },
-    ];
+watch(type, (value) => {
+  if (value === 'true_false') {
+    options.value = ['True', 'False'];
+
+    if (correctAnswer.value !== 'True' && correctAnswer.value !== 'False') {
+      correctAnswer.value = '';
+    }
 
     return;
   }
 
-  if (form.type === 'mcq') {
-    form.options = [
-      {
-        option_text: '',
-        is_correct: false,
-      },
-      {
-        option_text: '',
-        is_correct: false,
-      },
-    ];
+  if (value === 'mcq') {
+    if (options.value.length < 2) {
+      options.value = ['', ''];
+    }
 
     return;
   }
 
-  form.options = [];
-}
+  options.value = [];
+  correctAnswer.value = '';
+});
 
 function addOption() {
-  form.options.push({
-    option_text: '',
-    is_correct: false,
-  });
+  options.value.push('');
 }
 
 function removeOption(index: number) {
-  if (form.type === 'true_false') {
+  if (options.value.length <= 2) {
     return;
   }
 
-  if (form.options.length <= 2) {
+  const removed = options.value.splice(index, 1)[0];
+
+  if (removed === correctAnswer.value) {
+    correctAnswer.value = '';
+  }
+}
+
+function submit() {
+  if (!canSubmit.value) {
     return;
   }
 
-  form.options.splice(index, 1);
+  emit('submit', {
+    courseId: Number(courseId.value),
+    type: type.value,
+    chapter: chapter.value.trim(),
+    content: content.value.trim(),
+    difficulty: difficulty.value,
+
+    options: requiresOptions.value ? options.value.map((option) => option.trim()).filter(Boolean) : [],
+
+    correctAnswer: requiresOptions.value ? correctAnswer.value.trim() : '',
+  });
 }
-
-function setCorrectOption(index: number) {
-  form.options = form.options.map((option, optionIndex) => ({
-    ...option,
-    is_correct: optionIndex === index,
-  }));
-}
-
-function validate() {
-  clearErrors();
-
-  if (!form.type) {
-    errors.type = 'Question type is required.';
-  }
-
-  if (!form.content.trim() || form.content.trim().length < 5) {
-    errors.content = 'Question content must be at least 5 characters.';
-  }
-
-  if (!form.difficulty) {
-    errors.difficulty = 'Difficulty is required.';
-  }
-
-  if (!props.edit && !form.course_id) {
-    errors.course_id = 'Course is required.';
-  }
-
-  if (form.type === 'mcq') {
-    const options = form.options.filter((option) => option.option_text.trim());
-
-    if (options.length < 2) {
-      errors.options = 'MCQ requires at least two answer choices.';
-    }
-
-    if (!form.options.some((option) => option.is_correct)) {
-      errors.options = 'Select the correct answer.';
-    }
-  }
-
-  if (form.type === 'true_false') {
-    if (form.options.length !== 2) {
-      errors.options = 'True / False requires both options.';
-    }
-
-    if (!form.options.some((option) => option.is_correct)) {
-      errors.options = 'Select the correct answer.';
-    }
-  }
-
-  return Object.keys(errors).length === 0;
-}
-
-async function submit() {
-  if (!validate()) {
-    return;
-  }
-
-  const payload: QuestionPayload = {
-    type: form.type,
-    chapter: form.chapter.trim() || null,
-    content: form.content.trim(),
-    difficulty: form.difficulty as 'easy' | 'medium' | 'hard',
-  };
-
-  if (isChoiceQuestion.value) {
-    payload.options = form.options
-      .filter((option) => option.option_text.trim())
-      .map((option) => ({
-        option_text: option.option_text.trim(),
-        is_correct: option.is_correct,
-      }));
-  }
-
-  saving.value = true;
-
-  try {
-    /*
-     * Keep API calls in QuestionFormView or api layer
-     * if that is already how your current component works.
-     *
-     * This component emits the validated payload shape
-     * instead of inventing another API contract.
-     */
-    emit('saved');
-  } finally {
-    saving.value = false;
-  }
-}
-
-watch(() => props.question, initializeForm, { immediate: true });
 </script>
 
 <template>
-  <form class="space-y-5" @submit.prevent="submit">
-    <!-- General -->
-    <section class="rounded-md border border-border bg-surface p-6">
-      <div class="mb-5">
-        <h2 class="text-sm font-semibold text-text">Question information</h2>
+  <div class="space-y-6 rounded-md border border-border bg-surface p-6">
+    <div class="space-y-5">
+      <div v-if="!isEditing">
+        <BaseSelect v-model="courseId" label="Course" :options="courses" placeholder="Select course" />
 
-        <p class="mt-1 text-xs leading-5 text-text/45">Define the course, type, difficulty, and question content.</p>
+        <p class="mt-1.5 text-xs text-text/45">You can only select courses from your teaching assignments.</p>
       </div>
 
-      <div class="grid gap-4 sm:grid-cols-2">
-        <BaseSelect v-if="!edit" v-model="form.course_id" label="Course" :options="courseOptions" :error="errors.course_id" required />
+      <div v-else class="rounded-md border border-border bg-bg p-4">
+        <p class="text-xs font-bold uppercase tracking-wide text-text/45">Course</p>
 
-        <BaseSelect v-model="form.type" label="Question type" :options="typeOptions" :error="errors.type" required @update:model-value="handleTypeChange" />
+        <p class="mt-1 text-sm font-semibold text-text">
+          {{ question?.course?.name || '—' }}
+        </p>
 
-        <BaseSelect v-model="form.difficulty" label="Difficulty" :options="difficultyOptions" :error="errors.difficulty" required />
-
-        <BaseInput v-model="form.chapter" label="Chapter" placeholder="e.g. Number Theory" />
-      </div>
-
-      <div class="mt-4">
-        <label class="mb-1.5 block text-sm font-medium text-text"> Question </label>
-
-        <textarea
-          v-model="form.content"
-          rows="7"
-          class="w-full rounded-md border border-border bg-bg px-3 py-2.5 text-sm leading-6 text-text outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/10"
-          placeholder="Enter the question..." />
-
-        <p v-if="errors.content" class="mt-1.5 text-xs text-error">
-          {{ errors.content }}
+        <p class="mt-0.5 font-mono text-xs text-text/40">
+          {{ question?.course?.code || '—' }}
         </p>
       </div>
-    </section>
 
-    <!-- Options -->
-    <section v-if="isChoiceQuestion" class="rounded-md border border-border bg-surface p-6">
-      <div class="mb-5 flex items-start justify-between gap-4">
+      <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
+        <BaseSelect v-model="type" label="Question type" :options="typeOptions" />
+
+        <BaseSelect v-model="difficulty" label="Difficulty" :options="difficultyOptions" />
+      </div>
+
+      <BaseInput v-model="chapter" label="Chapter" placeholder="e.g. Database Fundamentals" />
+
+      <div>
+        <label class="mb-1.5 block text-xs font-bold uppercase tracking-wide text-text/60"> Question </label>
+
+        <textarea
+          v-model="content"
+          rows="5"
+          placeholder="Enter the question..."
+          class="w-full rounded-md border border-border bg-surface px-3 py-2.5 text-sm text-text outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/10" />
+      </div>
+    </div>
+
+    <div v-if="requiresOptions" class="space-y-4 rounded-md border border-border bg-bg/40 p-5">
+      <div class="flex items-center justify-between gap-4">
         <div>
-          <h2 class="text-sm font-semibold text-text">Answer choices</h2>
+          <p class="text-sm font-semibold text-text">
+            {{ type === 'mcq' ? 'Answer choices' : 'Correct answer' }}
+          </p>
 
-          <p class="mt-1 text-xs leading-5 text-text/45">Select the correct answer.</p>
+          <p class="mt-0.5 text-xs text-text/45">Select the correct answer.</p>
         </div>
 
-        <BaseButton v-if="!isTrueFalse" type="button" variant="secondary" @click="addOption"> Add option </BaseButton>
+        <button v-if="type === 'mcq'" type="button" class="inline-flex items-center gap-1.5 text-xs font-semibold text-accent" @click="addOption">
+          <Plus class="h-3.5 w-3.5" />
+          Add choice
+        </button>
       </div>
 
-      <div class="space-y-3">
-        <div v-for="(option, index) in form.options" :key="index" class="flex items-start gap-3">
-          <button
-            type="button"
-            class="mt-2 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-xs font-semibold transition"
-            :class="option.is_correct ? 'border-accent bg-accent text-white' : 'border-border text-text/50 hover:bg-text/5'"
-            :aria-label="`Mark option ${index + 1} as correct`"
-            @click="setCorrectOption(index)">
-            {{ String.fromCharCode(65 + index) }}
-          </button>
+      <div class="space-y-2">
+        <div v-for="(option, index) in options" :key="index" class="flex items-center gap-2">
+          <input
+            type="radio"
+            :name="`question-correct-${type}`"
+            :checked="correctAnswer === option"
+            :disabled="!option.trim()"
+            class="h-4 w-4 accent-accent"
+            @change="correctAnswer = option" />
 
-          <div class="flex-1">
-            <BaseInput v-model="option.option_text" :label="`Option ${String.fromCharCode(65 + index)}`" />
-          </div>
+          <input
+            v-model="options[index]"
+            type="text"
+            :disabled="type === 'true_false'"
+            :placeholder="`Option ${index + 1}`"
+            class="flex-1 rounded-md border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:border-accent" />
 
-          <button v-if="!isTrueFalse && form.options.length > 2" type="button" class="mt-8 text-xs font-medium text-error hover:underline" @click="removeOption(index)">
-            Remove
+          <button v-if="type === 'mcq' && options.length > 2" type="button" class="rounded-md p-2 text-text/40 hover:bg-error/5 hover:text-error" @click="removeOption(index)">
+            <Trash2 class="h-4 w-4" />
           </button>
         </div>
       </div>
+    </div>
 
-      <p v-if="errors.options" class="mt-3 text-xs text-error">
-        {{ errors.options }}
-      </p>
-    </section>
+    <div v-else class="space-y-2">
+      <label class="block text-xs font-bold uppercase tracking-wide text-text/60"> Expected answer </label>
 
-    <!-- Footer -->
-    <div class="flex flex-col-reverse gap-2 border-t border-border pt-5 sm:flex-row sm:justify-end">
-      <BaseButton type="button" variant="secondary" @click="emit('cancel')"> Cancel </BaseButton>
+      <textarea
+        v-model="correctAnswer"
+        rows="4"
+        placeholder="Enter the expected answer..."
+        class="w-full rounded-md border border-border bg-surface px-3 py-2.5 text-sm text-text outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/10" />
 
-      <BaseButton type="submit" :loading="saving" :disabled="!canSave">
-        {{ edit ? 'Save changes' : 'Create question' }}
+      <p class="text-xs text-text/40">This is optional for essay and short-answer questions with the current backend model.</p>
+    </div>
+
+    <div class="flex justify-end gap-2 border-t border-border pt-5">
+      <BaseButton variant="secondary" @click="emit('cancel')"> Cancel </BaseButton>
+
+      <BaseButton :loading="saving" :disabled="!canSubmit" @click="submit">
+        <template #icon>
+          <Check class="h-4 w-4" />
+        </template>
+
+        {{ isEditing ? 'Save changes' : 'Create question' }}
       </BaseButton>
     </div>
-  </form>
+  </div>
 </template>
