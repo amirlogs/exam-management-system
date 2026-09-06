@@ -18,6 +18,7 @@ class InstructorNavigation
                 'label' => 'My Teaching',
                 'to' => '/instructor/teaching',
                 'icon' => 'BookOpen',
+                'group' => 'Academics',
                 'permissions' => [
                     'course_offering.view',
                 ],
@@ -25,43 +26,47 @@ class InstructorNavigation
             ],
 
             [
-                'label' => 'Question Bank',
-                'to' => '/instructor/questions',
-                'icon' => 'LibraryBig',
-                'permissions' => [
-                    'question.view',
-                ],
-                'permission_mode' => 'any',
-            ],
-
-            [
-                'label' => 'Exams',
-                'to' => '/instructor/exams',
+                'label' => 'Assessments',
                 'icon' => 'FileQuestion',
-                'permissions' => [
-                    'exam.view',
+                'group' => 'Assessments',
+                'children' => [
+                    [
+                        'label' => 'Question Bank',
+                        'to' => '/instructor/questions',
+                        'icon' => 'LibraryBig',
+                        'permissions' => [
+                            'question.view',
+                        ],
+                        'permission_mode' => 'any',
+                    ],
+                    [
+                        'label' => 'Exams',
+                        'to' => '/instructor/exams',
+                        'icon' => 'FileQuestion',
+                        'permissions' => [
+                            'exam.view',
+                        ],
+                        'permission_mode' => 'any',
+                    ],
+                    [
+                        'label' => 'Grading',
+                        'to' => '/instructor/grading',
+                        'icon' => 'ClipboardCheck',
+                        'permissions' => [
+                            'grade.create',
+                        ],
+                        'permission_mode' => 'any',
+                    ],
+                    [
+                        'label' => 'Results',
+                        'to' => '/instructor/results',
+                        'icon' => 'BarChart3',
+                        'permissions' => [
+                            'result.view',
+                        ],
+                        'permission_mode' => 'any',
+                    ],
                 ],
-                'permission_mode' => 'any',
-            ],
-
-            [
-                'label' => 'Grading',
-                'to' => '/instructor/grading',
-                'icon' => 'ClipboardCheck',
-                'permissions' => [
-                    'grade.create',
-                ],
-                'permission_mode' => 'any',
-            ],
-
-            [
-                'label' => 'Results',
-                'to' => '/instructor/results',
-                'icon' => 'BarChart3',
-                'permissions' => [
-                    'result.view',
-                ],
-                'permission_mode' => 'any',
             ],
         ];
     }

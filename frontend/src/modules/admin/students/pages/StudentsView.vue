@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
-import { GraduationCap, RotateCcw } from 'lucide-vue-next';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { Check, GraduationCap, RotateCcw } from 'lucide-vue-next';
 
 import ResourceToolbar from '@/shared/components/ResourceToolbar.vue';
 import BaseBadge from '@/shared/components/ui/BaseBadge.vue';
@@ -22,6 +22,62 @@ const uiStore = useUiStore();
 
 const students = ref<Student[]>([]);
 
+// Column Visibility State
+type StudentColumn = 'student' | 'student_number' | 'program' | 'section' | 'entry_year' | 'status';
+
+const showColumns = ref(false);
+const columns = [
+  { key: 'student' as StudentColumn, label: 'Student', required: true },
+  { key: 'student_number' as StudentColumn, label: 'Student Number', required: false },
+  { key: 'program' as StudentColumn, label: 'Program', required: false },
+  { key: 'section' as StudentColumn, label: 'Section', required: false },
+  { key: 'entry_year' as StudentColumn, label: 'Entry Year', required: false },
+  { key: 'status' as StudentColumn, label: 'Status', required: false },
+];
+
+const visibleColumns = ref<StudentColumn[]>([
+  'student',
+  'student_number',
+  'program',
+  'section',
+  'entry_year',
+  'status',
+]);
+
+const isColumnVisible = (column: StudentColumn) => visibleColumns.value.includes(column);
+
+function toggleColumn(column: StudentColumn) {
+  const config = columns.find((item) => item.key === column);
+  if (config?.required) return;
+  if (isColumnVisible(column)) {
+    visibleColumns.value = visibleColumns.value.filter((item) => item !== column);
+  } else {
+    visibleColumns.value = [...visibleColumns.value, column];
+  }
+}
+
+function resetColumns() {
+  visibleColumns.value = ['student', 'student_number', 'program', 'section', 'entry_year', 'status'];
+}
+
+function toggleColumnSelector() {
+  setTimeout(() => {
+    showColumns.value = !showColumns.value;
+  }, 0);
+}
+
+function handleColumnOutsideClick(event: MouseEvent) {
+  if (!showColumns.value) return;
+  const target = event.target as HTMLElement;
+  const clickedTrigger = target.closest('[title="Show/hide columns"]');
+  const clickedMenu = target.closest('[data-columns-menu]');
+  if (!clickedTrigger && !clickedMenu) {
+    showColumns.value = false;
+  }
+}
+
+const visibleColumnCount = computed(() => visibleColumns.value.length);
+
 const programs = ref<
   {
     id: number;
@@ -29,6 +85,35 @@ const programs = ref<
     code: string;
   }[]
 >([]);
+
+const programMap = computed(() => {
+  const map = new Map<number, { id: number; name: string; code: string }>();
+  programs.value.forEach((p) => map.set(p.id, p));
+  return map;
+});
+
+function getProgramDisplay(student: Student) {
+  if ((student as any).program?.name) {
+    return {
+      name: (student as any).program.name,
+      code: (student as any).program.code,
+    };
+  }
+  if (student.section && (student.section as any).program?.name) {
+    return {
+      name: (student.section as any).program.name,
+      code: (student.section as any).program.code,
+    };
+  }
+  const found = programMap.value.get(student.program_id);
+  if (found) {
+    return {
+      name: found.name,
+      code: found.code,
+    };
+  }
+  return null;
+}
 
 const sections = ref<
   {
@@ -223,12 +308,17 @@ function initials(student: Student) {
 }
 
 onMounted(async () => {
+  document.addEventListener('click', handleColumnOutsideClick);
   try {
     await loadPrograms();
     await load(1);
   } catch (err) {
     handleApiError(err, uiStore, undefined, 'Failed to load student data.');
   }
+});
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleColumnOutsideClick);
 });
 </script>
 
@@ -241,13 +331,62 @@ onMounted(async () => {
       :search="search"
       :show-search="true"
       :show-filter="true"
+      :show-columns="true"
       :show-refresh="true"
       :refreshing="refreshing"
       :has-active-filters="hasActiveFilters"
       :filter-count="filterCount"
       @update:search="handleSearch"
       @refresh="handleRefresh"
+      @columns="toggleColumnSelector"
       @clear-filters="clearFilters">
+      <!-- Column Picker Menu -->
+      <template #columns>
+        <div
+          v-if="showColumns"
+          data-columns-menu
+          class="absolute right-0 top-full mt-2 z-50 w-56 rounded-xl border border-border bg-surface p-2 shadow-xl">
+          <div class="flex items-center justify-between px-2 py-1.5">
+            <span class="text-xs font-semibold text-text">Columns</span>
+            <button
+              type="button"
+              class="text-xs font-medium text-text/50 transition-colors hover:text-accent cursor-pointer"
+              @click="resetColumns">
+              Reset
+            </button>
+          </div>
+
+          <div class="my-1 border-t border-border" />
+
+          <button
+            v-for="column in columns"
+            :key="column.key"
+            type="button"
+            class="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm transition-colors hover:bg-text/5 cursor-pointer"
+            @click="toggleColumn(column.key)">
+            <span
+              class="flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors"
+              :class="isColumnVisible(column.key) ? 'border-accent bg-accent text-white' : 'border-border bg-surface'">
+              <Check v-if="isColumnVisible(column.key)" class="h-3 w-3" />
+            </span>
+
+            <span class="flex-1 text-xs font-medium text-text/80">
+              {{ column.label }}
+            </span>
+
+            <span v-if="column.required" class="text-[10px] font-mono text-text/40">
+              Req
+            </span>
+          </button>
+
+          <div class="mt-1 border-t border-border pt-1">
+            <div class="px-2 py-1 text-[11px] text-text/40">
+              {{ visibleColumnCount }} columns visible
+            </div>
+          </div>
+        </div>
+      </template>
+
       <template #filters>
         <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
           <BaseSelect v-model="filters.program_id" label="Program" :options="programOptions" placeholder="All programs" @update:model-value="handleProgramChange" />
@@ -280,23 +419,23 @@ onMounted(async () => {
         <table class="w-full min-w-[980px] border-collapse">
           <thead>
             <tr class="border-b border-border bg-text/2.5">
-              <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-text/50">Student</th>
+              <th v-if="isColumnVisible('student')" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-text/50">Student</th>
 
-              <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-text/50">Student Number</th>
+              <th v-if="isColumnVisible('student_number')" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-text/50">Student Number</th>
 
-              <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-text/50">Program</th>
+              <th v-if="isColumnVisible('program')" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-text/50">Program</th>
 
-              <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-text/50">Section</th>
+              <th v-if="isColumnVisible('section')" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-text/50">Section</th>
 
-              <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-text/50">Entry Year</th>
+              <th v-if="isColumnVisible('entry_year')" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-text/50">Entry Year</th>
 
-              <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-text/50">Status</th>
+              <th v-if="isColumnVisible('status')" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-text/50">Status</th>
             </tr>
           </thead>
 
           <tbody v-if="loading" class="divide-y divide-border">
             <tr v-for="row in 6" :key="row">
-              <td colspan="6" class="px-4 py-4">
+              <td :colspan="visibleColumnCount" class="px-4 py-4">
                 <div class="h-3.5 w-full max-w-sm animate-pulse rounded bg-text/5" />
               </td>
             </tr>
@@ -304,7 +443,7 @@ onMounted(async () => {
 
           <tbody v-else-if="students.length" class="divide-y divide-border">
             <tr v-for="student in students" :key="student.id" class="hover:bg-text/2">
-              <td class="px-4 py-3.5">
+              <td v-if="isColumnVisible('student')" class="px-4 py-3.5">
                 <div class="flex items-center gap-3">
                   <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent/10 text-xs font-bold text-accent">
                     {{ initials(student) }}
@@ -323,23 +462,33 @@ onMounted(async () => {
                 </div>
               </td>
 
-              <td class="px-4 py-3.5 font-mono text-xs text-text/70">
+              <td v-if="isColumnVisible('student_number')" class="px-4 py-3.5 font-mono text-xs text-text/70">
                 {{ student.student_number || '—' }}
               </td>
 
-              <td class="px-4 py-3.5 text-sm text-text/60">
-                {{ student.program_id || '—' }}
+              <td v-if="isColumnVisible('program')" class="px-4 py-3.5 text-sm text-text/60">
+                <div v-if="getProgramDisplay(student)" class="min-w-0">
+                  <p class="truncate font-medium text-text">
+                    {{ getProgramDisplay(student)?.name }}
+                  </p>
+                  <p class="font-mono text-xs text-text/40">
+                    {{ getProgramDisplay(student)?.code }}
+                  </p>
+                </div>
+                <span v-else class="text-text/40">
+                  {{ student.program_id ? `Program #${student.program_id}` : '—' }}
+                </span>
               </td>
 
-              <td class="px-4 py-3.5 text-sm text-text/60">
+              <td v-if="isColumnVisible('section')" class="px-4 py-3.5 text-sm text-text/60">
                 {{ student.section ? `${student.section.name} (Yr ${student.section.year_level})` : '—' }}
               </td>
 
-              <td class="px-4 py-3.5 font-mono text-xs text-text/60">
+              <td v-if="isColumnVisible('entry_year')" class="px-4 py-3.5 font-mono text-xs text-text/60">
                 {{ student.entry_year || '—' }}
               </td>
 
-              <td class="px-4 py-3.5">
+              <td v-if="isColumnVisible('status')" class="px-4 py-3.5">
                 <BaseBadge :variant="student.status === 'active' ? 'success' : 'neutral'">
                   {{ student.status }}
                 </BaseBadge>
@@ -349,7 +498,7 @@ onMounted(async () => {
 
           <tbody v-else>
             <tr>
-              <td colspan="6" class="px-6 py-14 text-center">
+              <td :colspan="visibleColumnCount" class="px-6 py-14 text-center">
                 <div class="mx-auto flex max-w-sm flex-col items-center">
                   <div class="flex h-10 w-10 items-center justify-center rounded-full bg-accent/10 text-accent">
                     <GraduationCap class="h-5 w-5" />

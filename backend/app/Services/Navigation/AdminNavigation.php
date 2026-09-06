@@ -13,158 +13,186 @@ class AdminNavigation
                 'icon' => 'LayoutGrid',
                 'permissions' => [],
             ],
-
+            // ============ ACADEMICS ============
             [
-                'label' => 'Universities',
-                'to' => '/admin/universities',
+                'label' => 'Academic Structure',
                 'icon' => 'Landmark',
-                'permissions' => [
-                    'university.view',
-                    'university.view_archived',
+                'group' => 'Academics',
+                'children' => [
+                    [
+                        'label' => 'Universities',
+                        'to' => '/admin/universities',
+                        'icon' => 'Landmark',
+                        'permissions' => [
+                            'university.view',
+                            'university.view_archived',
+                        ],
+                        'permission_mode' => 'any',
+                    ],
+                    [
+                        'label' => 'Colleges',
+                        'to' => '/admin/colleges',
+                        'icon' => 'Building2',
+                        'permissions' => [
+                            'college.view',
+                            'college.view_archived',
+                        ],
+                        'permission_mode' => 'any',
+                    ],
+                    [
+                        'label' => 'Departments',
+                        'to' => '/admin/departments',
+                        'icon' => 'Building2',
+                        'permissions' => [
+                            'department.view',
+                            'department.view_archived',
+                        ],
+                        'permission_mode' => 'any',
+                    ],
+                    [
+                        'label' => 'Programs',
+                        'to' => '/admin/programs',
+                        'icon' => 'GraduationCap',
+                        'permissions' => [
+                            'program.view',
+                            'program.view_archived',
+                        ],
+                        'permission_mode' => 'any',
+                    ],
                 ],
-                'permission_mode' => 'any',
-            ],
-            [
-                'label' => 'Colleges',
-                'to' => '/admin/colleges',
-                'icon' => 'Building2',
-                'permissions' => [
-                    'college.view',
-                    'college.view_archived',
-                ],
-                'permission_mode' => 'any',
             ],
 
             [
-                'label' => 'Departments',
-                'to' => '/admin/departments',
-                'icon' => 'Building2',
-                'permissions' => [
-                    'department.view',
-                    'department.view_archived',
-                ],
-                'permission_mode' => 'any',
-            ],
-
-            [
-                'label' => 'Programs',
-                'to' => '/admin/programs',
-                'icon' => 'GraduationCap',
-                'permissions' => [
-                    'program.view',
-                    'program.view_archived',
-                ],
-                'permission_mode' => 'any',
-            ],
-
-            [
-                'label' => 'Courses',
-                'to' => '/admin/courses',
+                'label' => 'Curriculum & Courses',
                 'icon' => 'BookOpen',
-                'permissions' => [
-                    'course.view',
-                    'course.view_archived',
+                'group' => 'Academics',
+                'children' => [
+                    [
+                        'label' => 'Courses',
+                        'to' => '/admin/courses',
+                        'icon' => 'BookOpen',
+                        'permissions' => [
+                            'course.view',
+                            'course.view_archived',
+                        ],
+                        'permission_mode' => 'any',
+                    ],
+                    [
+                        'label' => 'Curriculum',
+                        'to' => '/admin/curriculum',
+                        'icon' => 'ListTree',
+                        'permissions' => [
+                            'curriculum.view',
+                        ],
+                        'permission_mode' => 'any',
+                    ],
+                    [
+                        'label' => 'Semesters',
+                        'to' => '/admin/semesters',
+                        'icon' => 'CalendarDays',
+                        'permissions' => [
+                            'semester.view',
+                            'semester.view_archived',
+                        ],
+                        'permission_mode' => 'any',
+                    ],
+                    [
+                        'label' => 'Sections',
+                        'to' => '/admin/sections',
+                        'icon' => 'Users2',
+                        'permissions' => [
+                            'section.view',
+                            'section.view_archived',
+                        ],
+                        'permission_mode' => 'any',
+                    ],
+                    [
+                        'label' => 'Course Offerings',
+                        'to' => '/admin/course-offerings',
+                        'icon' => 'ClipboardList',
+                        'permissions' => [
+                            'course_offering.view',
+                        ],
+                        'permission_mode' => 'any',
+                    ],
                 ],
-                'permission_mode' => 'any',
+            ],
+
+            // ============ MANAGEMENT ============
+            [
+                'label' => 'Examinations',
+                'icon' => 'LibraryBig',
+                'group' => 'Management',
+                'children' => [
+                    [
+                        'label' => 'Question Bank',
+                        'to' => '/admin/questions',
+                        'icon' => 'LibraryBig',
+                        'permissions' => [
+                            'question.view_all',
+                        ],
+                        'permission_mode' => 'any',
+                    ],
+                    [
+                        'label' => 'Results',
+                        'to' => '/admin/results',
+                        'icon' => 'BarChart3',
+                        'permissions' => [
+                            'result.view',
+                            'result.view_archived',
+                        ],
+                        'permission_mode' => 'any',
+                    ],
+                ],
             ],
 
             [
-                'label' => 'Curriculum',
-                'to' => '/admin/curriculum',
-                'icon' => 'ListTree',
-                'permissions' => [
-                    'curriculum.view',
-                ],
-                'permission_mode' => 'any',
-            ],
-
-            [
-                'label' => 'Semesters',
-                'to' => '/admin/semesters',
-                'icon' => 'CalendarDays',
-                'permissions' => [
-                    'semester.view',
-                    'semester.view_archived',
-                ],
-                'permission_mode' => 'any',
-            ],
-
-            [
-                'label' => 'Sections',
-                'to' => '/admin/sections',
+                'label' => 'People & Access',
                 'icon' => 'Users2',
-                'permissions' => [
-                    'section.view',
-                    'section.view_archived',
+                'group' => 'Management',
+                'children' => [
+                    [
+                        'label' => 'Users',
+                        'to' => '/admin/users',
+                        'icon' => 'Users2',
+                        'permissions' => ['user.view'],
+                        'permission_mode' => 'any',
+                    ],
+                    [
+                        'label' => 'Instructors',
+                        'to' => '/admin/instructors',
+                        'icon' => 'UserCog',
+                        'permissions' => ['instructor.view'],
+                        'permission_mode' => 'any',
+                    ],
+                    [
+                        'label' => 'Students',
+                        'to' => '/admin/students',
+                        'icon' => 'GraduationCap',
+                        'permissions' => ['student.view'],
+                        'permission_mode' => 'any',
+                    ],
+                    [
+                        'label' => 'Roles & Permissions',
+                        'to' => '/admin/roles',
+                        'icon' => 'ShieldCheck',
+                        'permissions' => [
+                            'role.view',
+                            'permission.view',
+                        ],
+                        'permission_mode' => 'any',
+                    ],
                 ],
-                'permission_mode' => 'any',
             ],
+
+            // ============ SYSTEM ============
             [
                 'label' => 'Data Import',
                 'to' => '/admin/imports',
                 'icon' => 'Upload',
+                'group' => 'System',
                 'permissions' => [
                     'import.view',
-                ],
-                'permission_mode' => 'any',
-            ],
-            [
-                'label' => 'Question Bank',
-                'to' =>  '/admin/questions',
-                'icon' => 'LibraryBig',
-                'permissions' => [
-                    'question.view_all',
-                ],
-                'permission_mode' => 'any',
-            ],
-            [
-                'label' => 'Course Offerings',
-                'to' => '/admin/course-offerings',
-                'icon' => 'ClipboardList',
-                'permissions' => [
-                    'course_offering.view',
-                ],
-                'permission_mode' => 'any',
-            ],
-            [
-                'label' => 'Users',
-                'to' => '/admin/users',
-                'icon' => 'Users2',
-                'permissions' => ['user.view'],
-                'permission_mode' => 'any',
-            ],
-            [
-                'label' => 'Instructors',
-                'to' => '/admin/instructors',
-                'icon' => 'UserCog',
-                'permissions' => ['instructor.view'],
-                'permission_mode' => 'any',
-            ],
-            [
-                'label' => 'Students',
-                'to' => '/admin/students',
-                'icon' => 'GraduationCap',
-                'permissions' => ['student.view'],
-                'permission_mode' => 'any',
-            ],
-            [
-                'label' => 'Roles & Permissions',
-                'to' => '/admin/roles',
-                'icon' => 'ShieldCheck',
-                'permissions' => [
-                    'role.view',
-                    'permission.view',
-                ],
-                'permission_mode' => 'any',
-            ],
-
-            [
-                'label' => 'Results',
-                'to' => '/admin/results',
-                'icon' => 'BarChart3',
-                'permissions' => [
-                    'result.view',
-                    'result.view_archived',
                 ],
                 'permission_mode' => 'any',
             ],

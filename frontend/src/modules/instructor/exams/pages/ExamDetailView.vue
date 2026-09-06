@@ -177,7 +177,7 @@ onMounted(loadExam);
         </button>
 
         <div class="flex flex-wrap items-center gap-2.5">
-          <BaseButton variant="secondary" @click="openQuestions">
+          <BaseButton v-can:any="['exam.view', 'exam.update']" variant="secondary" @click="openQuestions">
             <template #icon>
               <FileQuestion class="h-4 w-4" />
             </template>
@@ -362,7 +362,7 @@ onMounted(loadExam);
                       </div>
                       <p class="text-sm font-medium text-text">No questions attached yet</p>
                       <p class="mt-0.5 text-xs text-text/45">Use "Manage Question Paper" to add or import questions.</p>
-                      <BaseButton size="sm" class="mt-3" @click="openQuestions">
+                      <BaseButton v-can="'exam.update'" size="sm" class="mt-3" @click="openQuestions">
                         <template #icon>
                           <FileQuestion class="h-3.5 w-3.5" />
                         </template>

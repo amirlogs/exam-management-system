@@ -59,14 +59,6 @@ const typeOptions = [
     value: 'true_false',
     label: 'True / False',
   },
-  {
-    value: 'short_answer',
-    label: 'Short answer',
-  },
-  {
-    value: 'essay',
-    label: 'Essay',
-  },
 ];
 
 const difficultyOptions = [

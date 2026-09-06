@@ -188,14 +188,14 @@ onMounted(load);
         </div>
 
         <div v-if="canEdit" class="flex flex-wrap items-center gap-2">
-          <BaseButton @click="openPicker">
+          <BaseButton v-can="'exam.update'" @click="openPicker">
             <template #icon>
               <Plus class="h-4 w-4" />
             </template>
             Add questions
           </BaseButton>
 
-          <BaseButton variant="secondary" @click="openImport">
+          <BaseButton v-can="'exam.update'" variant="secondary" @click="openImport">
             <template #icon>
               <Upload class="h-4 w-4" />
             </template>

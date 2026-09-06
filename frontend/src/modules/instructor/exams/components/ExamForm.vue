@@ -3,6 +3,7 @@ import { computed, ref } from 'vue';
 import BaseButton from '@/shared/components/ui/BaseButton.vue';
 import BaseInput from '@/shared/components/ui/BaseInput.vue';
 import BaseSelect from '@/shared/components/ui/BaseSelect.vue';
+import DurationSelector from './DurationSelector.vue';
 
 import type { ExamComposition, ExamType } from '../types/exam';
 
@@ -32,9 +33,6 @@ const mcqMarks = ref(1);
 const trueFalseEnabled = ref(true);
 const trueFalseMarks = ref(2);
 
-const essayEnabled = ref(false);
-const shortAnswerEnabled = ref(false);
-
 const typeOptions = [
   {
     value: 'MIDTERM',
@@ -63,7 +61,7 @@ const canSubmit = computed(() => {
     return false;
   }
 
-  return mcqEnabled.value || trueFalseEnabled.value || essayEnabled.value || shortAnswerEnabled.value;
+  return mcqEnabled.value || trueFalseEnabled.value;
 });
 
 function submit() {
@@ -83,16 +81,6 @@ function submit() {
     const marks = Number(trueFalseMarks.value);
     composition.true_false = { marks_each: marks };
     composition.TRUE_FALSE = { marks_each: marks };
-  }
-
-  if (shortAnswerEnabled.value) {
-    composition.short_answer = {};
-    composition.SHORT_ANSWER = {};
-  }
-
-  if (essayEnabled.value) {
-    composition.essay = {};
-    composition.ESSAY = {};
   }
 
   emit('submit', {
@@ -117,8 +105,13 @@ function submit() {
           <BaseInput v-model="title" label="Exam title" placeholder="e.g. Midterm Examination — Spring 2026" />
         </div>
 
-        <BaseSelect v-model="type" label="Exam type" :options="typeOptions" />
-        <BaseInput v-model="duration" label="Duration (minutes)" type="number" min="30" />
+        <div class="md:col-span-2">
+          <BaseSelect v-model="type" label="Exam type" :options="typeOptions" />
+        </div>
+
+        <div class="md:col-span-2 pt-1">
+          <DurationSelector v-model="duration" :min="30" />
+        </div>
       </div>
     </div>
 
@@ -149,22 +142,6 @@ function submit() {
             </div>
           </div>
           <BaseInput v-if="trueFalseEnabled" v-model="trueFalseMarks" class="w-28" type="number" min="1" />
-        </label>
-
-        <label class="flex items-center gap-3 rounded-xl border border-border bg-bg/50 p-4 transition hover:bg-bg">
-          <input v-model="shortAnswerEnabled" type="checkbox" class="h-4 w-4 rounded accent-accent" />
-          <div>
-            <p class="text-sm font-medium text-text">Short Answer</p>
-            <p class="text-xs text-text/50">Custom marks allocated when questions are attached.</p>
-          </div>
-        </label>
-
-        <label class="flex items-center gap-3 rounded-xl border border-border bg-bg/50 p-4 transition hover:bg-bg">
-          <input v-model="essayEnabled" type="checkbox" class="h-4 w-4 rounded accent-accent" />
-          <div>
-            <p class="text-sm font-medium text-text">Essay</p>
-            <p class="text-xs text-text/50">Custom marks allocated when questions are attached.</p>
-          </div>
         </label>
       </div>
     </div>

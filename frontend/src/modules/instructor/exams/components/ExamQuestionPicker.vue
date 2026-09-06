@@ -41,8 +41,6 @@ const typeOptions = [
   { value: '', label: 'All types' },
   { value: 'MCQ', label: 'MCQ' },
   { value: 'TRUE_FALSE', label: 'True / False' },
-  { value: 'SHORT_ANSWER', label: 'Short Answer' },
-  { value: 'ESSAY', label: 'Essay' },
 ];
 
 const difficultyOptions = [
@@ -354,7 +352,7 @@ onMounted(loadQuestions);
         <div class="flex items-center gap-2.5">
           <BaseButton variant="secondary" @click="emit('close')"> Cancel </BaseButton>
 
-          <BaseButton :disabled="selectedCount === 0" :loading="props.loading" @click="submitBulk">
+          <BaseButton v-can="'exam.update'" :disabled="selectedCount === 0" :loading="props.loading" @click="submitBulk">
             Add {{ selectedCount > 0 ? selectedCount : '' }} Question{{ selectedCount === 1 ? '' : 's' }}
           </BaseButton>
         </div>

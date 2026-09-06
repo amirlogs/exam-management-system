@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount, ref, computed } from 'vue';
+import { onMounted, ref, computed } from 'vue';
 
-import { BookOpen, Check, Plus, Trash2, RefreshCw, Power, Maximize2, Minimize2, Pencil } from 'lucide-vue-next';
+import { BookOpen, Check, Plus, Trash2, RefreshCw, Power, Pencil } from 'lucide-vue-next';
 
 import BaseDialog from '@/shared/components/ui/BaseDialog.vue';
 import BaseButton from '@/shared/components/ui/BaseButton.vue';
@@ -77,30 +77,6 @@ const courseOptions = computed(() =>
 
 /*
 |--------------------------------------------------------------------------
-| Fullscreen
-|--------------------------------------------------------------------------
-*/
-
-const isFullscreen = ref(false);
-
-async function toggleFullscreen() {
-  try {
-    if (!document.fullscreenElement) {
-      await document.documentElement.requestFullscreen();
-    } else {
-      await document.exitFullscreen();
-    }
-  } catch (error) {
-    console.error('Fullscreen error:', error);
-  }
-}
-
-function handleFullscreenChange() {
-  isFullscreen.value = !!document.fullscreenElement;
-}
-
-/*
-|--------------------------------------------------------------------------
 | Loading
 |--------------------------------------------------------------------------
 */
@@ -163,14 +139,8 @@ function onProgramChange(id: string) {
 */
 
 onMounted(async () => {
-  document.addEventListener('fullscreenchange', handleFullscreenChange);
-
   await loadPrograms();
   await loadCurricula();
-});
-
-onBeforeUnmount(() => {
-  document.removeEventListener('fullscreenchange', handleFullscreenChange);
 });
 
 /*
@@ -445,7 +415,7 @@ async function confirmRemove() {
 
     <div class="border-b border-border pb-5">
       <div class="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
-        <!-- LEFT -->
+        <!-- LEFT: Title, Description & Program Picker -->
         <div class="min-w-0">
           <h1 class="font-display text-2xl font-bold text-text">Curriculum</h1>
 
@@ -454,16 +424,19 @@ async function confirmRemove() {
           <div class="mt-4 w-full max-w-xs">
             <label class="mb-1.5 block text-xs font-bold uppercase tracking-wide text-text/60"> Program </label>
 
-            <BaseSelect :model-value="String(selectedProgramId ?? '')" :options="programOptions" placeholder="Select program" @update:model-value="onProgramChange" />
+            <BaseSelect
+              :model-value="String(selectedProgramId ?? '')"
+              :options="programOptions"
+              placeholder="Select program"
+              @update:model-value="onProgramChange" />
           </div>
         </div>
 
-        <!-- RIGHT UTILITIES -->
+        <!-- RIGHT: Refresh Button -->
         <div class="flex shrink-0 items-center justify-end gap-2">
-          <!-- Refresh -->
           <button
             type="button"
-            class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-surface text-text/60 transition-colors hover:border-accent/40 hover:text-accent disabled:pointer-events-none disabled:opacity-50"
+            class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-surface text-text/60 transition-colors hover:border-accent/40 hover:text-accent disabled:pointer-events-none disabled:opacity-50 cursor-pointer"
             title="Refresh"
             :disabled="loadingCurricula"
             @click="loadCurricula">
@@ -472,17 +445,6 @@ async function confirmRemove() {
               :class="{
                 'animate-spin': loadingCurricula,
               }" />
-          </button>
-
-          <!-- Fullscreen -->
-          <button
-            type="button"
-            class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-surface text-text/60 transition-colors hover:border-accent/40 hover:text-accent"
-            :title="isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'"
-            @click="toggleFullscreen">
-            <Minimize2 v-if="isFullscreen" class="h-4 w-4" />
-
-            <Maximize2 v-else class="h-4 w-4" />
           </button>
         </div>
       </div>
@@ -501,7 +463,7 @@ async function confirmRemove() {
               v-for="curriculum in curricula"
               :key="curriculum.id"
               type="button"
-              class="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors"
+              class="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors cursor-pointer"
               :class="curriculum.id === selectedCurriculumId ? 'bg-accent/10 text-accent' : 'text-text/60 hover:bg-text/5 hover:text-text'"
               @click="selectedCurriculumId = curriculum.id">
               {{ curriculum.version }}
@@ -512,7 +474,7 @@ async function confirmRemove() {
             <button
               v-can="'curriculum.create'"
               type="button"
-              class="flex items-center gap-1 rounded-md px-3 py-1.5 text-sm text-text/50 transition-colors hover:bg-text/5 hover:text-text"
+              class="flex items-center gap-1 rounded-md px-3 py-1.5 text-sm text-text/50 transition-colors hover:bg-text/5 hover:text-text cursor-pointer"
               @click="openVersionModal">
               <Plus class="h-3.5 w-3.5" />
 
@@ -535,7 +497,7 @@ async function confirmRemove() {
           <button
             v-can="'curriculum.update'"
             type="button"
-            class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-surface text-text/50 transition-colors hover:border-accent/40 hover:text-accent"
+            class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-surface text-text/50 transition-colors hover:border-accent/40 hover:text-accent cursor-pointer"
             title="Edit version"
             @click="openEditVersionModal">
             <Pencil class="h-4 w-4" />

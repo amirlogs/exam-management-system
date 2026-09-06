@@ -52,11 +52,9 @@ async function onSubmit() {
     <form class="space-y-5" @submit.prevent="onSubmit">
       <div>
         <BaseInput v-model="email" label="Email Address" type="email" placeholder="example@email.com" :error="fieldErrors.email" />
-        <p v-if="fieldErrors.email" class="text-xs text-red-600 mt-1">{{ fieldErrors.email }}</p>
       </div>
       <div>
         <BaseInput v-model="password" label="Password" type="password" placeholder="••••••••" :error="fieldErrors.password" />
-        <p v-if="fieldErrors.password" class="text-xs text-red-600 mt-1">{{ fieldErrors.password }}</p>
       </div>
 
       <AlertBanner v-if="authStore.error" variant="error">

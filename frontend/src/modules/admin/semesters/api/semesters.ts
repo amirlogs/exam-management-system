@@ -7,12 +7,29 @@ interface ListResponse<T> {
   pagination: Pagination;
 }
 
-export async function getSemesters(page = 1, perPage = 12): Promise<ListResponse<Semester>> {
-  const res = await api.get('/semesters', { params: { page, per_page: perPage } });
+export interface SemesterFilters {
+  academic_year?: string | number;
+  status?: string;
+  search?: string;
+}
+
+export async function getSemesters(page = 1, perPage = 12, filters?: SemesterFilters): Promise<ListResponse<Semester>> {
+  const params: Record<string, any> = { page, per_page: perPage };
+  if (filters?.academic_year) params.academic_year = filters.academic_year;
+  if (filters?.status) params.status = filters.status;
+  if (filters?.search) params.search = filters.search;
+
+  const res = await api.get('/semesters', { params });
   return res.data;
 }
-export async function getArchivedSemesters(page = 1, perPage = 12): Promise<ListResponse<Semester>> {
-  const res = await api.get('/semesters/archived', { params: { page, per_page: perPage } });
+
+export async function getArchivedSemesters(page = 1, perPage = 12, filters?: SemesterFilters): Promise<ListResponse<Semester>> {
+  const params: Record<string, any> = { page, per_page: perPage };
+  if (filters?.academic_year) params.academic_year = filters.academic_year;
+  if (filters?.status) params.status = filters.status;
+  if (filters?.search) params.search = filters.search;
+
+  const res = await api.get('/semesters/archived', { params });
   return res.data;
 }
 export async function createSemester(data: SaveSemesterData) {

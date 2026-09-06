@@ -205,12 +205,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/grades/publish', [GradingController::class, 'publish'])->middleware('permission:grade.publish');
 
 
-
     // ======================== QUESTION FLAGS ========================
     Route::post('/questions/{question}/flags', [QuestionFlagController::class, 'store'])->middleware('permission:question.flag');
     Route::get('/questions/{question}/flags', [QuestionFlagController::class, 'index'])->middleware('permission:question.view');
     Route::patch('/question-flags/{flag}/resolve', [QuestionFlagController::class, 'resolve'])->middleware('permission:question.update');
-
 
     // ====================== RESULTS =============================
     // Route::post('/results/generate', [ResultController::class, 'generate'])->middleware('permission:result.generate');

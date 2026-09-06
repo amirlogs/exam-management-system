@@ -4,6 +4,8 @@ import { Archive, CalendarClock, Check, Clock, Clock3, Play, RotateCcw, Send, Sq
 
 import BaseButton from '@/shared/components/ui/BaseButton.vue';
 import BaseInput from '@/shared/components/ui/BaseInput.vue';
+import CalendarSelector from '@/shared/components/ui/CalendarSelector.vue';
+import DurationSelector from './DurationSelector.vue';
 
 import type { Exam } from '../types/exam';
 
@@ -79,7 +81,7 @@ function submitExtend() {
 <template>
   <div class="flex flex-wrap items-center gap-2">
     <!-- Draft State Actions -->
-    <BaseButton v-if="status === 'draft'" :loading="loading" @click="emit('submit')">
+    <BaseButton v-if="status === 'draft'" v-can="'exam.submit'" :loading="loading" @click="emit('submit')">
       <template #icon>
         <Send class="h-4 w-4" />
       </template>
@@ -88,14 +90,14 @@ function submitExtend() {
 
     <!-- Pending Approval State Actions -->
     <template v-if="status === 'pending_approval'">
-      <BaseButton variant="primary" :loading="loading" @click="emit('approve')">
+      <BaseButton v-can="'exam.approve'" variant="primary" :loading="loading" @click="emit('approve')">
         <template #icon>
           <Check class="h-4 w-4" />
         </template>
         Approve
       </BaseButton>
 
-      <BaseButton variant="secondary" :loading="loading" @click="emit('revert')">
+      <BaseButton v-can="'exam.revert'" variant="secondary" :loading="loading" @click="emit('revert')">
         <template #icon>
           <RotateCcw class="h-4 w-4" />
         </template>
@@ -103,6 +105,7 @@ function submitExtend() {
       </BaseButton>
 
       <button
+        v-can="'exam.reject'"
         type="button"
         class="inline-flex h-9 items-center gap-1.5 rounded-lg border border-error/30 px-3 text-xs font-medium text-error hover:bg-error/10 transition-colors"
         @click="showReject = true">
@@ -113,7 +116,7 @@ function submitExtend() {
 
     <!-- Approved State Actions -->
     <template v-if="status === 'approved'">
-      <BaseButton :loading="loading" @click="openSchedule">
+      <BaseButton v-can="'exam.schedule'" :loading="loading" @click="openSchedule">
         <template #icon>
           <Clock3 class="h-4 w-4" />
         </template>
@@ -121,6 +124,7 @@ function submitExtend() {
       </BaseButton>
 
       <button
+        v-can="'exam.cancel'"
         type="button"
         class="inline-flex h-9 items-center gap-1.5 rounded-lg border border-error/30 px-3 text-xs font-medium text-error hover:bg-error/10 transition-colors"
         @click="emit('cancel')">
@@ -131,14 +135,14 @@ function submitExtend() {
 
     <!-- Scheduled State Actions -->
     <template v-if="status === 'scheduled'">
-      <BaseButton :loading="loading" @click="emit('publish')">
+      <BaseButton v-can:any="['exam.publish', 'exam.activate']" :loading="loading" @click="emit('publish')">
         <template #icon>
           <Play class="h-4 w-4" />
         </template>
         Publish & activate
       </BaseButton>
 
-      <BaseButton variant="secondary" :loading="loading" @click="openSchedule">
+      <BaseButton v-can="'exam.schedule.update'" variant="secondary" :loading="loading" @click="openSchedule">
         <template #icon>
           <CalendarClock class="h-4 w-4" />
         </template>
@@ -146,6 +150,7 @@ function submitExtend() {
       </BaseButton>
 
       <button
+        v-can="'exam.cancel'"
         type="button"
         class="inline-flex h-9 items-center gap-1.5 rounded-lg border border-error/30 px-3 text-xs font-medium text-error hover:bg-error/10 transition-colors"
         @click="emit('cancel')">
@@ -156,14 +161,14 @@ function submitExtend() {
 
     <!-- Active State Actions -->
     <template v-if="status === 'active'">
-      <BaseButton variant="danger" :loading="loading" @click="emit('end')">
+      <BaseButton v-can="'exam.end'" variant="danger" :loading="loading" @click="emit('end')">
         <template #icon>
           <Square class="h-4 w-4" />
         </template>
         End exam
       </BaseButton>
 
-      <BaseButton variant="secondary" :loading="loading" @click="showExtend = true">
+      <BaseButton v-can="'exam.extend'" variant="secondary" :loading="loading" @click="showExtend = true">
         <template #icon>
           <Clock class="h-4 w-4" />
         </template>
@@ -174,6 +179,7 @@ function submitExtend() {
     <!-- Completed State Actions -->
     <template v-if="status === 'completed'">
       <button
+        v-can="'exam.archive'"
         type="button"
         class="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border px-3 text-xs font-medium text-text/70 hover:border-accent/40 hover:text-text transition-colors"
         @click="emit('archive')">
@@ -184,7 +190,7 @@ function submitExtend() {
 
     <!-- Schedule / Reschedule Modal -->
     <div v-if="showSchedule" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-xs p-4">
-      <div class="w-full max-w-md rounded-2xl border border-border bg-surface p-6 shadow-2xl">
+      <div class="w-full max-w-lg rounded-2xl border border-border bg-surface p-6 shadow-2xl max-h-[90vh] flex flex-col">
         <div class="flex items-start justify-between">
           <div>
             <h3 class="font-display text-base font-bold text-text">
@@ -192,21 +198,21 @@ function submitExtend() {
             </h3>
             <p class="mt-1 text-xs text-text/50">Specify the starting date and time for students to sit for this exam.</p>
           </div>
-          <button type="button" class="rounded p-1 text-text/40 hover:text-text" @click="showSchedule = false">
+          <button type="button" class="rounded p-1 text-text/40 hover:text-text cursor-pointer" @click="showSchedule = false">
             <X class="h-4 w-4" />
           </button>
         </div>
 
-        <div class="mt-4 space-y-4">
-          <div>
-            <label class="block mb-1.5 text-xs font-medium text-text">Start Date & Time</label>
-            <input
-              v-model="scheduleStart"
-              type="datetime-local"
-              class="w-full rounded-lg border border-border bg-bg px-3 py-2 text-sm text-text outline-none focus:border-accent" />
-          </div>
+        <div class="mt-4 space-y-4 overflow-y-auto pr-1 flex-1">
+          <CalendarSelector
+            v-model="scheduleStart"
+            label="Examination Start Window" />
 
-          <BaseInput v-if="status === 'scheduled'" v-model="scheduleDuration" type="number" min="30" label="Duration (minutes)" />
+          <DurationSelector
+            v-if="status === 'scheduled'"
+            v-model="scheduleDuration"
+            :min="30"
+            label="Adjust Duration" />
         </div>
 
         <div class="mt-6 flex justify-end gap-2">
@@ -234,7 +240,26 @@ function submitExtend() {
           </button>
         </div>
 
-        <div class="mt-4">
+        <div class="mt-4 space-y-3">
+          <div>
+            <label class="block mb-1.5 text-xs font-bold uppercase tracking-wide text-text/70">Quick Add</label>
+            <div class="grid grid-cols-4 gap-2">
+              <button
+                v-for="mins in [10, 15, 30, 45]"
+                :key="mins"
+                type="button"
+                class="rounded-lg border py-1.5 text-xs font-semibold transition cursor-pointer"
+                :class="
+                  extendMinutes === mins
+                    ? 'border-accent bg-accent/10 text-accent'
+                    : 'border-border bg-bg/50 text-text/75 hover:border-text/30 hover:bg-bg'
+                "
+                @click="extendMinutes = mins">
+                +{{ mins }}m
+              </button>
+            </div>
+          </div>
+
           <BaseInput v-model="extendMinutes" type="number" min="1" label="Additional minutes" placeholder="e.g. 15" />
         </div>
 

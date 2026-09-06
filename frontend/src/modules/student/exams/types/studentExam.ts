@@ -1,6 +1,6 @@
 export interface StudentExamAttemptInfo {
   id: number;
-  status: 'in_progress' | 'completed' | 'graded';
+  status: 'in_progress' | 'completed' | 'submitted' | 'auto_submitted' | 'graded' | string;
   started_at: string | null;
   submitted_at: string | null;
   score: number | null;

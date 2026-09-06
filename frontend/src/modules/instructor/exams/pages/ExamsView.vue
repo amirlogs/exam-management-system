@@ -333,7 +333,7 @@ onBeforeUnmount(() => {
         @refresh="handleRefresh"
         @columns="showColumns = !showColumns">
         <template #actions>
-          <BaseButton :disabled="!selectedTeachingId" @click="createExam">
+          <BaseButton v-can="'exam.create'" :disabled="!selectedTeachingId" @click="createExam">
             <template #icon>
               <Plus class="h-4 w-4" />
             </template>
@@ -475,6 +475,7 @@ onBeforeUnmount(() => {
                   :extra-actions="getRowExtraActions(exam)"
                   :show-edit="false"
                   :show-archive="exam.status === 'draft' || exam.status === 'completed'"
+                  archive-permission="exam.archive"
                   @action="handleRowAction($event, exam)"
                   @archive="openArchive(exam)" />
               </td>
@@ -492,7 +493,7 @@ onBeforeUnmount(() => {
                   <p class="mt-1 text-sm text-text/45">
                     {{ hasActiveFilters || search ? 'Try adjusting your filters or search query.' : 'Create your first exam for this course offering to get started.' }}
                   </p>
-                  <BaseButton v-if="!hasActiveFilters && !search && selectedTeachingId" class="mt-4" @click="createExam">
+                  <BaseButton v-if="!hasActiveFilters && !search && selectedTeachingId" v-can="'exam.create'" class="mt-4" @click="createExam">
                     <template #icon>
                       <Plus class="h-4 w-4" />
                     </template>

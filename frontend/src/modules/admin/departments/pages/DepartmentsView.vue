@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { onMounted, ref, computed, watch } from 'vue';
-import { Archive, Layers, Plus, RotateCcw } from 'lucide-vue-next';
+import { onMounted, onBeforeUnmount, ref, computed, watch } from 'vue';
+import { Archive, Check, Layers, Plus, RotateCcw } from 'lucide-vue-next';
 
 import ResourceToolbar from '@/shared/components/ResourceToolbar.vue';
 import TableRowActions from '@/shared/components/TableRowActions.vue';
@@ -24,6 +24,55 @@ import type { Department } from '../types/department';
 import type { College } from '@/modules/admin/colleges/types/college';
 
 const uiStore = useUiStore();
+
+// Column Visibility State
+type DepartmentColumn = 'department' | 'college' | 'type' | 'created_at';
+
+const showColumns = ref(false);
+const columns = [
+  { key: 'department' as DepartmentColumn, label: 'Department', required: true },
+  { key: 'college' as DepartmentColumn, label: 'College', required: false },
+  { key: 'type' as DepartmentColumn, label: 'Type', required: false },
+  { key: 'created_at' as DepartmentColumn, label: 'Created', required: false },
+];
+
+const visibleColumns = ref<DepartmentColumn[]>(['department', 'college', 'type', 'created_at']);
+
+const isColumnVisible = (column: DepartmentColumn) => {
+  return visibleColumns.value.includes(column);
+};
+
+function toggleColumn(column: DepartmentColumn) {
+  const config = columns.find((item) => item.key === column);
+  if (config?.required) return;
+  if (isColumnVisible(column)) {
+    visibleColumns.value = visibleColumns.value.filter((item) => item !== column);
+  } else {
+    visibleColumns.value = [...visibleColumns.value, column];
+  }
+}
+
+function resetColumns() {
+  visibleColumns.value = ['department', 'college', 'type', 'created_at'];
+}
+
+function toggleColumnSelector() {
+  setTimeout(() => {
+    showColumns.value = !showColumns.value;
+  }, 0);
+}
+
+function handleColumnOutsideClick(event: MouseEvent) {
+  if (!showColumns.value) return;
+  const target = event.target as HTMLElement;
+  const clickedTrigger = target.closest('[title="Show/hide columns"]');
+  const clickedMenu = target.closest('[data-columns-menu]');
+  if (!clickedTrigger && !clickedMenu) {
+    showColumns.value = false;
+  }
+}
+
+const visibleColumnCount = computed(() => visibleColumns.value.length);
 
 //  Filters
 const filters = ref({
@@ -122,6 +171,11 @@ async function loadCollegeOptions() {
 onMounted(() => {
   loadCollegeOptions();
   crud.load(1);
+  document.addEventListener('click', handleColumnOutsideClick);
+});
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', handleColumnOutsideClick);
 });
 
 // Filter changes
@@ -292,6 +346,7 @@ function typeLabel(type: string) {
       :show-search="true"
       :show-filter="true"
       :show-refresh="true"
+      :show-columns="true"
       :show-fullscreen="true"
       :show-tabs="true"
       :active-tab="crud.activeTab.value"
@@ -302,10 +357,58 @@ function typeLabel(type: string) {
       @clear-filters="clearFilters"
       @change-tab="crud.changeTab"
       @update:search="crud.setSearch"
-      @refresh="retry">
+      @refresh="retry"
+      @columns="toggleColumnSelector">
       <!-- Primary Action -->
       <template #actions>
         <BaseButton v-can="'department.create'" :icon="Plus" @click="openCreate"> Add department </BaseButton>
+      </template>
+
+      <!-- Column Picker Menu -->
+      <template #columns>
+        <div
+          v-if="showColumns"
+          data-columns-menu
+          class="absolute right-0 top-full mt-2 z-50 w-56 rounded-xl border border-border bg-surface p-2 shadow-xl">
+          <div class="flex items-center justify-between px-2 py-1.5">
+            <span class="text-xs font-semibold text-text">Columns</span>
+            <button
+              type="button"
+              class="text-xs font-medium text-text/50 transition-colors hover:text-accent cursor-pointer"
+              @click="resetColumns">
+              Reset
+            </button>
+          </div>
+
+          <div class="my-1 border-t border-border" />
+
+          <button
+            v-for="column in columns"
+            :key="column.key"
+            type="button"
+            class="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm transition-colors hover:bg-text/5 cursor-pointer"
+            @click="toggleColumn(column.key)">
+            <span
+              class="flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors"
+              :class="isColumnVisible(column.key) ? 'border-accent bg-accent text-white' : 'border-border bg-surface'">
+              <Check v-if="isColumnVisible(column.key)" class="h-3 w-3" />
+            </span>
+
+            <span class="flex-1 text-xs font-medium text-text/80">
+              {{ column.label }}
+            </span>
+
+            <span v-if="column.required" class="text-[10px] font-mono text-text/40">
+              Req
+            </span>
+          </button>
+
+          <div class="mt-1 border-t border-border pt-1">
+            <div class="px-2 py-1 text-[11px] text-text/40">
+              {{ visibleColumnCount }} columns visible
+            </div>
+          </div>
+        </div>
       </template>
 
       <!-- Filters -->
@@ -334,13 +437,13 @@ function typeLabel(type: string) {
           <!-- HEAD -->
           <thead>
             <tr class="border-b border-border bg-text/2.5">
-              <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-text/50">Department</th>
+              <th v-if="isColumnVisible('department')" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-text/50">Department</th>
 
-              <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-text/50">College</th>
+              <th v-if="isColumnVisible('college')" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-text/50">College</th>
 
-              <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-text/50">Type</th>
+              <th v-if="isColumnVisible('type')" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-text/50">Type</th>
 
-              <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-text/50">Created</th>
+              <th v-if="isColumnVisible('created_at')" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-text/50">Created</th>
 
               <th class="w-16 px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-text/50">
                 <span class="sr-only"> Actions </span>
@@ -351,7 +454,7 @@ function typeLabel(type: string) {
           <!-- LOADING -->
           <tbody v-if="crud.loading.value" class="divide-y divide-border">
             <tr v-for="row in 6" :key="row">
-              <td class="px-4 py-4">
+              <td v-if="isColumnVisible('department')" class="px-4 py-4">
                 <div class="flex items-center gap-3">
                   <div class="h-9 w-9 animate-pulse rounded-md bg-text/5" />
 
@@ -359,15 +462,15 @@ function typeLabel(type: string) {
                 </div>
               </td>
 
-              <td class="px-4 py-4">
+              <td v-if="isColumnVisible('college')" class="px-4 py-4">
                 <div class="h-3.5 w-32 animate-pulse rounded bg-text/5" />
               </td>
 
-              <td class="px-4 py-4">
+              <td v-if="isColumnVisible('type')" class="px-4 py-4">
                 <div class="h-6 w-24 animate-pulse rounded bg-text/5" />
               </td>
 
-              <td class="px-4 py-4">
+              <td v-if="isColumnVisible('created_at')" class="px-4 py-4">
                 <div class="h-3.5 w-24 animate-pulse rounded bg-text/5" />
               </td>
 
@@ -378,7 +481,7 @@ function typeLabel(type: string) {
           <!-- DATA -->
           <tbody v-else-if="crud.currentList().length" class="divide-y divide-border">
             <tr v-for="dept in crud.currentList()" :key="dept.id" class="group transition-colors hover:bg-text/2">
-              <td class="px-4 py-3.5">
+              <td v-if="isColumnVisible('department')" class="px-4 py-3.5">
                 <div class="flex items-center gap-3">
                   <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border bg-bg text-text/50">
                     <Layers class="h-4 w-4" />
@@ -390,19 +493,19 @@ function typeLabel(type: string) {
                 </div>
               </td>
 
-              <td class="px-4 py-3.5">
+              <td v-if="isColumnVisible('college')" class="px-4 py-3.5">
                 <span class="text-sm text-text/60">
                   {{ dept.college?.name || '—' }}
                 </span>
               </td>
 
-              <td class="px-4 py-3.5">
+              <td v-if="isColumnVisible('type')" class="px-4 py-3.5">
                 <BaseBadge :variant="typeVariant(dept.type)">
                   {{ typeLabel(dept.type) }}
                 </BaseBadge>
               </td>
 
-              <td class="px-4 py-3.5">
+              <td v-if="isColumnVisible('created_at')" class="px-4 py-3.5">
                 <span class="font-mono text-xs tabular-nums text-text/60">
                   {{ dept.created_at }}
                 </span>
@@ -424,7 +527,7 @@ function typeLabel(type: string) {
           <!-- EMPTY -->
           <tbody v-else>
             <tr>
-              <td colspan="5" class="px-6 py-16 text-center text-sm text-text/55">
+              <td :colspan="visibleColumnCount + 1" class="px-6 py-16 text-center text-sm text-text/55">
                 {{ emptyStateText }}
               </td>
             </tr>
@@ -432,7 +535,13 @@ function typeLabel(type: string) {
         </table>
       </div>
 
-      <AppPagination :pagination="crud.currentPagination()" @change-page="crud.load" />
+      <!-- PAGINATION -->
+      <div class="border-t border-border px-4 py-3">
+        <AppPagination
+          :pagination="crud.currentPagination()"
+          :loading="crud.loading.value"
+          @change-page="crud.load" />
+      </div>
     </div>
   </div>
 

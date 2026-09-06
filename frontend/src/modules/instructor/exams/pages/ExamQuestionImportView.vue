@@ -190,7 +190,7 @@ onMounted(loadContext);
         <div class="flex items-center justify-between border-t border-border pt-4">
           <BaseButton variant="secondary" @click="showCancelModal = true"> Cancel import </BaseButton>
 
-          <BaseButton :disabled="record.error_count > 0 || record.total_rows === 0" @click="showConfirmModal = true">
+          <BaseButton v-can="'exam.update'" :disabled="record.error_count > 0 || record.total_rows === 0" @click="showConfirmModal = true">
             {{ record.error_count > 0 ? `Resolve ${record.error_count} invalid rows` : 'Confirm & attach to exam' }}
           </BaseButton>
         </div>

@@ -102,6 +102,7 @@ function getDifficultyVariant(difficulty: string | null | undefined): 'neutral' 
             <td class="px-6 py-4 text-right">
               <button
                 v-if="canRemove"
+                v-can="'exam.update'"
                 type="button"
                 class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-text/40 transition hover:bg-error/10 hover:text-error"
                 title="Remove question"

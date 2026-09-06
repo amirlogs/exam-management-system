@@ -85,8 +85,8 @@ function closeMobileMenu() {
             <GraduationCap class="w-5 h-5 text-accent" />
           </div>
           <div class="hidden sm:block overflow-hidden leading-tight">
-            <h1 class="text-base font-bold text-accent truncate">Academia</h1>
-            <p class="text-[10px] font-bold tracking-wider uppercase text-text/40 truncate">Student Assessment</p>
+            <h1 class="text-sm font-bold text-accent truncate">University Exam</h1>
+            <p class="text-[10px] font-mono tracking-wider uppercase text-text/40 truncate">Student Portal</p>
           </div>
         </div>
 

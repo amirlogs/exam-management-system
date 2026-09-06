@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router';
 import {
   Clock,
   Flag,
+  Bookmark,
   Check,
   ArrowLeft,
   ArrowRight,
@@ -20,6 +21,7 @@ import {
   Minimize2,
   Wifi,
   WifiOff,
+  GraduationCap,
 } from 'lucide-vue-next';
 
 import BaseButton from '@/shared/components/ui/BaseButton.vue';
@@ -243,6 +245,25 @@ async function handleTimeoutSubmission() {
   await submitFinalExam();
 }
 
+function isExamEndedError(err: any): boolean {
+  const msg = (err?.response?.data?.message || err?.message || '').toLowerCase();
+  const status = err?.response?.status;
+  return (
+    status === 403 &&
+    (msg.includes('completed') ||
+      msg.includes('not in progress') ||
+      msg.includes('already submitted') ||
+      msg.includes('ended') ||
+      msg.includes('closed'))
+  );
+}
+
+function handleExamEnded() {
+  if (timerInterval) clearInterval(timerInterval);
+  uiStore.showToast('This examination has concluded. Your answers have been submitted.', 'info');
+  router.push({ name: 'student.exams.overview', params: { examId } });
+}
+
 async function selectOption(optionId: number) {
   if (!currentQuestion.value || !attemptId.value) return;
   const qId = currentQuestion.value.exam_question_id;
@@ -263,6 +284,10 @@ async function selectOption(optionId: number) {
     });
     answersState.value[qId].lastSavedAt = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   } catch (err: any) {
+    if (isExamEndedError(err)) {
+      handleExamEnded();
+      return;
+    }
     console.error('Error saving option', err);
     uiStore.showToast('Failed to save answer choice. Please retry.', 'error');
   } finally {
@@ -297,6 +322,10 @@ async function saveWrittenAnswer(showToast = true) {
       uiStore.showToast('Answer response saved successfully.', 'success');
     }
   } catch (err: any) {
+    if (isExamEndedError(err)) {
+      handleExamEnded();
+      return;
+    }
     handleApiError(err, uiStore, undefined, 'Failed to save written answer.');
   } finally {
     savingAnswer.value = false;
@@ -350,6 +379,10 @@ async function submitFinalExam() {
     uiStore.showToast('Examination submitted successfully!', 'success');
     router.push({ name: 'student.exams.overview', params: { examId } });
   } catch (err: any) {
+    if (isExamEndedError(err)) {
+      handleExamEnded();
+      return;
+    }
     handleApiError(err, uiStore, undefined, 'Failed to submit exam attempt.');
   } finally {
     submitting.value = false;
@@ -376,56 +409,51 @@ onUnmounted(() => {
 
 <template>
   <div class="min-h-screen bg-bg flex flex-col font-sans select-none">
-    <!-- ── Sticky Academic Exam Header ─────────────────────────────── -->
-    <header class="w-full bg-surface border-b border-border px-4 sm:px-6 py-3 flex items-center justify-between shadow-2xs sticky top-0 z-40">
-      <!-- Left: Title and Course Identity -->
+    <!-- ── Minimal Academic Exam Top Bar ─────────────────────────────── -->
+    <header class="w-full bg-surface border-b border-border px-6 lg:px-8 py-3.5 flex items-center justify-between shadow-2xs sticky top-0 z-40">
+      <!-- Left: University Exam Management Portal -->
       <div class="flex items-center gap-3 min-w-0">
-        <span class="w-2.5 h-2.5 rounded-full bg-accent animate-pulse shrink-0" />
-        <h1 class="text-sm sm:text-base font-bold text-text tracking-tight truncate font-display">
-          {{ exam?.course?.code }}: {{ exam?.title }}
-        </h1>
-        <span class="text-xs text-text/50 font-mono hidden md:inline-block truncate max-w-[220px]">
-          / {{ exam?.course?.name }}
-        </span>
+        <div class="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center shrink-0">
+          <GraduationCap class="w-4.5 h-4.5 text-accent" />
+        </div>
+        <div class="min-w-0">
+          <h1 class="text-sm font-bold text-text truncate font-display">
+            University Exam Management Portal
+          </h1>
+          <p v-if="exam?.title" class="text-[11px] font-mono text-text/50 truncate">
+            {{ exam?.course?.code ? `${exam.course.code} · ` : '' }}{{ exam.title }}
+          </p>
+        </div>
       </div>
 
-      <!-- Right: Invigilation Controls, Timer & Status -->
+      <!-- Right: Network Status, Single Calm Timer, Fullscreen -->
       <div class="flex items-center gap-3 shrink-0">
-        <!-- Connectivity status -->
+        <!-- Connectivity status (only when offline) -->
         <div
           v-if="!isOnline"
           class="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-mono font-semibold bg-error/15 text-error border border-error/30 animate-pulse"
           title="Network disconnected. Answers saved to local memory.">
           <WifiOff class="w-3.5 h-3.5" />
-          <span class="hidden sm:inline">Offline Mode</span>
+          <span class="hidden sm:inline">Offline</span>
         </div>
 
-        <!-- Session active badge -->
-        <div class="hidden sm:flex items-center gap-1.5 bg-success/10 text-success px-2.5 py-1 rounded-full font-mono text-[11px] font-semibold border border-success/20">
-          <Lock class="w-3 h-3" />
-          <span>SESSION ACTIVE</span>
-        </div>
-
-        <!-- High-contrast countdown timer -->
+        <!-- Single Calm Timer Indicator -->
         <div
-          class="flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-mono font-bold transition-colors border shadow-2xs"
+          class="flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-mono font-semibold transition-colors border shadow-2xs"
           :class="isTimeCritical ? 'bg-error/15 text-error border-error/30 animate-pulse' : 'bg-bg text-text border-border'">
           <Clock class="w-3.5 h-3.5 text-accent" :class="{ 'text-error': isTimeCritical }" />
-          <span>{{ formattedTimeRemaining }}</span>
+          <span>{{ formattedTimeRemaining }} remaining</span>
         </div>
 
         <!-- Fullscreen toggle -->
         <button
           type="button"
-          class="p-1.5 rounded-lg border border-border bg-bg text-text/70 hover:text-text hover:bg-surface transition-colors cursor-pointer hidden sm:inline-flex"
+          class="p-1.5 rounded-md border border-border bg-bg text-text/70 hover:text-text hover:bg-surface transition-colors cursor-pointer hidden sm:inline-flex"
           :title="isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen Examination Mode'"
           @click="toggleFullscreen">
           <Minimize2 v-if="isFullscreen" class="w-4 h-4" />
           <Maximize2 v-else class="w-4 h-4" />
         </button>
-
-        <div class="h-4 w-px bg-border hidden sm:block" />
-        <span class="font-mono text-xs text-text/50 hidden lg:inline-block">ID: {{ examId }}</span>
       </div>
     </header>
 
@@ -433,67 +461,55 @@ onUnmounted(() => {
     <div v-if="loading" class="flex-1 flex items-center justify-center p-12">
       <div class="flex flex-col items-center gap-4">
         <Loader2 class="w-8 h-8 animate-spin text-accent" />
-        <p class="text-sm font-medium text-text/60">Initializing secure examination chamber...</p>
+        <p class="text-sm font-medium text-text/60">Loading examination questions...</p>
       </div>
     </div>
 
     <!-- ── Main Exam Body ─────────────────────────────────────────── -->
-    <div v-else class="flex-1 flex flex-col md:flex-row w-full min-h-[calc(100vh-3.75rem)]">
-      <!-- Left Question Palette Rail -->
+    <div v-else class="flex-1 flex flex-col md:flex-row w-full min-h-[calc(100vh-3.5rem)]">
+      <!-- Left Sidebar: Question Navigation & Progress -->
       <aside class="w-full md:w-72 shrink-0 bg-surface border-b md:border-b-0 md:border-r border-border flex flex-col justify-between select-none">
-        <div class="p-4 sm:p-5 space-y-4 flex-1 overflow-y-auto">
-          <!-- Rail title & item counter -->
-          <div class="flex items-center justify-between pb-2 border-b border-border">
-            <span class="font-mono text-xs uppercase text-text/60 tracking-wider font-semibold">Question Index</span>
-            <span class="font-mono text-[11px] bg-bg border border-border px-2 py-0.5 rounded text-text font-bold">
-              {{ totalQuestions }} Items
-            </span>
-          </div>
-
-          <!-- Overall completion progress bar -->
-          <div class="space-y-1.5 bg-bg/60 border border-border/80 rounded-xl p-3">
-            <div class="flex items-center justify-between text-[11px] font-mono">
-              <span class="text-text/70">Completion Progress</span>
-              <span class="font-bold text-accent">{{ completionPercent }}%</span>
+        <div class="p-5 space-y-5 flex-1 overflow-y-auto">
+          <!-- Progress Summary -->
+          <div>
+            <div class="flex items-center justify-between text-xs text-text/70 mb-2">
+              <span class="font-medium text-text">Progress</span>
+              <span class="font-mono font-semibold text-text">{{ answeredCount }} of {{ totalQuestions }} answered</span>
             </div>
-            <div class="w-full bg-surface border border-border rounded-full h-2 overflow-hidden">
+            <div class="w-full bg-bg border border-border rounded-full h-1.5 overflow-hidden">
               <div
                 class="bg-accent h-full transition-all duration-300 rounded-full"
                 :style="{ width: `${completionPercent}%` }" />
             </div>
-            <div class="text-[10px] font-mono text-text/50 flex justify-between pt-0.5">
-              <span>{{ answeredCount }} Answered</span>
-              <span>{{ unansweredCount }} Pending</span>
-            </div>
           </div>
 
-          <!-- Palette Filter Pills -->
-          <div class="flex items-center gap-1.5 bg-bg p-1 rounded-lg border border-border text-[11px] font-mono">
+          <!-- Filter Underline Tabs -->
+          <div class="flex items-center gap-4 border-b border-border pb-2 text-xs font-mono">
             <button
               type="button"
-              class="flex-1 py-1 rounded transition-colors text-center cursor-pointer font-medium"
-              :class="paletteFilter === 'all' ? 'bg-surface text-text shadow-2xs font-bold' : 'text-text/60 hover:text-text'"
+              class="relative pb-1 transition-colors cursor-pointer"
+              :class="paletteFilter === 'all' ? 'text-text font-bold after:absolute after:-bottom-[9px] after:left-0 after:right-0 after:h-[2px] after:bg-text' : 'text-text/50 hover:text-text'"
               @click="paletteFilter = 'all'">
               All ({{ totalQuestions }})
             </button>
             <button
               type="button"
-              class="flex-1 py-1 rounded transition-colors text-center cursor-pointer font-medium"
-              :class="paletteFilter === 'unanswered' ? 'bg-surface text-text shadow-2xs font-bold' : 'text-text/60 hover:text-text'"
+              class="relative pb-1 transition-colors cursor-pointer"
+              :class="paletteFilter === 'unanswered' ? 'text-text font-bold after:absolute after:-bottom-[9px] after:left-0 after:right-0 after:h-[2px] after:bg-text' : 'text-text/50 hover:text-text'"
               @click="paletteFilter = 'unanswered'">
-              Blank ({{ unansweredCount }})
+              Unanswered ({{ unansweredCount }})
             </button>
             <button
               type="button"
-              class="flex-1 py-1 rounded transition-colors text-center cursor-pointer font-medium"
-              :class="paletteFilter === 'flagged' ? 'bg-surface text-warning shadow-2xs font-bold' : 'text-text/60 hover:text-text'"
+              class="relative pb-1 transition-colors cursor-pointer"
+              :class="paletteFilter === 'flagged' ? 'text-text font-bold after:absolute after:-bottom-[9px] after:left-0 after:right-0 after:h-[2px] after:bg-text' : 'text-text/50 hover:text-text'"
               @click="paletteFilter = 'flagged'">
-              Flag ({{ flaggedQuestions.size }})
+              Flagged ({{ flaggedQuestions.size }})
             </button>
           </div>
 
-          <!-- Question Grid (5 columns) -->
-          <div class="grid grid-cols-5 gap-2">
+          <!-- Question Grid (4 Columns) -->
+          <div class="grid grid-cols-4 gap-2">
             <template v-for="(q, idx) in questions" :key="q.id">
               <button
                 v-if="
@@ -502,178 +518,144 @@ onUnmounted(() => {
                   (paletteFilter === 'flagged' && flaggedQuestions.has(q.exam_question_id))
                 "
                 type="button"
-                class="relative h-10 rounded-lg font-mono text-xs flex items-center justify-center transition-all cursor-pointer select-none"
+                class="relative h-10 rounded-md font-mono text-xs flex items-center justify-center transition-all cursor-pointer select-none"
                 :class="[
                   currentIndex === idx
-                    ? 'bg-accent text-white font-bold shadow-md scale-105 ring-2 ring-accent ring-offset-1 ring-offset-surface'
+                    ? 'bg-surface text-accent font-bold ring-2 ring-accent shadow-xs'
                     : isQuestionAnswered(q.exam_question_id)
-                      ? 'bg-success/15 text-success font-semibold border border-success/30 hover:bg-success/25'
-                      : 'bg-bg text-text/70 hover:bg-bg/80 border border-border',
-                  flaggedQuestions.has(q.exam_question_id) && currentIndex !== idx ? '!border-warning ring-1 ring-warning/60' : '',
+                      ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 font-semibold hover:bg-emerald-500/25'
+                      : 'bg-surface text-text/70 border border-border hover:border-text/40',
+                  flaggedQuestions.has(q.exam_question_id) && currentIndex !== idx ? 'ring-1 ring-amber-500/60' : '',
                 ]"
                 @click="goToQuestion(idx)">
                 {{ idx + 1 }}
+                <!-- Flagged Dot Indicator -->
                 <span
                   v-if="flaggedQuestions.has(q.exam_question_id)"
-                  class="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-warning ring-2 ring-surface" />
+                  class="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-amber-500" />
               </button>
             </template>
           </div>
 
-          <!-- Empty filter feedback -->
+          <!-- Filter empty state -->
           <div
             v-if="paletteFilter === 'unanswered' && unansweredCount === 0"
-            class="py-3 px-2 text-center text-xs text-success font-medium bg-success/10 border border-success/20 rounded-lg">
+            class="py-3 px-2 text-center text-xs text-text/60 bg-bg border border-border rounded-md font-mono">
             All questions answered
           </div>
           <div
             v-else-if="paletteFilter === 'flagged' && flaggedQuestions.size === 0"
-            class="py-3 px-2 text-center text-xs text-text/50 bg-bg border border-border rounded-lg font-mono text-[11px]">
-            No questions flagged
-          </div>
-
-          <!-- Legend -->
-          <div class="bg-bg border border-border/80 rounded-xl p-3 space-y-2 text-xs text-text/60">
-            <div class="flex items-center gap-2">
-              <span class="w-3 h-3 rounded bg-accent inline-block shadow-2xs" />
-              <span class="font-medium text-text">Current Focus (Q{{ currentIndex + 1 }})</span>
-            </div>
-            <div class="flex items-center gap-2">
-              <span class="w-3 h-3 rounded bg-success/30 border border-success/50 inline-block" />
-              <span>Answered ({{ answeredCount }})</span>
-            </div>
-            <div class="flex items-center gap-2">
-              <span class="w-3 h-3 rounded bg-bg border border-border inline-block" />
-              <span>Unanswered ({{ unansweredCount }})</span>
-            </div>
-            <div v-if="flaggedQuestions.size > 0" class="flex items-center gap-2">
-              <span class="w-3 h-3 rounded bg-warning/40 border border-warning inline-block" />
-              <span class="text-warning font-medium">Flagged for Review ({{ flaggedQuestions.size }})</span>
-            </div>
+            class="py-3 px-2 text-center text-xs text-text/50 bg-bg border border-border rounded-md font-mono">
+            No flagged questions
           </div>
         </div>
 
-        <!-- Submit Examination CTA at Bottom of Rail -->
-        <div class="p-4 sm:p-5 border-t border-border bg-surface">
-          <BaseButton variant="primary" class="w-full font-semibold shadow-sm" @click="showSubmitModal = true">
-            <ListChecks class="w-4 h-4" />
-            <span>Finish &amp; Submit</span>
+        <!-- Left Rail Bottom Submit CTA -->
+        <div class="p-5 border-t border-border bg-surface">
+          <BaseButton variant="primary" class="w-full font-semibold shadow-xs" @click="showSubmitModal = true">
+            <Send class="w-4 h-4 mr-1.5" />
+            <span>Submit Exam</span>
           </BaseButton>
-          <p class="text-[10px] font-mono text-text/50 text-center mt-2">
-            {{ answeredCount }} of {{ totalQuestions }} questions finalized
-          </p>
         </div>
       </aside>
 
       <!-- Main Question Workspace -->
       <section class="flex-1 flex flex-col min-h-0 bg-bg overflow-y-auto">
         <div v-if="currentQuestion" class="flex-1 px-6 sm:px-12 lg:px-16 py-8 max-w-3xl mx-auto w-full space-y-6">
-          <!-- Question metadata card -->
-          <div class="flex items-center justify-between bg-surface px-6 py-3.5 rounded-xl border border-border shadow-2xs">
-            <div class="flex items-center gap-3">
-              <span class="text-base sm:text-lg font-bold text-text font-display">
-                Question {{ currentIndex + 1 }}
-                <span class="text-text/50 font-normal text-sm">of {{ totalQuestions }}</span>
-              </span>
-              <span class="text-xs font-mono bg-bg border border-border text-text/70 px-2.5 py-0.5 rounded capitalize">
-                {{ currentQuestion.type.replace('_', ' ') }}
-              </span>
+          <!-- Metadata Bar: Question Index • Type & Points / Flag Toggle -->
+          <div class="flex items-center justify-between pb-3 border-b border-border">
+            <div class="flex items-center gap-2 text-xs font-mono text-text/60">
+              <span class="font-bold text-text text-sm">Question {{ currentIndex + 1 }}</span>
+              <span>·</span>
+              <span class="capitalize">{{ currentQuestion.type.replace('_', ' ') }}</span>
+              <span>({{ currentQuestion.marks }} pt{{ currentQuestion.marks !== 1 ? 's' : '' }})</span>
             </div>
 
-            <div class="flex items-center gap-3">
-              <!-- Flag toggle -->
-              <button
-                type="button"
-                class="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-lg border transition-all cursor-pointer"
-                :class="
-                  flaggedQuestions.has(currentQuestion.exam_question_id)
-                    ? 'text-warning font-semibold bg-warning/10 border-warning/40'
-                    : 'text-text/60 hover:text-text hover:bg-bg border-border'
-                "
-                @click="toggleFlag(currentQuestion.exam_question_id)">
-                <Flag class="w-3.5 h-3.5" :class="{ 'fill-current': flaggedQuestions.has(currentQuestion.exam_question_id) }" />
-                <span>{{ flaggedQuestions.has(currentQuestion.exam_question_id) ? 'Flagged' : 'Flag' }}</span>
-              </button>
-
-              <!-- Points badge -->
-              <div class="flex items-center gap-1.5 bg-bg border border-border px-3 py-1 rounded-lg text-xs font-mono font-bold text-text">
-                <Stars class="w-3.5 h-3.5 text-accent" />
-                <span>{{ currentQuestion.marks }} pt{{ currentQuestion.marks !== 1 ? 's' : '' }}</span>
-              </div>
-            </div>
+            <!-- Flag for Review -->
+            <button
+              type="button"
+              class="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-md border transition-all cursor-pointer"
+              :class="
+                flaggedQuestions.has(currentQuestion.exam_question_id)
+                  ? 'text-amber-600 dark:text-amber-400 bg-amber-500/10 border-amber-500/40 font-semibold'
+                  : 'text-text/60 hover:text-text hover:bg-surface border-border'
+              "
+              @click="toggleFlag(currentQuestion.exam_question_id)">
+              <Bookmark class="w-3.5 h-3.5" :class="{ 'fill-current': flaggedQuestions.has(currentQuestion.exam_question_id) }" />
+              <span>{{ flaggedQuestions.has(currentQuestion.exam_question_id) ? 'Flagged for review' : 'Flag for review' }}</span>
+            </button>
           </div>
 
-          <!-- Question Prompt / Stimulus -->
-          <div class="py-2 space-y-2">
-            <h2 class="text-xl sm:text-2xl font-semibold text-text leading-relaxed font-display whitespace-pre-line">
+          <!-- Question Prompt / Content -->
+          <div class="py-2">
+            <h2 class="text-xl lg:text-2xl font-semibold text-text leading-snug tracking-tight font-display whitespace-pre-line">
               {{ currentQuestion.content }}
             </h2>
           </div>
 
-          <!-- MCQ / True-False Options (Stitch Ergonomic Card Design) -->
-          <fieldset v-if="currentQuestion.type === 'mcq' || currentQuestion.type === 'true_false'" class="space-y-3.5">
+          <!-- MCQ / True-False Options -->
+          <fieldset v-if="currentQuestion.type === 'mcq' || currentQuestion.type === 'true_false'" class="space-y-3">
             <legend class="sr-only">Available Answers</legend>
             <div
               v-for="(option, optIdx) in currentQuestion.options"
               :key="option.id"
               role="button"
               tabindex="0"
-              class="group relative flex items-center justify-between p-5 rounded-xl border-2 transition-all cursor-pointer select-none overflow-hidden"
+              class="group relative flex items-center justify-between p-4 sm:p-5 rounded-xl border transition-all cursor-pointer select-none overflow-hidden"
               :class="
                 answersState[currentQuestion.exam_question_id]?.selected_option_id === option.id
-                  ? 'border-accent bg-accent/10 shadow-sm ring-1 ring-accent'
-                  : 'border-border bg-surface hover:border-accent/40 hover:bg-bg/60 shadow-2xs'
+                  ? 'border-accent/40 border-l-4 border-l-accent bg-accent/5 shadow-2xs'
+                  : 'border-border bg-surface hover:border-text/30 hover:bg-bg/40'
               "
               @click="selectOption(option.id)"
               @keydown.enter="selectOption(option.id)"
               @keydown.space.prevent="selectOption(option.id)">
-              <!-- Left accent bar for selected -->
-              <div
-                v-if="answersState[currentQuestion.exam_question_id]?.selected_option_id === option.id"
-                class="absolute left-0 top-0 bottom-0 w-1.5 bg-accent" />
-
-              <div class="flex items-center gap-4 min-w-0">
+              <div class="flex items-center gap-3.5 min-w-0">
+                <!-- Option Letter Badge -->
                 <span
-                  class="w-8 h-8 rounded-lg flex items-center justify-center font-mono text-xs font-bold transition-colors shrink-0"
+                  class="w-7 h-7 rounded-md flex items-center justify-center font-mono text-xs font-semibold transition-colors shrink-0"
                   :class="
                     answersState[currentQuestion.exam_question_id]?.selected_option_id === option.id
                       ? 'bg-accent text-white shadow-2xs'
-                      : 'bg-bg border border-border text-text/70 group-hover:border-accent/50'
+                      : 'border border-border bg-bg text-text/70 group-hover:border-text/30'
                   ">
                   {{ String.fromCharCode(65 + optIdx) }}
                 </span>
+                <!-- Option Text -->
                 <span
-                  class="text-sm sm:text-base leading-relaxed text-text font-medium"
+                  class="text-sm sm:text-base leading-relaxed text-text font-normal"
                   :class="{ 'font-semibold': answersState[currentQuestion.exam_question_id]?.selected_option_id === option.id }">
                   {{ option.option_text }}
                 </span>
               </div>
 
-              <!-- Radio Indicator with Checkmark -->
+              <!-- Radio Indicator -->
               <span
-                class="w-6 h-6 rounded-full flex items-center justify-center transition-all shrink-0 ml-4 shadow-2xs"
+                class="w-5 h-5 rounded-full flex items-center justify-center transition-all shrink-0 ml-4"
                 :class="
                   answersState[currentQuestion.exam_question_id]?.selected_option_id === option.id
-                    ? 'bg-accent text-white'
-                    : 'bg-bg border border-border text-transparent'
+                    ? 'border-2 border-accent'
+                    : 'border-2 border-border'
                 ">
-                <Check class="w-3.5 h-3.5 stroke-[3]" />
+                <span
+                  v-if="answersState[currentQuestion.exam_question_id]?.selected_option_id === option.id"
+                  class="w-2.5 h-2.5 rounded-full bg-accent" />
               </span>
             </div>
           </fieldset>
 
-          <!-- Short Answer / Essay Written Response -->
+          <!-- Written Response (Short Answer / Essay) -->
           <div v-else-if="currentQuestion.type === 'short_answer' || currentQuestion.type === 'essay'" class="space-y-4">
             <div class="flex justify-between items-center text-xs text-text/60 font-mono">
-              <span class="font-sans">Enter your academic response below:</span>
+              <span class="font-sans">Enter your response:</span>
               <span>Words: {{ currentWordCount }} · Characters: {{ currentAnswerEntry?.answer_text?.length || 0 }}</span>
             </div>
 
             <textarea
               v-if="currentQuestion.type === 'essay'"
               v-model="answersState[currentQuestion.exam_question_id].answer_text"
-              rows="11"
-              placeholder="Type your comprehensive essay response here..."
+              rows="10"
+              placeholder="Type your essay response here..."
               class="w-full bg-surface border border-border rounded-xl p-5 text-sm sm:text-base text-text focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 resize-y leading-relaxed font-sans shadow-2xs transition-colors"
               @input="onTextAnswerInput" />
             <input
@@ -684,41 +666,40 @@ onUnmounted(() => {
               class="w-full bg-surface border border-border rounded-xl px-5 py-3.5 text-sm sm:text-base text-text focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 shadow-2xs transition-colors"
               @input="onTextAnswerInput" />
 
-            <!-- Explicit Save Status Action Bar -->
+            <!-- Save Status Action Bar -->
             <div class="flex items-center justify-between bg-surface border border-border p-4 rounded-xl shadow-2xs">
-              <div class="text-xs text-text/60 flex items-center gap-2">
-                <span v-if="answersState[currentQuestion.exam_question_id]?.isDirty" class="text-warning font-semibold flex items-center gap-1.5">
+              <div class="text-xs text-text/60 flex items-center gap-2 font-mono">
+                <span v-if="answersState[currentQuestion.exam_question_id]?.isDirty" class="text-amber-500 font-semibold flex items-center gap-1.5">
                   <AlertTriangle class="w-4 h-4" />
-                  Unsaved edits in response — click Save to synchronize
+                  Unsaved edits
                 </span>
-                <span v-else-if="answersState[currentQuestion.exam_question_id]?.lastSavedAt" class="text-success font-medium flex items-center gap-1.5">
+                <span v-else-if="answersState[currentQuestion.exam_question_id]?.lastSavedAt" class="text-emerald-500 font-medium flex items-center gap-1.5">
                   <Check class="w-4 h-4" />
-                  Synchronized with server at {{ answersState[currentQuestion.exam_question_id].lastSavedAt }}
+                  Saved at {{ answersState[currentQuestion.exam_question_id].lastSavedAt }}
                 </span>
                 <span v-else class="text-text/50">
-                  Draft saved in local session memory.
+                  Saved locally
                 </span>
               </div>
 
-              <BaseButton variant="primary" :loading="savingAnswer" class="font-semibold shadow-xs" @click="saveWrittenAnswer(true)">
-                <Save class="w-4 h-4 mr-1.5" />
-                Save Answer
+              <BaseButton variant="primary" class="font-semibold shadow-xs" @click="showSubmitModal = true">
+                <Send class="w-4 h-4 mr-1.5" />
+                Submit Exam
               </BaseButton>
             </div>
           </div>
         </div>
 
-        <!-- Sticky Footer Navigation Bar -->
-        <div class="sticky bottom-0 bg-surface/95 backdrop-blur-md border-t border-border px-6 sm:px-12 lg:px-16 py-3.5 shadow-md">
-          <div class="max-w-3xl mx-auto flex items-center justify-between gap-3">
-            <BaseButton variant="secondary" :disabled="currentIndex === 0" class="flex items-center gap-1.5" @click="prevQuestion">
+        <!-- Sticky Footer Navigation Bar: Exactly Two Actions -->
+        <div class="sticky bottom-0 bg-surface/95 backdrop-blur-md border-t border-border px-6 sm:px-12 lg:px-16 py-3.5 shadow-xs">
+          <div class="max-w-3xl mx-auto flex items-center justify-between gap-4">
+            <BaseButton
+              variant="secondary"
+              :disabled="currentIndex === 0"
+              class="flex items-center gap-1.5"
+              @click="prevQuestion">
               <ArrowLeft class="w-4 h-4" />
               <span>Previous</span>
-            </BaseButton>
-
-            <BaseButton variant="secondary" class="flex items-center gap-1.5 hidden sm:inline-flex" @click="showSubmitModal = true">
-              <ListChecks class="w-4 h-4" />
-              <span>Review ({{ unansweredCount }} pending)</span>
             </BaseButton>
 
             <BaseButton
@@ -735,8 +716,8 @@ onUnmounted(() => {
               variant="primary"
               class="flex items-center gap-1.5 shadow-xs"
               @click="showSubmitModal = true">
-              <span>Finish Examination</span>
-              <CheckCircle2 class="w-4 h-4" />
+              <span>Submit Exam</span>
+              <Send class="w-4 h-4" />
             </BaseButton>
           </div>
         </div>
@@ -744,59 +725,54 @@ onUnmounted(() => {
     </div>
 
     <!-- ── Interactive Review & Submit Modal ──────────────────────── -->
-    <div v-if="showSubmitModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+    <div v-if="showSubmitModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4">
       <div class="w-full max-w-lg bg-surface p-6 sm:p-8 rounded-2xl shadow-2xl border border-border flex flex-col items-center text-center space-y-6">
-        <!-- Icon Badge -->
-        <div class="w-14 h-14 rounded-2xl bg-accent/10 flex items-center justify-center text-accent shadow-xs">
-          <Send class="w-7 h-7" />
-        </div>
-
-        <!-- Header & Counter breakdown pills -->
+        <!-- Header & Summary Pills -->
         <div class="space-y-3">
-          <h2 class="text-xl sm:text-2xl font-bold font-display text-text">Ready to submit your examination?</h2>
-          <div class="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-bg border border-border font-mono text-xs">
-            <span class="font-bold text-success">{{ answeredCount }} Answered</span>
+          <h2 class="text-xl sm:text-2xl font-bold font-display text-text">Ready to submit your exam?</h2>
+          <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-bg border border-border font-mono text-xs">
+            <span class="font-semibold text-text">{{ answeredCount }} answered</span>
             <span class="text-text/30">·</span>
-            <span class="font-bold" :class="unansweredCount > 0 ? 'text-error' : 'text-text/60'">
-              {{ unansweredCount }} Unanswered
+            <span class="font-semibold" :class="unansweredCount > 0 ? 'text-amber-500' : 'text-text/60'">
+              {{ unansweredCount }} unanswered
             </span>
             <span class="text-text/30">·</span>
-            <span class="font-bold text-warning">{{ flaggedQuestions.size }} Flagged</span>
+            <span class="font-semibold text-text/70">{{ flaggedQuestions.size }} flagged</span>
           </div>
         </div>
 
         <!-- Attention Needed Box with Interactive Jump Links -->
-        <div v-if="unansweredCount > 0" class="bg-error/10 border border-error/25 rounded-xl p-4 text-left w-full space-y-2 text-xs">
-          <div class="flex items-center gap-1.5 text-error font-semibold">
+        <div v-if="unansweredCount > 0" class="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 text-left w-full space-y-2 text-xs">
+          <div class="flex items-center gap-1.5 text-amber-600 dark:text-amber-400 font-semibold">
             <AlertTriangle class="w-4 h-4" />
-            <span>Unanswered Questions Detected</span>
+            <span>Unanswered questions remaining</span>
           </div>
           <p class="text-text/70 leading-relaxed">
             Click any question number below to jump directly to it:
           </p>
           <div class="flex flex-wrap gap-1.5 pt-1">
             <button
-              v-for="qNum in unansweredQuestionNumbers.slice(0, 15)"
+              v-for="qNum in unansweredQuestionNumbers.slice(0, 16)"
               :key="qNum"
               type="button"
-              class="px-2 py-1 rounded bg-surface border border-border font-mono font-bold text-text hover:bg-accent hover:text-white transition-colors cursor-pointer"
+              class="px-2.5 py-1 rounded bg-surface border border-border font-mono font-bold text-text hover:bg-accent hover:text-white transition-colors cursor-pointer"
               @click="jumpFromModalToQuestion(qNum - 1)">
               Q{{ qNum }}
             </button>
-            <span v-if="unansweredQuestionNumbers.length > 15" class="text-text/50 font-mono text-xs self-center">
-              +{{ unansweredQuestionNumbers.length - 15 }} more
+            <span v-if="unansweredQuestionNumbers.length > 16" class="text-text/50 font-mono text-xs self-center">
+              +{{ unansweredQuestionNumbers.length - 16 }} more
             </span>
           </div>
         </div>
 
         <!-- All Answered Reassurance Box -->
-        <div v-else class="bg-success/10 border border-success/20 rounded-xl p-4 text-left w-full space-y-1 text-xs">
-          <div class="flex items-center gap-1.5 text-success font-semibold">
+        <div v-else class="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4 text-left w-full space-y-1 text-xs">
+          <div class="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-semibold">
             <CheckCircle2 class="w-4 h-4" />
-            <span>All Questions Completed</span>
+            <span>All questions completed</span>
           </div>
           <p class="text-text/70 leading-relaxed">
-            You have responded to all {{ totalQuestions }} questions in this assessment. Once submitted, your answers cannot be modified.
+            You have responded to all {{ totalQuestions }} questions. Once submitted, your answers cannot be modified.
           </p>
         </div>
 
@@ -807,7 +783,7 @@ onUnmounted(() => {
           </BaseButton>
 
           <BaseButton variant="primary" :loading="submitting" class="flex-1 font-semibold shadow-xs" @click="submitFinalExam">
-            Confirm &amp; Submit
+            Submit Exam
           </BaseButton>
         </div>
       </div>

@@ -20,8 +20,6 @@ const localComposition = ref<ExamComposition>({});
 const allTypes = [
   { key: 'MCQ', label: 'Multiple Choice (MCQ)' },
   { key: 'TRUE_FALSE', label: 'True / False' },
-  { key: 'SHORT_ANSWER', label: 'Short Answer' },
-  { key: 'ESSAY', label: 'Essay' },
 ];
 
 function formatTypeName(typeStr: string) {
@@ -100,7 +98,7 @@ function save() {
         <p class="mt-0.5 text-xs text-text/50">Configure allowed question types and marks per question for this exam.</p>
       </div>
 
-      <BaseButton :disabled="disabled" :loading="loading" @click="save"> Save composition </BaseButton>
+      <BaseButton v-can="'exam.update'" :disabled="disabled" :loading="loading" @click="save"> Save composition </BaseButton>
     </div>
 
     <div class="space-y-3">
@@ -133,6 +131,7 @@ function save() {
           <span v-else class="text-xs text-text/45">Custom marks allocated per question</span>
 
           <button
+            v-can="'exam.update'"
             type="button"
             :disabled="disabled"
             class="rounded-lg p-1.5 text-text/40 transition hover:bg-error/10 hover:text-error disabled:opacity-40"
@@ -149,7 +148,7 @@ function save() {
     </div>
 
     <!-- Add Question Type Bar -->
-    <div class="mt-5 flex flex-wrap items-center gap-2 border-t border-border pt-5">
+    <div v-can="'exam.update'" class="mt-5 flex flex-wrap items-center gap-2 border-t border-border pt-5">
       <span class="mr-1 text-xs font-medium text-text/50">Add question type:</span>
       <template v-if="availableToAddTypes.length">
         <button

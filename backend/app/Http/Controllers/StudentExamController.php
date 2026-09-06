@@ -201,6 +201,10 @@ class StudentExamController extends Controller
     {
         $this->authorize('canSubmitAnswer', $attempt);
 
+        if ($attempt->status === 'completed' || $attempt->status === 'auto_submitted') {
+            return $this->success(null, 'Exam attempt has already been submitted');
+        }
+
         if ($attempt->status !== 'in_progress') {
             return $this->error(null, 'Exam attempt is already submitted', 403);
         }
