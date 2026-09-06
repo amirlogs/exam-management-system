@@ -348,14 +348,18 @@ class ExamController extends Controller
                 }
 
                 $question = Question::find($item['question_id']);
-                $typeConfig = $exam->composition[$question->type] ?? null;
+                $normalizedType = strtolower($question->type);
 
-                if (in_array($question->type, ['mcq', 'true_false'])) {
-                    if (! $typeConfig || empty($typeConfig['marks_each'])) {
-                        $errors[$index] = ["No marks_each configured for type {$question->type} in this exam's composition."];
+                $typeConfig = $exam->composition[$normalizedType]
+                    ?? $exam->composition[strtoupper($question->type)]
+                    ?? null;
+
+                if (in_array($normalizedType, ['mcq', 'true_false'])) {
+                    $marks = $item['marks'] ?? $typeConfig['marks_each'] ?? null;
+                    if (empty($marks)) {
+                        $errors[$index] = ["No marks configured for type {$question->type} in this exam's composition."];
                         continue;
                     }
-                    $marks = $typeConfig['marks_each'];
                 } else {
                     if (empty($item['marks'])) {
                         $errors[$index] = ["marks is required when adding a {$question->type} question."];

@@ -273,10 +273,7 @@ async function loadCounts() {
   try {
     const filters = buildFilters();
 
-    const [activeResponse, archivedResponse] = await Promise.all([
-      api.listQuestions(1, 1, false, filters),
-      api.listQuestions(1, 1, true, filters),
-    ]);
+    const [activeResponse, archivedResponse] = await Promise.all([api.listQuestions(1, 1, false, filters), api.listQuestions(1, 1, true, filters)]);
 
     activeCount.value = activeResponse.pagination.total;
     archivedCount.value = archivedResponse.pagination.total;

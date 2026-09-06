@@ -99,3 +99,24 @@ h2,
   font-family: var(--font-display);
   letter-spacing: -0.01em;
 }
+
+/* Sleek theme-aware scrollbars preventing blinding white OS tracks in dark mode */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text);
+  opacity: 0.4;
+}

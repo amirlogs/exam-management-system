@@ -196,19 +196,12 @@ onMounted(loadQuestions);
         <div>
           <div class="flex items-center gap-2">
             <h2 class="font-display text-lg font-bold text-text">Add Questions to Exam</h2>
-            <span class="rounded-full bg-accent/10 px-2.5 py-0.5 text-xs font-semibold text-accent">
-              Bulk Selection
-            </span>
+            <span class="rounded-full bg-accent/10 px-2.5 py-0.5 text-xs font-semibold text-accent"> Bulk Selection </span>
           </div>
-          <p class="mt-0.5 text-xs text-text/50">
-            Select one or multiple questions from your question bank to attach to {{ exam.title }}.
-          </p>
+          <p class="mt-0.5 text-xs text-text/50">Select one or multiple questions from your question bank to attach to {{ exam.title }}.</p>
         </div>
 
-        <button
-          type="button"
-          class="rounded-lg p-2 text-text/45 transition hover:bg-bg hover:text-text"
-          @click="emit('close')">
+        <button type="button" class="rounded-lg p-2 text-text/45 transition hover:bg-bg hover:text-text" @click="emit('close')">
           <X class="h-4 w-4" />
         </button>
       </div>
@@ -240,18 +233,13 @@ onMounted(loadQuestions);
 
             <!-- Select all bar -->
             <div class="mt-3 flex items-center justify-between border-t border-border/60 pt-2.5 text-xs">
-              <button
-                type="button"
-                class="inline-flex items-center gap-1.5 font-medium text-accent hover:underline"
-                @click="toggleSelectAll">
+              <button type="button" class="inline-flex items-center gap-1.5 font-medium text-accent hover:underline" @click="toggleSelectAll">
                 <CheckSquare v-if="isAllFilteredSelected" class="h-3.5 w-3.5" />
                 <Square v-else class="h-3.5 w-3.5" />
                 <span>{{ isAllFilteredSelected ? 'Deselect all filtered' : 'Select all filtered' }}</span>
               </button>
 
-              <span class="text-text/45">
-                Showing {{ filteredQuestions.length }} ({{ selectableFilteredQuestions.length }} available to add)
-              </span>
+              <span class="text-text/45"> Showing {{ filteredQuestions.length }} ({{ selectableFilteredQuestions.length }} available to add) </span>
             </div>
           </div>
 
@@ -262,9 +250,7 @@ onMounted(loadQuestions);
               :key="question.id"
               class="flex items-start gap-3 p-4 transition-colors"
               :class="[
-                isAlreadyAdded(question.id)
-                  ? 'opacity-60 cursor-not-allowed bg-text/[0.02]'
-                  : 'cursor-pointer hover:bg-text/[0.02]',
+                isAlreadyAdded(question.id) ? 'opacity-60 cursor-not-allowed bg-text/[0.02]' : 'cursor-pointer hover:bg-text/[0.02]',
                 isSelected(question.id) ? 'bg-accent/5' : '',
               ]"
               @click="toggleQuestion(question)">
@@ -285,9 +271,7 @@ onMounted(loadQuestions);
                   <BaseBadge :variant="getDifficultyVariant(question.difficulty)">
                     {{ question.difficulty || '—' }}
                   </BaseBadge>
-                  <span
-                    v-if="isAlreadyAdded(question.id)"
-                    class="inline-flex items-center rounded-md bg-accent/10 px-2 py-0.5 text-[10px] font-semibold text-accent">
+                  <span v-if="isAlreadyAdded(question.id)" class="inline-flex items-center rounded-md bg-accent/10 px-2 py-0.5 text-[10px] font-semibold text-accent">
                     Already in Exam
                   </span>
                 </div>
@@ -303,9 +287,7 @@ onMounted(loadQuestions);
               <p class="mt-1 text-xs text-text/45">Try adjusting your search query or filters.</p>
             </div>
 
-            <div v-if="loading" class="px-6 py-14 text-center text-sm text-text/45">
-              Loading questions…
-            </div>
+            <div v-if="loading" class="px-6 py-14 text-center text-sm text-text/45">Loading questions…</div>
           </div>
         </div>
 
@@ -313,30 +295,19 @@ onMounted(loadQuestions);
         <div class="flex flex-col bg-bg/20">
           <div class="border-b border-border bg-surface px-5 py-4">
             <div class="flex items-center justify-between">
-              <h3 class="text-xs font-bold uppercase tracking-wider text-text/45">
-                Selected Questions ({{ selectedCount }})
-              </h3>
-              <span class="font-mono text-xs font-semibold text-accent">
-                {{ totalCalculatedMarks }} Total Marks
-              </span>
+              <h3 class="text-xs font-bold uppercase tracking-wider text-text/45">Selected Questions ({{ selectedCount }})</h3>
+              <span class="font-mono text-xs font-semibold text-accent"> {{ totalCalculatedMarks }} Total Marks </span>
             </div>
           </div>
 
           <div class="min-h-0 flex-1 overflow-y-auto p-4 space-y-3">
             <template v-if="selectedCount > 0">
-              <div
-                v-for="q in selectedQuestionList"
-                :key="q.id"
-                class="rounded-xl border border-border bg-surface p-3 shadow-xs">
+              <div v-for="q in selectedQuestionList" :key="q.id" class="rounded-xl border border-border bg-surface p-3 shadow-xs">
                 <div class="flex items-start justify-between gap-2">
                   <p class="line-clamp-2 text-xs font-medium text-text">
                     {{ q.content }}
                   </p>
-                  <button
-                    type="button"
-                    class="shrink-0 text-text/40 hover:text-error"
-                    title="Remove"
-                    @click.stop="toggleQuestion(q)">
+                  <button type="button" class="shrink-0 text-text/40 hover:text-error" title="Remove" @click.stop="toggleQuestion(q)">
                     <X class="h-3.5 w-3.5" />
                   </button>
                 </div>
@@ -374,25 +345,16 @@ onMounted(loadQuestions);
         <div class="flex items-center gap-3">
           <div class="flex items-center gap-2">
             <span class="text-xs font-semibold uppercase tracking-wider text-text/50">Selected:</span>
-            <span class="rounded-md bg-accent/10 px-2.5 py-0.5 font-mono text-xs font-bold text-accent">
-              {{ selectedCount }} question{{ selectedCount === 1 ? '' : 's' }}
-            </span>
+            <span class="rounded-md bg-accent/10 px-2.5 py-0.5 font-mono text-xs font-bold text-accent"> {{ selectedCount }} question{{ selectedCount === 1 ? '' : 's' }} </span>
           </div>
           <span class="text-text/30">•</span>
-          <span class="font-mono text-xs font-semibold text-text/70">
-            {{ totalCalculatedMarks }} total marks
-          </span>
+          <span class="font-mono text-xs font-semibold text-text/70"> {{ totalCalculatedMarks }} total marks </span>
         </div>
 
         <div class="flex items-center gap-2.5">
-          <BaseButton variant="secondary" @click="emit('close')">
-            Cancel
-          </BaseButton>
+          <BaseButton variant="secondary" @click="emit('close')"> Cancel </BaseButton>
 
-          <BaseButton
-            :disabled="selectedCount === 0"
-            :loading="props.loading"
-            @click="submitBulk">
+          <BaseButton :disabled="selectedCount === 0" :loading="props.loading" @click="submitBulk">
             Add {{ selectedCount > 0 ? selectedCount : '' }} Question{{ selectedCount === 1 ? '' : 's' }}
           </BaseButton>
         </div>

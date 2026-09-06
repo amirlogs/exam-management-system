@@ -25,19 +25,7 @@ const uiStore = useUiStore();
 const examId = Number(route.params.examId);
 const type = 'questions' as const;
 
-const {
-  record,
-  isUploading,
-  isConfirming,
-  isCancelling,
-  savingRow,
-  uploadError,
-  upload,
-  updateRow,
-  deleteRow,
-  confirm,
-  cancel,
-} = useImportWizard();
+const { record, isUploading, isConfirming, isCancelling, savingRow, uploadError, upload, updateRow, deleteRow, confirm, cancel } = useImportWizard();
 
 const exam = ref<Exam | null>(null);
 const courseId = ref<number | null>(null);
@@ -60,10 +48,7 @@ const fixedContext = computed(() => {
 async function loadContext() {
   loadingContext.value = true;
   try {
-    const [examResponse, teachingResponse] = await Promise.all([
-      getExam(examId),
-      getTeaching(1, 1000),
-    ]);
+    const [examResponse, teachingResponse] = await Promise.all([getExam(examId), getTeaching(1, 1000)]);
 
     exam.value = examResponse.data;
     const teaching = teachingResponse.data?.find((item: any) => item?.id === exam.value?.course_offering_id);
@@ -131,12 +116,8 @@ onMounted(loadContext);
       </button>
 
       <div>
-        <h1 class="font-display text-xl font-bold text-text">
-          Import Questions to Exam
-        </h1>
-        <p class="text-xs text-text/45">
-          Upload questions via CSV to be validated and attached directly to this exam paper.
-        </p>
+        <h1 class="font-display text-xl font-bold text-text">Import Questions to Exam</h1>
+        <p class="text-xs text-text/45">Upload questions via CSV to be validated and attached directly to this exam paper.</p>
       </div>
     </div>
 
@@ -149,9 +130,7 @@ onMounted(loadContext);
 
         <div class="min-w-0 flex-1">
           <h2 class="font-display text-lg font-bold text-text">Target Exam: {{ exam.title }}</h2>
-          <p class="mt-0.5 text-xs text-text/50">
-            Imported questions will be added to the course bank and attached directly to this exam paper.
-          </p>
+          <p class="mt-0.5 text-xs text-text/50">Imported questions will be added to the course bank and attached directly to this exam paper.</p>
 
           <div v-if="courseLabel" class="mt-3 flex flex-wrap items-center gap-3 rounded-lg border border-border bg-bg/50 px-3.5 py-2 text-xs">
             <span class="text-text/50">Course:</span>
@@ -180,9 +159,7 @@ onMounted(loadContext);
         @upload="handleUpload" />
 
       <!-- Processing Step -->
-      <ImportProcessingStep
-        v-else-if="record?.status === 'pending' || record?.status === 'processing'"
-        :total-rows="record?.total_rows ?? 0" />
+      <ImportProcessingStep v-else-if="record?.status === 'pending' || record?.status === 'processing'" :total-rows="record?.total_rows ?? 0" />
 
       <!-- Review Step -->
       <div v-else-if="record?.status === 'ready_for_review'" class="space-y-6">
@@ -208,16 +185,10 @@ onMounted(loadContext);
           </div>
         </div>
 
-        <ImportQuestionsReviewTable
-          :rows="record.validated_data ?? {}"
-          :saving-row="savingRow"
-          @update-row="({ row, data }) => updateRow(row, data)"
-          @delete-row="deleteRow" />
+        <ImportQuestionsReviewTable :rows="record.validated_data ?? {}" :saving-row="savingRow" @update-row="({ row, data }) => updateRow(row, data)" @delete-row="deleteRow" />
 
         <div class="flex items-center justify-between border-t border-border pt-4">
-          <BaseButton variant="secondary" @click="showCancelModal = true">
-            Cancel import
-          </BaseButton>
+          <BaseButton variant="secondary" @click="showCancelModal = true"> Cancel import </BaseButton>
 
           <BaseButton :disabled="record.error_count > 0 || record.total_rows === 0" @click="showConfirmModal = true">
             {{ record.error_count > 0 ? `Resolve ${record.error_count} invalid rows` : 'Confirm & attach to exam' }}
@@ -229,21 +200,15 @@ onMounted(loadContext);
       <div v-else-if="record?.status === 'confirmed'" class="flex flex-col items-center rounded-xl border border-success/30 bg-success/5 p-12 text-center">
         <CheckCircle2 class="mb-4 h-10 w-10 text-success" />
         <h3 class="mb-1 text-lg font-bold text-text">Import confirmed</h3>
-        <p class="text-sm text-text/60">
-          {{ record.valid_count }} question(s) were imported and attached to this exam.
-        </p>
-        <BaseButton class="mt-5" @click="goBack">
-          Back to Exam Questions
-        </BaseButton>
+        <p class="text-sm text-text/60">{{ record.valid_count }} question(s) were imported and attached to this exam.</p>
+        <BaseButton class="mt-5" @click="goBack"> Back to Exam Questions </BaseButton>
       </div>
 
       <!-- Failed Step -->
       <div v-else-if="record?.status === 'failed'" class="rounded-xl border border-error/30 bg-error/5 p-8 text-center">
         <p class="text-sm font-medium text-error">This import failed to process.</p>
         <p class="mt-1 text-sm text-text/60">You can go back and upload the CSV again.</p>
-        <BaseButton variant="secondary" class="mt-4" @click="cancelFinal">
-          Try Again
-        </BaseButton>
+        <BaseButton variant="secondary" class="mt-4" @click="cancelFinal"> Try Again </BaseButton>
       </div>
     </template>
 

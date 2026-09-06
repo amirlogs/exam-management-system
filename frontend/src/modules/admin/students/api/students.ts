@@ -9,11 +9,7 @@ export interface StudentFilters {
   status?: string | null;
 }
 
-export async function getStudents(
-  page = 1,
-  perPage = 12,
-  filters: StudentFilters = {},
-) {
+export async function getStudents(page = 1, perPage = 12, filters: StudentFilters = {}) {
   const res = await api.get('/students', {
     params: {
       page,

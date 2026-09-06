@@ -217,7 +217,6 @@ onBeforeUnmount(() => {
   document.removeEventListener('click', handleColumnOutsideClick);
 });
 
-
 watch(
   filters,
   () => {
@@ -361,28 +360,28 @@ const emptyStateText = computed(() => {
 
 <template>
   <div class="mx-auto w-full max-w-360 space-y-6 px-6 py-6">
-  <ResourceToolbar
-    title="Courses"
-    description="Manage courses offered under each department."
-    search-placeholder="Search courses..."
-    :search="crud.search.value"
-    :show-search="true"
-    :show-filter="true"
-    :show-refresh="true"
-    :refreshing="crud.loading.value"
-    :show-columns="true"
-    :show-fullscreen="true"
-    :show-tabs="true"
-    :active-tab="crud.activeTab.value"
-    :active-count="crud.activePagination.value.total"
-    :archived-count="crud.archivedPagination.value.total"
-    :has-active-filters="hasActiveFilters"
-    :filter-count="filterCount"
-    @update:search="crud.setSearch"
-    @refresh="retry"
-    @clear-filters="clearFilters"
-    @change-tab="crud.changeTab"
-    @columns="toggleColumnSelector">
+    <ResourceToolbar
+      title="Courses"
+      description="Manage courses offered under each department."
+      search-placeholder="Search courses..."
+      :search="crud.search.value"
+      :show-search="true"
+      :show-filter="true"
+      :show-refresh="true"
+      :refreshing="crud.loading.value"
+      :show-columns="true"
+      :show-fullscreen="true"
+      :show-tabs="true"
+      :active-tab="crud.activeTab.value"
+      :active-count="crud.activePagination.value.total"
+      :archived-count="crud.archivedPagination.value.total"
+      :has-active-filters="hasActiveFilters"
+      :filter-count="filterCount"
+      @update:search="crud.setSearch"
+      @refresh="retry"
+      @clear-filters="clearFilters"
+      @change-tab="crud.changeTab"
+      @columns="toggleColumnSelector">
       <template #actions>
         <BaseButton v-can="'course.create'" :icon="Plus" @click="openCreate"> Add course </BaseButton>
       </template>

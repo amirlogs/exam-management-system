@@ -117,9 +117,7 @@ const teachingOptions = computed(() =>
     })),
 );
 
-const selectedTeaching = computed(() =>
-  teachings.value.find((teaching) => Number(teaching.id) === Number(selectedTeachingId.value)),
-);
+const selectedTeaching = computed(() => teachings.value.find((teaching) => Number(teaching.id) === Number(selectedTeachingId.value)));
 
 const hasActiveFilters = computed(() => Boolean(filterStatus.value || filterType.value));
 
@@ -179,12 +177,7 @@ async function loadExams(page = 1) {
     if (filterStatus.value) filters.status = filterStatus.value;
     if (filterType.value) filters.type = filterType.value;
 
-    const response = await listExams(
-      Number(selectedTeachingId.value),
-      page,
-      pagination.value.per_page,
-      filters,
-    );
+    const response = await listExams(Number(selectedTeachingId.value), page, pagination.value.per_page, filters);
 
     exams.value = response.data ?? [];
     if (response.pagination) {
@@ -320,7 +313,11 @@ onBeforeUnmount(() => {
     <div data-columns-container class="relative">
       <ResourceToolbar
         title="Exams"
-        :description="selectedTeaching ? `Manage exams for ${selectedTeaching.course?.code} — ${selectedTeaching.course?.name}` : 'Create, schedule, and manage exams for your assigned course offerings.'"
+        :description="
+          selectedTeaching
+            ? `Manage exams for ${selectedTeaching.course?.code} — ${selectedTeaching.course?.name}`
+            : 'Create, schedule, and manage exams for your assigned course offerings.'
+        "
         search-placeholder="Search exams by title or type…"
         :search="search"
         :show-search="true"
@@ -346,43 +343,24 @@ onBeforeUnmount(() => {
 
         <template #filters>
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <BaseSelect
-              v-model="selectedTeachingId"
-              label="Course Offering"
-              :options="teachingOptions"
-              placeholder="Select course offering"
-              @update:model-value="loadExams(1)" />
+            <BaseSelect v-model="selectedTeachingId" label="Course Offering" :options="teachingOptions" placeholder="Select course offering" @update:model-value="loadExams(1)" />
 
-            <BaseSelect
-              v-model="filterType"
-              label="Exam Type"
-              :options="typeOptions"
-              placeholder="All types" />
+            <BaseSelect v-model="filterType" label="Exam Type" :options="typeOptions" placeholder="All types" />
 
-            <BaseSelect
-              v-model="filterStatus"
-              label="Exam Status"
-              :options="statusOptions"
-              placeholder="All statuses" />
+            <BaseSelect v-model="filterStatus" label="Exam Status" :options="statusOptions" placeholder="All statuses" />
           </div>
         </template>
       </ResourceToolbar>
 
       <!-- Customize Columns Dropdown -->
-      <div
-        v-if="showColumns"
-        class="absolute right-0 top-full z-40 mt-2 w-64 rounded-lg border border-border bg-surface p-2 shadow-xl"
-        @click.stop>
+      <div v-if="showColumns" class="absolute right-0 top-full z-40 mt-2 w-64 rounded-lg border border-border bg-surface p-2 shadow-xl" @click.stop>
         <div class="flex items-center justify-between px-2 py-2">
           <div>
             <p class="text-sm font-semibold text-text">Columns</p>
             <p class="mt-0.5 text-xs text-text/45">Choose what appears in the table</p>
           </div>
 
-          <button
-            type="button"
-            class="rounded-md px-2 py-1 text-xs font-medium text-text/50 transition-colors hover:bg-text/5 hover:text-accent"
-            @click="resetColumns">
+          <button type="button" class="rounded-md px-2 py-1 text-xs font-medium text-text/50 transition-colors hover:bg-text/5 hover:text-accent" @click="resetColumns">
             Reset
           </button>
         </div>
@@ -399,13 +377,7 @@ onBeforeUnmount(() => {
             <span
               class="flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors"
               :class="isColumnVisible(column.key) ? 'border-accent bg-accent text-white' : 'border-border bg-surface'">
-              <svg
-                v-if="isColumnVisible(column.key)"
-                viewBox="0 0 12 12"
-                class="h-3 w-3"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2">
+              <svg v-if="isColumnVisible(column.key)" viewBox="0 0 12 12" class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M2 6l2.5 2.5L10 3" />
               </svg>
             </span>
@@ -419,9 +391,7 @@ onBeforeUnmount(() => {
         </div>
 
         <div class="mt-1 border-t border-border px-2 pt-2">
-          <p class="text-[11px] text-text/40">
-            {{ visibleColumnCount }} columns visible
-          </p>
+          <p class="text-[11px] text-text/40">{{ visibleColumnCount }} columns visible</p>
         </div>
       </div>
     </div>
@@ -432,57 +402,23 @@ onBeforeUnmount(() => {
         <table class="w-full border-collapse">
           <thead>
             <tr class="border-b border-border bg-bg/40">
-              <th
-                v-if="isColumnVisible('title')"
-                class="px-6 py-3.5 text-left text-xs font-bold uppercase tracking-wide text-text/45">
-                Exam
-              </th>
+              <th v-if="isColumnVisible('title')" class="px-6 py-3.5 text-left text-xs font-bold uppercase tracking-wide text-text/45">Exam</th>
 
-              <th
-                v-if="isColumnVisible('course')"
-                class="px-6 py-3.5 text-left text-xs font-bold uppercase tracking-wide text-text/45">
-                Course
-              </th>
+              <th v-if="isColumnVisible('course')" class="px-6 py-3.5 text-left text-xs font-bold uppercase tracking-wide text-text/45">Course</th>
 
-              <th
-                v-if="isColumnVisible('type')"
-                class="px-6 py-3.5 text-left text-xs font-bold uppercase tracking-wide text-text/45">
-                Type
-              </th>
+              <th v-if="isColumnVisible('type')" class="px-6 py-3.5 text-left text-xs font-bold uppercase tracking-wide text-text/45">Type</th>
 
-              <th
-                v-if="isColumnVisible('questions')"
-                class="px-6 py-3.5 text-left text-xs font-bold uppercase tracking-wide text-text/45">
-                Questions
-              </th>
+              <th v-if="isColumnVisible('questions')" class="px-6 py-3.5 text-left text-xs font-bold uppercase tracking-wide text-text/45">Questions</th>
 
-              <th
-                v-if="isColumnVisible('marks')"
-                class="px-6 py-3.5 text-left text-xs font-bold uppercase tracking-wide text-text/45">
-                Marks
-              </th>
+              <th v-if="isColumnVisible('marks')" class="px-6 py-3.5 text-left text-xs font-bold uppercase tracking-wide text-text/45">Marks</th>
 
-              <th
-                v-if="isColumnVisible('duration')"
-                class="px-6 py-3.5 text-left text-xs font-bold uppercase tracking-wide text-text/45">
-                Duration
-              </th>
+              <th v-if="isColumnVisible('duration')" class="px-6 py-3.5 text-left text-xs font-bold uppercase tracking-wide text-text/45">Duration</th>
 
-              <th
-                v-if="isColumnVisible('status')"
-                class="px-6 py-3.5 text-left text-xs font-bold uppercase tracking-wide text-text/45">
-                Status
-              </th>
+              <th v-if="isColumnVisible('status')" class="px-6 py-3.5 text-left text-xs font-bold uppercase tracking-wide text-text/45">Status</th>
 
-              <th
-                v-if="isColumnVisible('created_at')"
-                class="px-6 py-3.5 text-left text-xs font-bold uppercase tracking-wide text-text/45">
-                Created
-              </th>
+              <th v-if="isColumnVisible('created_at')" class="px-6 py-3.5 text-left text-xs font-bold uppercase tracking-wide text-text/45">Created</th>
 
-              <th class="w-16 px-6 py-3.5 text-right text-xs font-bold uppercase tracking-wide text-text/45">
-                Actions
-              </th>
+              <th class="w-16 px-6 py-3.5 text-right text-xs font-bold uppercase tracking-wide text-text/45">Actions</th>
             </tr>
           </thead>
 
@@ -495,18 +431,12 @@ onBeforeUnmount(() => {
           </tbody>
 
           <tbody v-else-if="filteredExams.length" class="divide-y divide-border">
-            <tr
-              v-for="exam in filteredExams"
-              :key="exam.id"
-              class="group cursor-pointer transition-colors hover:bg-text/[0.02]"
-              @click="openExam(exam)">
+            <tr v-for="exam in filteredExams" :key="exam.id" class="group cursor-pointer transition-colors hover:bg-text/[0.02]" @click="openExam(exam)">
               <td v-if="isColumnVisible('title')" class="px-6 py-4">
                 <p class="font-medium text-text text-sm group-hover:text-accent transition-colors">
                   {{ exam.title }}
                 </p>
-                <p class="mt-0.5 text-xs text-text/45">
-                  ID: #{{ exam.id }}
-                </p>
+                <p class="mt-0.5 text-xs text-text/45">ID: #{{ exam.id }}</p>
               </td>
 
               <td v-if="isColumnVisible('course')" class="px-6 py-4">
@@ -529,9 +459,7 @@ onBeforeUnmount(() => {
                 {{ exam.total_marks }}
               </td>
 
-              <td v-if="isColumnVisible('duration')" class="px-6 py-4 text-sm text-text/70">
-                {{ exam.duration_minutes }} min
-              </td>
+              <td v-if="isColumnVisible('duration')" class="px-6 py-4 text-sm text-text/70">{{ exam.duration_minutes }} min</td>
 
               <td v-if="isColumnVisible('status')" class="px-6 py-4">
                 <ExamStatusBadge :status="exam.status" />
@@ -564,10 +492,7 @@ onBeforeUnmount(() => {
                   <p class="mt-1 text-sm text-text/45">
                     {{ hasActiveFilters || search ? 'Try adjusting your filters or search query.' : 'Create your first exam for this course offering to get started.' }}
                   </p>
-                  <BaseButton
-                    v-if="!hasActiveFilters && !search && selectedTeachingId"
-                    class="mt-4"
-                    @click="createExam">
+                  <BaseButton v-if="!hasActiveFilters && !search && selectedTeachingId" class="mt-4" @click="createExam">
                     <template #icon>
                       <Plus class="h-4 w-4" />
                     </template>
@@ -580,9 +505,7 @@ onBeforeUnmount(() => {
         </table>
       </div>
 
-      <AppPagination
-        :pagination="pagination"
-        @change-page="loadExams" />
+      <AppPagination :pagination="pagination" @change-page="loadExams" />
     </div>
 
     <!-- Confirm Archive Modal -->

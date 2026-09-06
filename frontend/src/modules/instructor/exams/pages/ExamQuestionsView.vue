@@ -1,14 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import {
-  ArrowLeft,
-  FileQuestion,
-  FileSpreadsheet,
-  Plus,
-  RefreshCw,
-  Upload,
-} from 'lucide-vue-next';
+import { ArrowLeft, FileQuestion, FileSpreadsheet, Plus, RefreshCw, Upload } from 'lucide-vue-next';
 
 import BaseButton from '@/shared/components/ui/BaseButton.vue';
 import ExamStatusBadge from '../components/ExamStatusBadge.vue';
@@ -42,10 +35,7 @@ const questionIds = computed(() => questions.value.map((item) => item.question?.
 async function load() {
   loading.value = true;
   try {
-    const [examResponse, questionResponse] = await Promise.all([
-      getExam(examId.value),
-      listExamQuestions(examId.value, 1, 100),
-    ]);
+    const [examResponse, questionResponse] = await Promise.all([getExam(examId.value), listExamQuestions(examId.value, 1, 100)]);
 
     exam.value = examResponse.data;
     questions.value = questionResponse.data ?? [];
@@ -157,12 +147,8 @@ onMounted(load);
       </button>
 
       <div>
-        <h1 class="font-display text-xl font-bold text-text">
-          Exam Question Paper
-        </h1>
-        <p class="text-xs text-text/45">
-          Manage questions attached to this exam paper.
-        </p>
+        <h1 class="font-display text-xl font-bold text-text">Exam Question Paper</h1>
+        <p class="text-xs text-text/45">Manage questions attached to this exam paper.</p>
       </div>
     </div>
 
@@ -186,11 +172,17 @@ onMounted(load);
             </div>
 
             <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-text/55">
-              <span>Attached: <span class="font-medium text-text/80">{{ exam.total_questions || 0 }} question(s)</span></span>
+              <span
+                >Attached: <span class="font-medium text-text/80">{{ exam.total_questions || 0 }} question(s)</span></span
+              >
               <span>•</span>
-              <span>Total Marks: <span class="font-medium text-text/80">{{ exam.total_marks || 0 }}</span></span>
+              <span
+                >Total Marks: <span class="font-medium text-text/80">{{ exam.total_marks || 0 }}</span></span
+              >
               <span>•</span>
-              <span>Duration: <span class="font-medium text-text/80">{{ exam.duration_minutes }} min</span></span>
+              <span
+                >Duration: <span class="font-medium text-text/80">{{ exam.duration_minutes }} min</span></span
+              >
             </div>
           </div>
         </div>
@@ -222,11 +214,7 @@ onMounted(load);
     </div>
 
     <!-- Questions Table -->
-    <ExamQuestionsTable
-      :questions="questions"
-      :loading="loading"
-      :can-remove="canEdit"
-      @remove="removeQuestion" />
+    <ExamQuestionsTable :questions="questions" :loading="loading" :can-remove="canEdit" @remove="removeQuestion" />
 
     <!-- Helper note -->
     <div class="flex items-center gap-2 text-xs text-text/45">
@@ -245,5 +233,3 @@ onMounted(load);
       @close="showPicker = false" />
   </div>
 </template>
-
-

@@ -39,32 +39,78 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
 
 <template>
   <div ref="el" class="relative">
-    <button type="button" @click="isOpen = !isOpen" class="flex items-center gap-3 hover:bg-bg rounded-lg px-2 py-1.5 transition-colors">
-      <div class="text-sm text-right leading-tight hidden sm:block">
-        <div class="font-semibold text-text">{{ userName || 'User' }}</div>
-      </div>
-
-      <img v-if="userAvatar" :src="userAvatar" class="w-9 h-9 rounded-full object-cover border border-border" />
-      <div v-else class="w-9 h-9 rounded-full bg-accent/10 flex items-center justify-center text-accent text-xs font-bold">
+    <button
+      type="button"
+      @click="isOpen = !isOpen"
+      class="h-9 pl-2 pr-2.5 rounded-xl border border-border bg-surface hover:bg-bg hover:border-accent/40 shadow-2xs flex items-center gap-2.5 transition-all cursor-pointer group active:scale-98"
+      :class="{ 'border-accent/50 bg-bg': isOpen }">
+      <!-- Avatar -->
+      <img
+        v-if="userAvatar"
+        :src="userAvatar"
+        class="w-6.5 h-6.5 rounded-lg object-cover border border-border"
+        alt="Avatar" />
+      <div
+        v-else
+        class="w-6.5 h-6.5 rounded-lg bg-accent/10 border border-accent/20 flex items-center justify-center text-accent text-[11px] font-mono font-bold">
         {{ initials(userName) }}
       </div>
 
-      <ChevronDown class="w-4 h-4 text-text/40 transition-transform" :class="isOpen ? 'rotate-180' : ''" />
+      <!-- User name -->
+      <span class="text-xs font-semibold text-text max-w-32 truncate hidden sm:inline-block">
+        {{ userName || 'User' }}
+      </span>
+
+      <!-- Chevron -->
+      <ChevronDown
+        class="w-3.5 h-3.5 text-text/40 group-hover:text-text transition-transform duration-200"
+        :class="{ 'rotate-180 text-accent': isOpen }" />
     </button>
 
-    <div v-if="isOpen" class="absolute right-0 mt-2 w-52 bg-surface border border-border rounded-lg shadow-lg py-1 z-20">
-      <div class="px-3 py-2.5 border-b border-border">
-        <div class="text-sm font-semibold text-text">{{ userName || 'User' }}</div>
+    <Transition
+      enter-active-class="transition duration-150 ease-out"
+      enter-from-class="transform scale-95 opacity-0 -translate-y-1"
+      enter-to-class="transform scale-100 opacity-100 translate-y-0"
+      leave-active-class="transition duration-100 ease-in"
+      leave-from-class="transform scale-100 opacity-100 translate-y-0"
+      leave-to-class="transform scale-95 opacity-0 -translate-y-1">
+      <div
+        v-if="isOpen"
+        class="absolute right-0 mt-2 w-54 bg-surface border border-border rounded-2xl shadow-xl p-1.5 z-30">
+        <!-- Header -->
+        <div class="px-2.5 py-2 border-b border-border/50 mb-1">
+          <div class="text-xs font-semibold text-text truncate">{{ userName || 'User' }}</div>
+          <div class="text-[10px] font-mono text-text/50">Signed in</div>
+        </div>
+
+        <div class="space-y-0.5">
+          <router-link
+            to="/profile"
+            @click="isOpen = false"
+            class="flex items-center gap-2 px-2.5 py-2 rounded-xl text-xs font-medium text-text/80 hover:text-text hover:bg-bg transition-all">
+            <User class="w-3.5 h-3.5 text-text/50" />
+            <span>Profile</span>
+          </router-link>
+
+          <router-link
+            to="/settings"
+            @click="isOpen = false"
+            class="flex items-center gap-2 px-2.5 py-2 rounded-xl text-xs font-medium text-text/80 hover:text-text hover:bg-bg transition-all">
+            <Settings class="w-3.5 h-3.5 text-text/50" />
+            <span>Settings</span>
+          </router-link>
+        </div>
+
+        <div class="border-t border-border/50 mt-1 pt-1">
+          <button
+            type="button"
+            @click="handleLogout"
+            class="w-full flex items-center gap-2 px-2.5 py-2 rounded-xl text-xs font-medium text-error hover:bg-error/10 transition-all text-left cursor-pointer">
+            <LogOut class="w-3.5 h-3.5" />
+            <span>Log out</span>
+          </button>
+        </div>
       </div>
-      <router-link to="/profile" class="flex items-center gap-2 px-3 py-2.5 text-sm text-text hover:bg-bg transition-colors">
-        <User class="w-4 h-4 text-text/50" /> Profile
-      </router-link>
-      <router-link to="/settings" class="flex items-center gap-2 px-3 py-2.5 text-sm text-text hover:bg-bg transition-colors">
-        <Settings class="w-4 h-4 text-text/50" /> Settings
-      </router-link>
-      <button @click="handleLogout" class="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-error hover:bg-error/10 transition-colors">
-        <LogOut class="w-4 h-4" /> Log out
-      </button>
-    </div>
+    </Transition>
   </div>
 </template>

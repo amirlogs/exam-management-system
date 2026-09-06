@@ -139,38 +139,23 @@ async function confirmRemoveRole() {
 </script>
 
 <template>
-  <BaseDialog
-    :model-value="modelValue"
-    title="Manage roles"
-    :description="local ? `${local.first_name} ${local.last_name}` : ''"
-    @update:model-value="close">
+  <BaseDialog :model-value="modelValue" title="Manage roles" :description="local ? `${local.first_name} ${local.last_name}` : ''" @update:model-value="close">
     <div v-if="local" class="space-y-6">
       <div>
-        <h4 class="mb-2 text-xs font-bold uppercase tracking-wide text-text/60">
-          Current roles
-        </h4>
+        <h4 class="mb-2 text-xs font-bold uppercase tracking-wide text-text/60">Current roles</h4>
 
         <div class="flex flex-wrap gap-2">
-          <span
-            v-for="r in local.role_name"
-            :key="r"
-            class="flex items-center gap-1.5 rounded-full border border-border bg-bg px-3 py-1.5 text-xs text-text">
+          <span v-for="r in local.role_name" :key="r" class="flex items-center gap-1.5 rounded-full border border-border bg-bg px-3 py-1.5 text-xs text-text">
             <Shield class="h-3 w-3 text-accent" />
 
             {{ r }}
 
-            <button
-              type="button"
-              class="text-text/40 hover:text-error"
-              :disabled="busy"
-              @click="requestRemoveRole(r)">
+            <button type="button" class="text-text/40 hover:text-error" :disabled="busy" @click="requestRemoveRole(r)">
               <X class="h-3 w-3" />
             </button>
           </span>
 
-          <span v-if="!local.role_name.length" class="text-xs text-text/40">
-            No roles assigned.
-          </span>
+          <span v-if="!local.role_name.length" class="text-xs text-text/40"> No roles assigned. </span>
         </div>
       </div>
 
@@ -179,44 +164,27 @@ async function confirmRemoveRole() {
           <div class="flex items-center gap-2">
             <ShieldPlus class="h-4 w-4 text-accent" />
 
-            <h4 class="text-sm font-semibold text-text">
-              Assign a role
-            </h4>
+            <h4 class="text-sm font-semibold text-text">Assign a role</h4>
           </div>
 
-          <p class="mt-1 text-xs text-text/50">
-            Choose a role to grant this user its permissions.
-          </p>
+          <p class="mt-1 text-xs text-text/50">Choose a role to grant this user its permissions.</p>
         </div>
 
         <div class="space-y-2">
-          <label class="text-xs font-semibold uppercase tracking-wide text-text/60">
-            Role
-          </label>
+          <label class="text-xs font-semibold uppercase tracking-wide text-text/60"> Role </label>
 
-          <BaseSelect
-            v-model="selectedRoleId"
-            :options="roleOptions"
-            placeholder="Select a role"
-            :disabled="busy" />
+          <BaseSelect v-model="selectedRoleId" :options="roleOptions" placeholder="Select a role" :disabled="busy" />
         </div>
 
-        <div
-          class="rounded-md border px-3 py-2.5 transition-colors"
-          :class="selectedRoleId ? 'border-accent/20 bg-accent/5' : 'border-border bg-surface opacity-60'">
-          <p class="text-xs font-medium text-text/50">
-            Selected role
-          </p>
+        <div class="rounded-md border px-3 py-2.5 transition-colors" :class="selectedRoleId ? 'border-accent/20 bg-accent/5' : 'border-border bg-surface opacity-60'">
+          <p class="text-xs font-medium text-text/50">Selected role</p>
 
           <p class="mt-0.5 text-sm font-medium text-text">
             {{ selectedRoleLabel || 'No role selected' }}
           </p>
         </div>
 
-        <BaseButton
-          class="w-full"
-          :disabled="!selectedRoleId || busy"
-          @click="requestAssignRole">
+        <BaseButton class="w-full" :disabled="!selectedRoleId || busy" @click="requestAssignRole">
           <template #icon>
             <Plus class="h-4 w-4" />
           </template>
@@ -228,9 +196,7 @@ async function confirmRemoveRole() {
 
     <template #footer>
       <div class="flex justify-end">
-        <BaseButton variant="secondary" @click="close">
-          Done
-        </BaseButton>
+        <BaseButton variant="secondary" @click="close"> Done </BaseButton>
       </div>
     </template>
   </BaseDialog>

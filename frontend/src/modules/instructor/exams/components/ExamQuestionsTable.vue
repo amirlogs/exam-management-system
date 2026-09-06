@@ -77,9 +77,7 @@ function getDifficultyVariant(difficulty: string | null | undefined): 'neutral' 
                 <p class="text-sm font-medium leading-6 text-text">
                   {{ getContent(examQuestion) }}
                 </p>
-                <p v-if="getChapter(examQuestion)" class="mt-1 text-xs text-text/45">
-                  Chapter: {{ getChapter(examQuestion) }}
-                </p>
+                <p v-if="getChapter(examQuestion)" class="mt-1 text-xs text-text/45">Chapter: {{ getChapter(examQuestion) }}</p>
               </div>
             </td>
 
@@ -132,4 +130,3 @@ function getDifficultyVariant(difficulty: string | null | undefined): 'neutral' 
     </div>
   </div>
 </template>
-

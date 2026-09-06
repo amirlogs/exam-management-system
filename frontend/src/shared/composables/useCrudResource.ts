@@ -99,10 +99,7 @@ export function useCrudResource<T extends { id: number }>(api: CrudApi<T>, label
         }
       }
     } catch (err: any) {
-      error.value =
-        err?.response?.status === 401 || err?.response?.status === 403
-          ? 'You are not authorized to view this resource.'
-          : 'Failed to load data. Please try again.';
+      error.value = err?.response?.status === 401 || err?.response?.status === 403 ? 'You are not authorized to view this resource.' : 'Failed to load data. Please try again.';
     } finally {
       loading.value = false;
     }

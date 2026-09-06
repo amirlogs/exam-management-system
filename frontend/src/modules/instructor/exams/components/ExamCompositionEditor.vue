@@ -83,10 +83,7 @@ function save() {
   for (const [key, val] of Object.entries(localComposition.value)) {
     const upper = key.toUpperCase();
     const lower = key.toLowerCase();
-    const conf =
-      upper === 'MCQ' || upper === 'TRUE_FALSE'
-        ? { marks_each: val.marks_each ? Number(val.marks_each) : 1 }
-        : {};
+    const conf = upper === 'MCQ' || upper === 'TRUE_FALSE' ? { marks_each: val.marks_each ? Number(val.marks_each) : 1 } : {};
     payload[upper] = conf;
     payload[lower] = conf;
   }
@@ -100,21 +97,14 @@ function save() {
     <div class="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
       <div>
         <h2 class="text-base font-semibold text-text">Question Composition</h2>
-        <p class="mt-0.5 text-xs text-text/50">
-          Configure allowed question types and marks per question for this exam.
-        </p>
+        <p class="mt-0.5 text-xs text-text/50">Configure allowed question types and marks per question for this exam.</p>
       </div>
 
-      <BaseButton :disabled="disabled" :loading="loading" @click="save">
-        Save composition
-      </BaseButton>
+      <BaseButton :disabled="disabled" :loading="loading" @click="save"> Save composition </BaseButton>
     </div>
 
     <div class="space-y-3">
-      <div
-        v-for="[type, config] in entries"
-        :key="type"
-        class="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-border bg-bg/50 p-4 transition-colors">
+      <div v-for="[type, config] in entries" :key="type" class="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-border bg-bg/50 p-4 transition-colors">
         <div class="flex items-center gap-3">
           <span class="inline-flex rounded-md bg-accent/10 px-2 py-0.5 font-mono text-[11px] font-bold uppercase text-accent">
             {{ type }}

@@ -222,6 +222,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
 // ======================= EXAMS (student) =======================
 Route::middleware('auth:sanctum')->prefix('student')->group(function () {
+    Route::get('/exams', [StudentExamController::class, 'index']);
     Route::get('/exams/{exam}', [StudentExamController::class, 'show']);
     Route::get('/exams/{exam}/questions', [StudentExamController::class, 'questions']);
     Route::post('/exams/{exam}/start', [StudentExamController::class, 'start']);

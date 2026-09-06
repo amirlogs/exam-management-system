@@ -265,16 +265,16 @@ onBeforeUnmount(() => {
           <Columns3 class="h-4 w-4" />
         </button>
 
-        <button
-          v-if="showFullscreen"
-          type="button"
-          class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-surface text-text/60 transition-colors hover:border-accent/40 hover:text-accent"
-          :title="isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'"
-          @click="toggleFullscreen">
-          <Minimize2 v-if="isFullscreen" class="h-4 w-4" />
-
-          <Maximize2 v-else class="h-4 w-4" />
-        </button>
+        <!-- <button -->
+        <!--   v-if="showFullscreen" -->
+        <!--   type="button" -->
+        <!--   class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-surface text-text/60 transition-colors hover:border-accent/40 hover:text-accent" -->
+        <!--   :title="isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'" -->
+        <!--   @click="toggleFullscreen"> -->
+        <!--   <Minimize2 v-if="isFullscreen" class="h-4 w-4" /> -->
+        <!---->
+        <!--   <Maximize2 v-else class="h-4 w-4" /> -->
+        <!-- </button> -->
       </div>
     </div>
 

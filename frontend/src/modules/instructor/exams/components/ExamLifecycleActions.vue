@@ -1,18 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import {
-  Archive,
-  CalendarClock,
-  Check,
-  Clock,
-  Clock3,
-  Play,
-  RotateCcw,
-  Send,
-  Square,
-  X,
-  XCircle,
-} from 'lucide-vue-next';
+import { Archive, CalendarClock, Check, Clock, Clock3, Play, RotateCcw, Send, Square, X, XCircle } from 'lucide-vue-next';
 
 import BaseButton from '@/shared/components/ui/BaseButton.vue';
 import BaseInput from '@/shared/components/ui/BaseInput.vue';
@@ -218,12 +206,7 @@ function submitExtend() {
               class="w-full rounded-lg border border-border bg-bg px-3 py-2 text-sm text-text outline-none focus:border-accent" />
           </div>
 
-          <BaseInput
-            v-if="status === 'scheduled'"
-            v-model="scheduleDuration"
-            type="number"
-            min="30"
-            label="Duration (minutes)" />
+          <BaseInput v-if="status === 'scheduled'" v-model="scheduleDuration" type="number" min="30" label="Duration (minutes)" />
         </div>
 
         <div class="mt-6 flex justify-end gap-2">
@@ -252,12 +235,7 @@ function submitExtend() {
         </div>
 
         <div class="mt-4">
-          <BaseInput
-            v-model="extendMinutes"
-            type="number"
-            min="1"
-            label="Additional minutes"
-            placeholder="e.g. 15" />
+          <BaseInput v-model="extendMinutes" type="number" min="1" label="Additional minutes" placeholder="e.g. 15" />
         </div>
 
         <div class="mt-6 flex justify-end gap-2">
@@ -302,4 +280,3 @@ function submitExtend() {
     </div>
   </div>
 </template>
-

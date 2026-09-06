@@ -1,23 +1,8 @@
 export type ExamType = 'MIDTERM' | 'FINAL' | string;
 
-export type ExamStatus =
-  | 'draft'
-  | 'pending_approval'
-  | 'approved'
-  | 'rejected'
-  | 'scheduled'
-  | 'active'
-  | 'completed'
-  | 'archived'
-  | 'cancelled';
+export type ExamStatus = 'draft' | 'pending_approval' | 'approved' | 'rejected' | 'scheduled' | 'active' | 'completed' | 'archived' | 'cancelled';
 
-export type GradingStatus =
-  | 'not_started'
-  | 'in_progress'
-  | 'submitted'
-  | 'verified'
-  | 'published'
-  | string;
+export type GradingStatus = 'not_started' | 'in_progress' | 'submitted' | 'verified' | 'published' | string;
 
 export type QuestionType = 'mcq' | 'true_false' | 'short_answer' | 'essay' | 'MCQ' | 'TRUE_FALSE' | 'SHORT_ANSWER' | 'ESSAY';
 
@@ -147,4 +132,3 @@ export interface UpdateSchedulePayload {
   scheduled_start_time?: string;
   duration_minutes?: number;
 }
-

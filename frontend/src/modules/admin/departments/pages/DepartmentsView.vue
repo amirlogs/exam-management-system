@@ -35,26 +35,16 @@ const filters = ref({
 const crud = useCrudResource<Department>(
   {
     list: (params) =>
-      getDepartments(
-        params.page ?? 1,
-        10,
-        params.search ?? '',
-        {
-          college_id: filters.value.college_id,
-          type: filters.value.type,
-        },
-      ),
+      getDepartments(params.page ?? 1, 10, params.search ?? '', {
+        college_id: filters.value.college_id,
+        type: filters.value.type,
+      }),
 
     listArchived: (params) =>
-      getArchivedDepartments(
-        params.page ?? 1,
-        10,
-        params.search ?? '',
-        {
-          college_id: filters.value.college_id,
-          type: filters.value.type,
-        },
-      ),
+      getArchivedDepartments(params.page ?? 1, 10, params.search ?? '', {
+        college_id: filters.value.college_id,
+        type: filters.value.type,
+      }),
 
     remove: deleteDepartment,
     restore: restoreDepartment,

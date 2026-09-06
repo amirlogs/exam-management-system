@@ -244,9 +244,7 @@ function downloadSample() {
         <BaseSelect v-if="field.kind === 'semester_select'" v-model="context[field.key]" :options="semesterOptions" placeholder="Select semester" />
 
         <div v-else-if="field.kind === 'course_select'">
-          <div
-            v-if="props.fixedCourseLabel"
-            class="flex h-10 w-full items-center rounded-lg border border-border bg-bg/70 px-3 text-sm font-medium text-text">
+          <div v-if="props.fixedCourseLabel" class="flex h-10 w-full items-center rounded-lg border border-border bg-bg/70 px-3 text-sm font-medium text-text">
             {{ props.fixedCourseLabel }}
           </div>
           <BaseSelect v-else v-model="context[field.key]" :options="availableCourseOptions" placeholder="Select course" />

@@ -49,12 +49,7 @@ function goBack() {
   });
 }
 
-async function handleSubmit(payload: {
-  title: string;
-  type: string;
-  duration_minutes: number;
-  composition: Record<string, { marks_each?: number }>;
-}) {
+async function handleSubmit(payload: { title: string; type: string; duration_minutes: number; composition: Record<string, { marks_each?: number }> }) {
   const courseOfferingId = Number(selectedOfferingId.value);
   if (!courseOfferingId) {
     uiStore.showToast('Please select a course offering for this exam.', 'error');
@@ -95,12 +90,8 @@ onMounted(loadTeachings);
       </button>
 
       <div>
-        <h1 class="font-display text-xl font-bold text-text">
-          Create New Exam
-        </h1>
-        <p class="text-xs text-text/45">
-          Create a draft exam paper for one of your assigned course offerings.
-        </p>
+        <h1 class="font-display text-xl font-bold text-text">Create New Exam</h1>
+        <p class="text-xs text-text/45">Create a draft exam paper for one of your assigned course offerings.</p>
       </div>
     </div>
 
@@ -111,24 +102,15 @@ onMounted(loadTeachings);
         </div>
         <div class="min-w-0 flex-1">
           <h2 class="font-display text-lg font-bold text-text">Course Offering Assignment</h2>
-          <p class="mt-0.5 text-xs text-text/50">
-            Select which course offering this exam belongs to.
-          </p>
+          <p class="mt-0.5 text-xs text-text/50">Select which course offering this exam belongs to.</p>
 
           <div class="mt-4 max-w-md">
-            <BaseSelect
-              v-model="selectedOfferingId"
-              label="Course Offering"
-              :options="teachingOptions"
-              placeholder="Select a course offering" />
+            <BaseSelect v-model="selectedOfferingId" label="Course Offering" :options="teachingOptions" placeholder="Select a course offering" />
           </div>
         </div>
       </div>
     </div>
 
-    <ExamForm
-      :loading="saving"
-      @submit="handleSubmit"
-      @cancel="goBack" />
+    <ExamForm :loading="saving" @submit="handleSubmit" @cancel="goBack" />
   </div>
 </template>

@@ -21,7 +21,7 @@ export async function listOfferings(semesterId: number, page = 1, perPage = 10, 
   return res.data;
 }
 
-export async function getArchivedOfferings( semesterId: number | null, page = 1, perPage = 10, status?: OfferingStatus, search?: string, ): Promise<ListResponse<CourseOffering>> {
+export async function getArchivedOfferings(semesterId: number | null, page = 1, perPage = 10, status?: OfferingStatus, search?: string): Promise<ListResponse<CourseOffering>> {
   const res = await api.get('/course-offerings/archived', {
     params: {
       semester_id: semesterId ?? undefined,

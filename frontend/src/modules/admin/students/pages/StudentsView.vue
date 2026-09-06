@@ -79,9 +79,7 @@ const programOptions = computed(() => [
 const sectionOptions = computed(() => [
   {
     value: null,
-    label: filters.value.program_id
-      ? 'All sections'
-      : 'Select a program first',
+    label: filters.value.program_id ? 'All sections' : 'Select a program first',
   },
 
   ...sections.value.map((section) => ({
@@ -106,12 +104,7 @@ const statusOptions = [
 ];
 
 const hasActiveFilters = computed(() => {
-  return (
-    filters.value.program_id !== null ||
-    filters.value.section_id !== null ||
-    (filters.value.status !== null &&
-      filters.value.status !== '')
-  );
+  return filters.value.program_id !== null || filters.value.section_id !== null || (filters.value.status !== null && filters.value.status !== '');
 });
 
 const filterCount = computed(() => {
@@ -125,10 +118,7 @@ const filterCount = computed(() => {
     count++;
   }
 
-  if (
-    filters.value.status !== null &&
-    filters.value.status !== ''
-  ) {
+  if (filters.value.status !== null && filters.value.status !== '') {
     count++;
   }
 
@@ -151,14 +141,9 @@ async function loadSections() {
     return;
   }
 
-  const res = await getSections(
-    1,
-    200,
-    '',
-    {
-      program_id: filters.value.program_id,
-    },
-  );
+  const res = await getSections(1, 200, '', {
+    program_id: filters.value.program_id,
+  });
 
   sections.value = res.data;
 }
@@ -169,29 +154,17 @@ async function load(page = 1) {
   try {
     const activeFilters = {
       search: search.value || undefined,
-      program_id:
-        filters.value.program_id ?? undefined,
-      section_id:
-        filters.value.section_id ?? undefined,
-      status:
-        filters.value.status || undefined,
+      program_id: filters.value.program_id ?? undefined,
+      section_id: filters.value.section_id ?? undefined,
+      status: filters.value.status || undefined,
     };
 
-    const res = await getStudents(
-      page,
-      12,
-      activeFilters,
-    );
+    const res = await getStudents(page, 12, activeFilters);
 
     students.value = res.data;
     pagination.value = res.pagination;
   } catch (err) {
-    handleApiError(
-      err,
-      uiStore,
-      undefined,
-      'Failed to load students.',
-    );
+    handleApiError(err, uiStore, undefined, 'Failed to load students.');
   } finally {
     loading.value = false;
   }
@@ -242,15 +215,11 @@ async function handleRefresh() {
 }
 
 function initials(student: Student) {
-  const first =
-    student.user.first_name?.[0] ?? '';
+  const first = student.user.first_name?.[0] ?? '';
 
-  const last =
-    student.user.last_name?.[0] ?? '';
+  const last = student.user.last_name?.[0] ?? '';
 
-  return (
-    first + last
-  ).toUpperCase() || '—';
+  return (first + last).toUpperCase() || '—';
 }
 
 onMounted(async () => {
@@ -258,12 +227,7 @@ onMounted(async () => {
     await loadPrograms();
     await load(1);
   } catch (err) {
-    handleApiError(
-      err,
-      uiStore,
-      undefined,
-      'Failed to load student data.',
-    );
+    handleApiError(err, uiStore, undefined, 'Failed to load student data.');
   }
 });
 </script>
@@ -283,17 +247,10 @@ onMounted(async () => {
       :filter-count="filterCount"
       @update:search="handleSearch"
       @refresh="handleRefresh"
-      @clear-filters="clearFilters"
-    >
+      @clear-filters="clearFilters">
       <template #filters>
         <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <BaseSelect
-            v-model="filters.program_id"
-            label="Program"
-            :options="programOptions"
-            placeholder="All programs"
-            @update:model-value="handleProgramChange"
-          />
+          <BaseSelect v-model="filters.program_id" label="Program" :options="programOptions" placeholder="All programs" @update:model-value="handleProgramChange" />
 
           <BaseSelect
             v-model="filters.section_id"
@@ -301,27 +258,16 @@ onMounted(async () => {
             :options="sectionOptions"
             :disabled="filters.program_id === null"
             placeholder="All sections"
-            @update:model-value="handleSectionChange"
-          />
+            @update:model-value="handleSectionChange" />
 
-          <BaseSelect
-            v-model="filters.status"
-            label="Status"
-            :options="statusOptions"
-            placeholder="All statuses"
-            @update:model-value="handleStatusChange"
-          />
+          <BaseSelect v-model="filters.status" label="Status" :options="statusOptions" placeholder="All statuses" @update:model-value="handleStatusChange" />
         </div>
 
-        <div
-          v-if="hasActiveFilters"
-          class="mt-4 flex justify-end"
-        >
+        <div v-if="hasActiveFilters" class="mt-4 flex justify-end">
           <button
             type="button"
             class="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium text-text/55 transition-colors hover:bg-text/5 hover:text-accent"
-            @click="clearFilters"
-          >
+            @click="clearFilters">
             <RotateCcw class="h-3.5 w-3.5" />
             Reset filters
           </button>
@@ -334,36 +280,21 @@ onMounted(async () => {
         <table class="w-full min-w-[980px] border-collapse">
           <thead>
             <tr class="border-b border-border bg-text/2.5">
-              <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-text/50">
-                Student
-              </th>
+              <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-text/50">Student</th>
 
-              <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-text/50">
-                Student Number
-              </th>
+              <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-text/50">Student Number</th>
 
-              <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-text/50">
-                Program
-              </th>
+              <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-text/50">Program</th>
 
-              <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-text/50">
-                Section
-              </th>
+              <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-text/50">Section</th>
 
-              <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-text/50">
-                Entry Year
-              </th>
+              <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-text/50">Entry Year</th>
 
-              <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-text/50">
-                Status
-              </th>
+              <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-text/50">Status</th>
             </tr>
           </thead>
 
-          <tbody
-            v-if="loading"
-            class="divide-y divide-border"
-          >
+          <tbody v-if="loading" class="divide-y divide-border">
             <tr v-for="row in 6" :key="row">
               <td colspan="6" class="px-4 py-4">
                 <div class="h-3.5 w-full max-w-sm animate-pulse rounded bg-text/5" />
@@ -371,15 +302,8 @@ onMounted(async () => {
             </tr>
           </tbody>
 
-          <tbody
-            v-else-if="students.length"
-            class="divide-y divide-border"
-          >
-            <tr
-              v-for="student in students"
-              :key="student.id"
-              class="hover:bg-text/2"
-            >
+          <tbody v-else-if="students.length" class="divide-y divide-border">
+            <tr v-for="student in students" :key="student.id" class="hover:bg-text/2">
               <td class="px-4 py-3.5">
                 <div class="flex items-center gap-3">
                   <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent/10 text-xs font-bold text-accent">
@@ -408,11 +332,7 @@ onMounted(async () => {
               </td>
 
               <td class="px-4 py-3.5 text-sm text-text/60">
-                {{
-                  student.section
-                    ? `${student.section.name} (Yr ${student.section.year_level})`
-                    : '—'
-                }}
+                {{ student.section ? `${student.section.name} (Yr ${student.section.year_level})` : '—' }}
               </td>
 
               <td class="px-4 py-3.5 font-mono text-xs text-text/60">
@@ -420,13 +340,7 @@ onMounted(async () => {
               </td>
 
               <td class="px-4 py-3.5">
-                <BaseBadge
-                  :variant="
-                    student.status === 'active'
-                      ? 'success'
-                      : 'neutral'
-                  "
-                >
+                <BaseBadge :variant="student.status === 'active' ? 'success' : 'neutral'">
                   {{ student.status }}
                 </BaseBadge>
               </td>
@@ -441,13 +355,9 @@ onMounted(async () => {
                     <GraduationCap class="h-5 w-5" />
                   </div>
 
-                  <p class="mt-3 text-sm font-medium text-text">
-                    No students found.
-                  </p>
+                  <p class="mt-3 text-sm font-medium text-text">No students found.</p>
 
-                  <p class="mt-1 text-xs text-text/45">
-                    Try changing your search or filters.
-                  </p>
+                  <p class="mt-1 text-xs text-text/45">Try changing your search or filters.</p>
                 </div>
               </td>
             </tr>
@@ -455,10 +365,7 @@ onMounted(async () => {
         </table>
       </div>
 
-      <AppPagination
-        :pagination="pagination"
-        @change-page="load"
-      />
+      <AppPagination :pagination="pagination" @change-page="load" />
     </div>
   </div>
 </template>

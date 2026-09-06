@@ -75,67 +75,65 @@ function handleNavigate() {
   <aside
     class="fixed md:sticky top-0 h-screen shrink-0 bg-surface border-r border-border flex flex-col justify-between z-50 md:z-40 transition-all duration-300 ease-in-out shadow-2xl md:shadow-none"
     :class="[isCollapsed ? 'md:w-19' : 'md:w-66', isMobileOpen ? 'translate-x-0 w-70' : '-translate-x-full md:translate-x-0 w-70 md:w-auto']">
-    <div class="overflow-y-auto flex-1 flex flex-col">
-      <!-- Top bar -->
-      <div class="h-17 px-3 flex items-center justify-between border-b border-border shrink-0" :class="isCollapsed ? 'md:justify-center md:px-0' : ''">
-        <div v-if="!isCollapsed" class="flex items-center gap-3 leading-tight overflow-hidden">
-          <div class="w-9 h-9 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
-            <GraduationCap class="w-5 h-5 text-accent" />
-          </div>
-          <div class="overflow-hidden">
-            <h1 class="text-base font-bold text-accent truncate">{{ brandName }}</h1>
-            <p class="text-[10px] font-bold tracking-wider uppercase text-text/40 truncate">{{ brandSubtitle }}</p>
-          </div>
+    <!-- Fixed Top bar -->
+    <div class="h-17 px-3 flex items-center justify-between border-b border-border shrink-0" :class="isCollapsed ? 'md:justify-center md:px-0' : ''">
+      <div v-if="!isCollapsed" class="flex items-center gap-3 leading-tight overflow-hidden">
+        <div class="w-9 h-9 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
+          <GraduationCap class="w-5 h-5 text-accent" />
         </div>
-
-        <!-- Collapsed icon toggle (Desktop) -->
-        <button
-          v-else-if="isCollapsed"
-          @click="toggleCollapse"
-          class="hidden md:flex group relative w-9 h-9 rounded-xl items-center justify-center text-text/50 hover:bg-bg hover:text-text transition-colors shrink-0"
-          title="Expand sidebar">
-          <GraduationCap class="w-5 h-5 text-accent group-hover:hidden" />
-          <PanelLeftOpen class="w-4.5 h-4,5 hidden group-hover:block" />
-        </button>
-
-        <!-- Collapse button (Desktop) -->
-        <button
-          v-if="!isCollapsed"
-          @click="toggleCollapse"
-          class="hidden md:flex ml-4 w-8 h-8 rounded-lg items-center justify-center text-text/50 hover:bg-bg hover:text-text transition-colors shrink-0"
-          title="Collapse sidebar">
-          <PanelLeftClose class="w-4.5 h-4.5" />
-        </button>
-
-        <!-- Close button (Mobile) -->
-        <button
-          class="md:hidden w-9 h-9 rounded-4.5l flex items-center justify-center bg-bg text-text/60 hover:text-text active:scale-95 transition-all"
-          @click="closeMobile"
-          aria-label="Close sidebar">
-          <X class="w-5 h-5" />
-        </button>
+        <div class="overflow-hidden">
+          <h1 class="text-base font-bold text-accent truncate">{{ brandName }}</h1>
+          <p class="text-[10px] font-bold tracking-wider uppercase text-text/40 truncate">{{ brandSubtitle }}</p>
+        </div>
       </div>
 
-      <!-- Nav Items -->
-      <nav class="p-4 space-y-1.5 flex-1">
-        <router-link
-          v-for="item in items"
-          :key="item.to"
-          :to="item.to"
-          @click="handleNavigate"
-          class="flex items-center gap-3.5 px-3.5 py-3 md:py-2.5 rounded-xl text-sm font-medium transition-all duration-150 active:scale-[0.98]"
-          :class="[
-            activeTo.startsWith(item.to) ? 'bg-accent/10 text-accent font-semibold' : 'text-text/60 hover:bg-bg hover:text-text',
-            isCollapsed ? 'md:justify-center md:px-0' : '',
-          ]"
-          :title="isCollapsed ? item.label : ''">
-          <component :is="icons[item.icon]" class="w-5 h-5 md:w-4.5 md:h-4.5 shrink-0" />
-          <span :class="isCollapsed ? 'md:hidden' : ''">{{ item.label }}</span>
-        </router-link>
-      </nav>
+      <!-- Collapsed icon toggle (Desktop) -->
+      <button
+        v-else-if="isCollapsed"
+        @click="toggleCollapse"
+        class="hidden md:flex group relative w-9 h-9 rounded-xl items-center justify-center text-text/50 hover:bg-bg hover:text-text transition-colors shrink-0 cursor-pointer"
+        title="Expand sidebar">
+        <GraduationCap class="w-5 h-5 text-accent group-hover:hidden" />
+        <PanelLeftOpen class="w-4.5 h-4.5 hidden group-hover:block" />
+      </button>
+
+      <!-- Collapse button (Desktop) -->
+      <button
+        v-if="!isCollapsed"
+        @click="toggleCollapse"
+        class="hidden md:flex ml-4 w-8 h-8 rounded-lg items-center justify-center text-text/50 hover:bg-bg hover:text-text transition-colors shrink-0 cursor-pointer"
+        title="Collapse sidebar">
+        <PanelLeftClose class="w-4.5 h-4.5" />
+      </button>
+
+      <!-- Close button (Mobile) -->
+      <button
+        class="md:hidden w-9 h-9 rounded-xl flex items-center justify-center bg-bg text-text/60 hover:text-text active:scale-95 transition-all cursor-pointer"
+        @click="closeMobile"
+        aria-label="Close sidebar">
+        <X class="w-5 h-5" />
+      </button>
     </div>
 
-    <!-- Footer / Settings -->
+    <!-- Nav Items (Scrollable without visible scrollbar) -->
+    <nav class="p-4 space-y-1.5 flex-1 overflow-y-auto sidebar-scroll">
+      <router-link
+        v-for="item in items"
+        :key="item.to"
+        :to="item.to"
+        @click="handleNavigate"
+        class="flex items-center gap-3.5 px-3.5 py-3 md:py-2.5 rounded-xl text-sm font-medium transition-all duration-150 active:scale-[0.98]"
+        :class="[
+          activeTo.startsWith(item.to) ? 'bg-accent/10 text-accent font-semibold' : 'text-text/60 hover:bg-bg hover:text-text',
+          isCollapsed ? 'md:justify-center md:px-0' : '',
+        ]"
+        :title="isCollapsed ? item.label : ''">
+        <component :is="icons[item.icon]" class="w-5 h-5 md:w-4.5 md:h-4.5 shrink-0" />
+        <span :class="isCollapsed ? 'md:hidden' : ''">{{ item.label }}</span>
+      </router-link>
+    </nav>
+
+    <!-- Footer / Settings (Fixed at bottom) -->
     <div class="px-4 py-2 border-t border-border shrink-0">
       <router-link
         to="/settings"
@@ -150,6 +148,14 @@ function handleNavigate() {
 </template>
 
 <style scoped>
+.sidebar-scroll {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+.sidebar-scroll::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.2s ease;

@@ -1,19 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import {
-  ArrowLeft,
-  CalendarClock,
-  ChevronLeft,
-  ChevronRight,
-  ClipboardList,
-  Clock3,
-  ExternalLink,
-  FileQuestion,
-  FileText,
-  HelpCircle,
-  Lock,
-} from 'lucide-vue-next';
+import { ArrowLeft, CalendarClock, ChevronLeft, ChevronRight, ClipboardList, Clock3, ExternalLink, FileQuestion, FileText, HelpCircle, Lock } from 'lucide-vue-next';
 
 import BaseBadge from '@/shared/components/ui/BaseBadge.vue';
 import BaseButton from '@/shared/components/ui/BaseButton.vue';
@@ -91,10 +79,7 @@ function getMarks(item: any): number | string {
 async function loadExam() {
   loading.value = true;
   try {
-    const [response] = await Promise.all([
-      getExam(examId.value),
-      loadQuestions(1),
-    ]);
+    const [response] = await Promise.all([getExam(examId.value), loadQuestions(1)]);
     exam.value = response.data;
   } catch (error) {
     handleApiError(error, uiStore, undefined, 'Unable to load this exam.');
@@ -150,24 +135,15 @@ async function handleSchedule(payload: { scheduled_start: string; duration_minut
   if (!exam.value) return;
 
   if (exam.value.status === 'scheduled') {
-    await runAction(
-      () => updateExamSchedule(exam.value!.id, payload),
-      'Exam schedule updated successfully.',
-    );
+    await runAction(() => updateExamSchedule(exam.value!.id, payload), 'Exam schedule updated successfully.');
   } else {
-    await runAction(
-      () => scheduleExam(exam.value!.id, { scheduled_start: payload.scheduled_start }),
-      'Exam scheduled successfully.',
-    );
+    await runAction(() => scheduleExam(exam.value!.id, { scheduled_start: payload.scheduled_start }), 'Exam scheduled successfully.');
   }
 }
 
 async function handleExtendTime(durationMinutes: number) {
   if (!exam.value) return;
-  await runAction(
-    () => extendExamTime(exam.value!.id, durationMinutes),
-    'Exam time extended successfully.',
-  );
+  await runAction(() => extendExamTime(exam.value!.id, durationMinutes), 'Exam time extended successfully.');
 }
 
 onMounted(loadExam);
@@ -195,10 +171,7 @@ onMounted(loadExam);
     <template v-else-if="exam">
       <!-- Top Action Bar (Back button on left, Lifecycle Actions on right) -->
       <div class="flex flex-wrap items-center justify-between gap-4">
-        <button
-          type="button"
-          class="inline-flex items-center gap-2 text-sm font-medium text-text/60 transition-colors hover:text-accent"
-          @click="goBack">
+        <button type="button" class="inline-flex items-center gap-2 text-sm font-medium text-text/60 transition-colors hover:text-accent" @click="goBack">
           <ArrowLeft class="h-4 w-4" />
           <span>Back to Exams</span>
         </button>
@@ -296,9 +269,7 @@ onMounted(loadExam);
           <div class="flex items-center justify-between">
             <div>
               <p class="text-xs font-medium uppercase tracking-wide text-text/45">Duration</p>
-              <p class="mt-2 text-2xl font-bold tabular-nums text-text">
-                {{ exam.duration_minutes }} min
-              </p>
+              <p class="mt-2 text-2xl font-bold tabular-nums text-text">{{ exam.duration_minutes }} min</p>
             </div>
             <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10">
               <Clock3 class="h-5 w-5 text-accent" />
@@ -326,15 +297,10 @@ onMounted(loadExam);
         <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 class="text-base font-semibold text-text">Question Paper Preview</h2>
-            <p class="mt-0.5 text-xs text-text/50">
-              {{ exam.total_questions }} question(s) attached totaling {{ exam.total_marks }} mark(s).
-            </p>
+            <p class="mt-0.5 text-xs text-text/50">{{ exam.total_questions }} question(s) attached totaling {{ exam.total_marks }} mark(s).</p>
           </div>
 
-          <button
-            type="button"
-            class="inline-flex items-center gap-1.5 text-xs font-medium text-accent hover:underline"
-            @click="openQuestions">
+          <button type="button" class="inline-flex items-center gap-1.5 text-xs font-medium text-accent hover:underline" @click="openQuestions">
             <span>Open Full Question Paper</span>
             <ExternalLink class="h-3.5 w-3.5" />
           </button>
@@ -362,10 +328,7 @@ onMounted(loadExam);
               </tbody>
 
               <tbody v-else-if="attachedQuestions.length" class="divide-y divide-border">
-                <tr
-                  v-for="item in attachedQuestions"
-                  :key="item.pivot?.id || item.id"
-                  class="transition-colors hover:bg-text/[0.02]">
+                <tr v-for="item in attachedQuestions" :key="item.pivot?.id || item.id" class="transition-colors hover:bg-text/[0.02]">
                   <td class="px-5 py-3.5">
                     <p class="line-clamp-2 text-sm font-medium text-text">
                       {{ item.question?.content || item.content || '—' }}
@@ -429,9 +392,7 @@ onMounted(loadExam);
                 <ChevronLeft class="h-3.5 w-3.5" /> Prev
               </button>
 
-              <span class="px-2 font-mono text-xs text-text/60">
-                {{ questionPage }} / {{ questionPagination.last_page }}
-              </span>
+              <span class="px-2 font-mono text-xs text-text/60"> {{ questionPage }} / {{ questionPagination.last_page }} </span>
 
               <button
                 type="button"
@@ -461,9 +422,7 @@ onMounted(loadExam);
 
             <div>
               <h3 class="text-sm font-semibold text-text">Composition is locked</h3>
-              <p class="mt-0.5 text-xs text-text/50">
-                The exam is in {{ exam.status.replaceAll('_', ' ') }} state, so its question composition cannot be modified.
-              </p>
+              <p class="mt-0.5 text-xs text-text/50">The exam is in {{ exam.status.replaceAll('_', ' ') }} state, so its question composition cannot be modified.</p>
             </div>
           </div>
         </div>
@@ -471,4 +430,3 @@ onMounted(loadExam);
     </template>
   </div>
 </template>
-
