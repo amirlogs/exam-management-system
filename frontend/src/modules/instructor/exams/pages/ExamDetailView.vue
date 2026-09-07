@@ -1,243 +1,432 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { FileEdit, Send, CheckCircle2, XCircle, Calendar, Play, Square, Ban, Archive } from 'lucide-vue-next';
-import BaseCard from '@/shared/components/ui/BaseCard.vue';
+import { ArrowLeft, CalendarClock, ChevronLeft, ChevronRight, ClipboardList, Clock3, ExternalLink, FileQuestion, FileText, HelpCircle, Lock } from 'lucide-vue-next';
+
+import BaseBadge from '@/shared/components/ui/BaseBadge.vue';
 import BaseButton from '@/shared/components/ui/BaseButton.vue';
-import BaseDialog from '@/shared/components/ui/BaseDialog.vue';
-import ConfirmModal from '@/shared/components/ConfirmModal.vue';
-import AlertBanner from '@/shared/components/ui/AlertBanner.vue';
-import * as examsApi from '../api/exams';
+import ExamStatusBadge from '../components/ExamStatusBadge.vue';
+import ExamCompositionEditor from '../components/ExamCompositionEditor.vue';
+import ExamLifecycleActions from '../components/ExamLifecycleActions.vue';
+
+import {
+  approveExam,
+  archiveExam,
+  cancelExam,
+  endExam,
+  extendExamTime,
+  getExam,
+  listExamQuestions,
+  publishExam,
+  rejectExam,
+  revertExamToDraft,
+  scheduleExam,
+  submitExamForApproval,
+  updateExamComposition,
+  updateExamSchedule,
+} from '../api/exams';
+
 import { useUiStore } from '@/stores/ui';
+import { handleApiError } from '@/shared/utils/apiError';
 import type { Exam } from '../types/exam';
 
-const route = useRoute();
 const router = useRouter();
+const route = useRoute();
 const uiStore = useUiStore();
-const examId = computed(() => Number(route.params.examId));
 
 const exam = ref<Exam | null>(null);
+const attachedQuestions = ref<any[]>([]);
+const questionPage = ref(1);
+const questionPerPage = 5;
+const questionPagination = ref<any>(null);
+
 const loading = ref(true);
-const busy = ref(false);
+const loadingQuestions = ref(false);
+const actionLoading = ref(false);
 
-const steps = [
-  { key: 'draft', label: 'Draft', icon: FileEdit },
-  { key: 'pending_approval', label: 'Pending', icon: Send },
-  { key: 'approved', label: 'Approved', icon: CheckCircle2 },
-  { key: 'scheduled', label: 'Scheduled', icon: Calendar },
-  { key: 'active', label: 'Active', icon: Play },
-  { key: 'completed', label: 'Completed', icon: Square },
-];
-const stepIndex = computed(() => steps.findIndex((s) => s.key === exam.value?.status));
+const examId = computed(() => Number(route.params.examId));
+const showComposition = computed(() => exam.value?.status === 'draft');
 
-async function load() {
+function formatDate(value: string | null | undefined) {
+  if (!value) return 'Not scheduled';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat('en-US', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(date);
+}
+
+function getDifficultyVariant(difficulty: string | null | undefined): 'neutral' | 'info' | 'danger' | 'warning' | 'success' | 'dark' {
+  if (!difficulty) return 'neutral';
+  const val = difficulty.toLowerCase();
+  if (val === 'easy') return 'success';
+  if (val === 'medium') return 'warning';
+  if (val === 'hard') return 'danger';
+  return 'neutral';
+}
+
+function getMarks(item: any): number | string {
+  if (item?.marks !== undefined && item?.marks !== null && item?.marks !== '') {
+    return item.marks;
+  }
+  if (item?.pivot?.marks !== undefined && item?.pivot?.marks !== null && item?.pivot?.marks !== '') {
+    return item.pivot.marks;
+  }
+  return 1;
+}
+
+async function loadExam() {
   loading.value = true;
   try {
-    exam.value = await examsApi.getExam(examId.value);
-  } catch (err: any) {
-    uiStore.showToast(err?.response?.data?.message || 'Failed to load exam.', 'error');
+    const [response] = await Promise.all([getExam(examId.value), loadQuestions(1)]);
+    exam.value = response.data;
+  } catch (error) {
+    handleApiError(error, uiStore, undefined, 'Unable to load this exam.');
+    router.push({ name: 'instructor.exams.list' });
   } finally {
     loading.value = false;
   }
 }
-onMounted(load);
 
-async function guardedAction(fn: () => Promise<Exam>, successMsg: string) {
-  busy.value = true;
+async function loadQuestions(page = 1) {
+  loadingQuestions.value = true;
   try {
-    exam.value = await fn();
-    uiStore.showToast(successMsg, 'success');
-  } catch (err: any) {
-    uiStore.showToast(err?.response?.data?.message || 'Action failed.', 'error');
+    const qResponse = await listExamQuestions(examId.value, page, questionPerPage);
+    attachedQuestions.value = qResponse.data ?? [];
+    questionPagination.value = qResponse.pagination ?? null;
+    questionPage.value = page;
+  } catch (error) {
+    // Non-blocking
   } finally {
-    busy.value = false;
+    loadingQuestions.value = false;
   }
 }
 
-const showRejectModal = ref(false);
-const rejectReason = ref('');
-async function submitReject() {
-  if (!exam.value) return;
-  await guardedAction(() => examsApi.rejectExam(exam.value!.id, rejectReason.value), 'Exam rejected.');
-  showRejectModal.value = false;
-  rejectReason.value = '';
+function goBack() {
+  router.push({
+    name: 'instructor.exams.list',
+  });
 }
 
-const showScheduleModal = ref(false);
-const scheduleDate = ref('');
-async function submitSchedule() {
-  if (!exam.value) return;
-  await guardedAction(() => examsApi.scheduleExam(exam.value!.id, new Date(scheduleDate.value).toISOString()), 'Exam scheduled.');
-  showScheduleModal.value = false;
+function openQuestions() {
+  router.push({
+    name: 'instructor.exams.questions',
+    params: {
+      examId: examId.value,
+    },
+  });
 }
 
-const showExtendModal = ref(false);
-const extendMinutes = ref(15);
-async function submitExtend() {
-  if (!exam.value) return;
-  await guardedAction(() => examsApi.extendTime(exam.value!.id, extendMinutes.value), 'Time extended.');
-  showExtendModal.value = false;
+async function runAction(action: () => Promise<unknown>, successMessage: string) {
+  actionLoading.value = true;
+  try {
+    await action();
+    uiStore.showToast(successMessage, 'success');
+    await loadExam();
+  } catch (requestError: any) {
+    handleApiError(requestError, uiStore, undefined, 'The exam action could not be completed.');
+  } finally {
+    actionLoading.value = false;
+  }
 }
 
-const showCancelModal = ref(false);
-async function submitCancel() {
+async function handleSchedule(payload: { scheduled_start: string; duration_minutes?: number }) {
   if (!exam.value) return;
-  await guardedAction(() => examsApi.cancelExam(exam.value!.id), 'Exam cancelled.');
-  showCancelModal.value = false;
+
+  if (exam.value.status === 'scheduled') {
+    await runAction(() => updateExamSchedule(exam.value!.id, payload), 'Exam schedule updated successfully.');
+  } else {
+    await runAction(() => scheduleExam(exam.value!.id, { scheduled_start: payload.scheduled_start }), 'Exam scheduled successfully.');
+  }
 }
 
-const showEndModal = ref(false);
-async function submitEnd() {
+async function handleExtendTime(durationMinutes: number) {
   if (!exam.value) return;
-  await guardedAction(() => examsApi.endExam(exam.value!.id), 'Exam ended.');
-  showEndModal.value = false;
+  await runAction(() => extendExamTime(exam.value!.id, durationMinutes), 'Exam time extended successfully.');
 }
+
+onMounted(loadExam);
 </script>
 
 <template>
-  <div v-if="loading" class="p-8 text-center text-text/50">Loading…</div>
-  <div v-else-if="exam" class="mx-auto w-full max-w-360 space-y-6 px-6 py-8 min-h-[calc(100vh-68px)]">
-    <div class="flex items-start justify-between gap-4">
-      <div>
-        <div class="flex items-center gap-2 mb-2">
-          <span class="font-mono text-xs bg-bg border border-border rounded px-2 py-0.5 text-text/60">{{ exam.type }}</span>
+  <div class="mx-auto min-h-[calc(100vh-68px)] w-full max-w-360 space-y-6 px-6 py-8">
+    <!-- Skeleton Loading -->
+    <div v-if="loading" class="space-y-6">
+      <div class="h-5 w-28 animate-pulse rounded bg-bg" />
+
+      <div class="rounded-xl border border-border bg-surface p-6 shadow-sm">
+        <div class="space-y-3">
+          <div class="h-7 w-72 animate-pulse rounded bg-bg" />
+          <div class="h-4 w-48 animate-pulse rounded bg-bg" />
         </div>
-        <h1 class="text-2xl font-bold font-display text-text">{{ exam.title }}</h1>
-        <p class="text-sm text-text/60 mt-1">{{ exam.total_questions ?? 0 }} questions · {{ exam.total_marks ?? 0 }} marks</p>
       </div>
 
-      <div class="flex flex-wrap items-center gap-2">
-        <router-link :to="`/instructor/exams/${exam.id}/build`">
-          <BaseButton variant="secondary">Open Composer</BaseButton>
-        </router-link>
-
-        <BaseButton
-          v-if="exam.status === 'draft'"
-          :disabled="!exam.total_questions || busy"
-          @click="guardedAction(() => examsApi.submitApproval(exam!.id), 'Submitted for approval.')">
-          Submit for Approval
-        </BaseButton>
-        <BaseButton
-          v-if="exam.status === 'pending_approval'"
-          variant="secondary"
-          :disabled="busy"
-          @click="guardedAction(() => examsApi.revertToDraft(exam!.id), 'Reverted to draft.')">
-          Revert to Draft
-        </BaseButton>
-        <BaseButton v-if="exam.status === 'pending_approval'" :disabled="busy" @click="guardedAction(() => examsApi.approveExam(exam!.id), 'Exam approved.')"> Approve </BaseButton>
-        <BaseButton v-if="exam.status === 'pending_approval'" variant="secondary" :disabled="busy" @click="showRejectModal = true"> Reject </BaseButton>
-        <BaseButton v-if="exam.status === 'approved'" :disabled="busy" @click="showScheduleModal = true"> Schedule Exam </BaseButton>
-        <BaseButton v-if="exam.status === 'scheduled'" :disabled="busy" @click="guardedAction(() => examsApi.publishExam(exam!.id), 'Exam published.')"> Publish Now </BaseButton>
-        <BaseButton v-if="exam.status === 'active'" variant="secondary" :disabled="busy" @click="showExtendModal = true"> Extend Time </BaseButton>
-        <BaseButton v-if="exam.status === 'active'" variant="secondary" :disabled="busy" @click="showEndModal = true">
-          <template #icon>
-            <Ban class="w-4 h-4" />
-          </template>
-          End Exam
-        </BaseButton>
-        <BaseButton v-if="['approved', 'scheduled'].includes(exam.status)" variant="secondary" :disabled="busy" @click="showCancelModal = true"> Cancel Exam </BaseButton>
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div v-for="i in 4" :key="i" class="h-24 animate-pulse rounded-xl border border-border bg-surface" />
       </div>
     </div>
 
-    <!-- Stepper -->
-    <BaseCard>
-      <h3 class="font-semibold text-text mb-8">Lifecycle Status</h3>
-      <div class="flex items-start justify-between relative">
-        <div class="absolute top-5 left-[5%] right-[5%] h-0.5 bg-border" />
-        <div v-for="(step, i) in steps" :key="step.key" class="flex flex-col items-center relative z-10" :style="{ width: `${100 / steps.length}%` }">
-          <div
-            class="w-10 h-10 rounded-full flex items-center justify-center border-4 border-bg"
-            :class="i <= stepIndex ? 'bg-accent text-white' : 'bg-surface border-border text-text/30'">
-            <component :is="step.icon" class="w-4 h-4" />
+    <!-- Exam Content -->
+    <template v-else-if="exam">
+      <!-- Top Action Bar (Back button on left, Lifecycle Actions on right) -->
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <button type="button" class="inline-flex items-center gap-2 text-sm font-medium text-text/60 transition-colors hover:text-accent" @click="goBack">
+          <ArrowLeft class="h-4 w-4" />
+          <span>Back to Exams</span>
+        </button>
+
+        <div class="flex flex-wrap items-center gap-2.5">
+          <BaseButton v-can:any="['exam.view', 'exam.update']" variant="secondary" @click="openQuestions">
+            <template #icon>
+              <FileQuestion class="h-4 w-4" />
+            </template>
+            Manage Question Paper
+          </BaseButton>
+
+          <ExamLifecycleActions
+            :exam="exam"
+            :loading="actionLoading"
+            @submit="runAction(() => submitExamForApproval(exam!.id), 'Exam submitted for approval.')"
+            @revert="runAction(() => revertExamToDraft(exam!.id), 'Exam reverted to draft.')"
+            @approve="runAction(() => approveExam(exam!.id), 'Exam approved.')"
+            @reject="(reason) => runAction(() => rejectExam(exam!.id, reason), 'Exam rejected.')"
+            @schedule="handleSchedule"
+            @publish="runAction(() => publishExam(exam!.id), 'Exam published and activated.')"
+            @end="runAction(() => endExam(exam!.id), 'Exam ended.')"
+            @cancel="runAction(() => cancelExam(exam!.id), 'Exam cancelled.')"
+            @archive="runAction(() => archiveExam(exam!.id), 'Exam archived.')"
+            @extend-time="handleExtendTime" />
+        </div>
+      </div>
+
+      <!-- Main Overview Card -->
+      <div class="rounded-xl border border-border bg-surface p-6 shadow-sm">
+        <div class="flex min-w-0 items-start gap-4">
+          <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-accent/10">
+            <FileText class="h-6 w-6 text-accent" />
           </div>
-          <span class="mt-2 text-xs font-semibold" :class="i === stepIndex ? 'text-accent' : 'text-text/50'">{{ step.label }}</span>
+
+          <div class="min-w-0 flex-1">
+            <div class="flex flex-wrap items-center gap-2.5">
+              <h1 class="font-display text-2xl font-bold text-text truncate">
+                {{ exam.title }}
+              </h1>
+              <ExamStatusBadge :status="exam.status" />
+              <span class="inline-flex rounded-md bg-bg border border-border px-2.5 py-0.5 font-mono text-xs uppercase font-medium text-text/70">
+                {{ exam.type }}
+              </span>
+            </div>
+
+            <div class="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-text/60">
+              <span class="font-mono text-text/50">#{{ exam.id }}</span>
+              <span>•</span>
+              <span class="inline-flex items-center gap-1.5">
+                <Clock3 class="h-4 w-4 text-text/35" />
+                {{ exam.duration_minutes }} min
+              </span>
+              <span>•</span>
+              <span class="inline-flex items-center gap-1.5">
+                <CalendarClock class="h-4 w-4 text-text/35" />
+                Created {{ formatDate(exam.created_at) }}
+              </span>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div v-if="exam.status === 'rejected'" class="mt-6 bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-2">
-        <XCircle class="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
-        <div>
-          <p class="text-sm font-semibold text-red-800">Rejected</p>
-          <p class="text-sm text-red-600 mt-1">Review the rejection reason and revert to draft to make changes.</p>
+      <!-- Stat / Metrics 4-Column Grid -->
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div class="rounded-xl border border-border bg-surface p-5 shadow-sm">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-xs font-medium uppercase tracking-wide text-text/45">Questions</p>
+              <p class="mt-2 text-2xl font-bold tabular-nums text-text">
+                {{ exam.total_questions }}
+              </p>
+            </div>
+            <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10">
+              <ClipboardList class="h-5 w-5 text-accent" />
+            </div>
+          </div>
+        </div>
+
+        <div class="rounded-xl border border-border bg-surface p-5 shadow-sm">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-xs font-medium uppercase tracking-wide text-text/45">Total Marks</p>
+              <p class="mt-2 text-2xl font-bold tabular-nums text-text">
+                {{ exam.total_marks }}
+              </p>
+            </div>
+            <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10">
+              <FileText class="h-5 w-5 text-accent" />
+            </div>
+          </div>
+        </div>
+
+        <div class="rounded-xl border border-border bg-surface p-5 shadow-sm">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-xs font-medium uppercase tracking-wide text-text/45">Duration</p>
+              <p class="mt-2 text-2xl font-bold tabular-nums text-text">{{ exam.duration_minutes }} min</p>
+            </div>
+            <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10">
+              <Clock3 class="h-5 w-5 text-accent" />
+            </div>
+          </div>
+        </div>
+
+        <div class="rounded-xl border border-border bg-surface p-5 shadow-sm">
+          <div class="flex items-center justify-between">
+            <div class="min-w-0">
+              <p class="text-xs font-medium uppercase tracking-wide text-text/45">Schedule</p>
+              <p class="mt-2 text-sm font-semibold text-text truncate">
+                {{ formatDate(exam.scheduled_start) }}
+              </p>
+            </div>
+            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent/10">
+              <CalendarClock class="h-5 w-5 text-accent" />
+            </div>
+          </div>
         </div>
       </div>
-    </BaseCard>
 
-    <!-- Metadata -->
-    <BaseCard>
-      <h3 class="font-semibold text-text mb-4 pb-2 border-b border-border">Exam Metadata</h3>
-      <dl class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div>
-          <dt class="text-xs font-bold uppercase text-text/50 mb-1">Duration</dt>
-          <dd class="text-sm font-medium text-text">{{ exam.duration_minutes }} min</dd>
+      <!-- Question Paper Preview Section (Compact 5-items preview with pagination) -->
+      <section class="space-y-3">
+        <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 class="text-base font-semibold text-text">Question Paper Preview</h2>
+            <p class="mt-0.5 text-xs text-text/50">{{ exam.total_questions }} question(s) attached totaling {{ exam.total_marks }} mark(s).</p>
+          </div>
+
+          <button type="button" class="inline-flex items-center gap-1.5 text-xs font-medium text-accent hover:underline" @click="openQuestions">
+            <span>Open Full Question Paper</span>
+            <ExternalLink class="h-3.5 w-3.5" />
+          </button>
         </div>
-        <div>
-          <dt class="text-xs font-bold uppercase text-text/50 mb-1">Total Marks</dt>
-          <dd class="text-sm font-medium text-text">{{ exam.total_marks }}</dd>
+
+        <!-- Compact Table Container -->
+        <div class="overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
+          <div class="overflow-x-auto">
+            <table class="w-full border-collapse min-w-[640px]">
+              <thead>
+                <tr class="border-b border-border bg-bg/40">
+                  <th class="px-5 py-3 text-left text-xs font-bold uppercase tracking-wide text-text/45">Question</th>
+                  <th class="px-5 py-3 text-left text-xs font-bold uppercase tracking-wide text-text/45">Type</th>
+                  <th class="px-5 py-3 text-left text-xs font-bold uppercase tracking-wide text-text/45">Difficulty</th>
+                  <th class="px-5 py-3 text-right text-xs font-bold uppercase tracking-wide text-text/45">Marks</th>
+                </tr>
+              </thead>
+
+              <tbody v-if="loadingQuestions" class="divide-y divide-border">
+                <tr v-for="i in 3" :key="i">
+                  <td colspan="4" class="px-5 py-4">
+                    <div class="h-4 w-full animate-pulse rounded bg-bg" />
+                  </td>
+                </tr>
+              </tbody>
+
+              <tbody v-else-if="attachedQuestions.length" class="divide-y divide-border">
+                <tr v-for="item in attachedQuestions" :key="item.pivot?.id || item.id" class="transition-colors hover:bg-text/[0.02]">
+                  <td class="px-5 py-3.5">
+                    <p class="line-clamp-2 text-sm font-medium text-text">
+                      {{ item.question?.content || item.content || '—' }}
+                    </p>
+                  </td>
+
+                  <td class="px-5 py-3.5">
+                    <span class="inline-flex rounded bg-bg border border-border px-2 py-0.5 font-mono text-[10px] uppercase font-medium text-text/70">
+                      {{ item.question?.type || item.type || '—' }}
+                    </span>
+                  </td>
+
+                  <td class="px-5 py-3.5">
+                    <BaseBadge :variant="getDifficultyVariant(item.question?.difficulty || item.difficulty)">
+                      {{ item.question?.difficulty || item.difficulty || '—' }}
+                    </BaseBadge>
+                  </td>
+
+                  <td class="px-5 py-3.5 text-right font-mono text-sm font-semibold tabular-nums text-text">
+                    {{ getMarks(item) }}
+                  </td>
+                </tr>
+              </tbody>
+
+              <tbody v-else>
+                <tr>
+                  <td colspan="4" class="px-5 py-10 text-center">
+                    <div class="mx-auto flex max-w-sm flex-col items-center">
+                      <div class="mb-2 flex h-9 w-9 items-center justify-center rounded-lg bg-bg">
+                        <HelpCircle class="h-5 w-5 text-text/30" />
+                      </div>
+                      <p class="text-sm font-medium text-text">No questions attached yet</p>
+                      <p class="mt-0.5 text-xs text-text/45">Use "Manage Question Paper" to add or import questions.</p>
+                      <BaseButton v-can="'exam.update'" size="sm" class="mt-3" @click="openQuestions">
+                        <template #icon>
+                          <FileQuestion class="h-3.5 w-3.5" />
+                        </template>
+                        Add Questions
+                      </BaseButton>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination Bar for 5-item preview -->
+          <div
+            v-if="questionPagination && questionPagination.total > questionPerPage"
+            class="flex items-center justify-between border-t border-border bg-surface px-5 py-3 text-xs">
+            <span class="text-text/50">
+              Showing {{ questionPagination.from || 1 }}–{{ questionPagination.to || attachedQuestions.length }} of {{ questionPagination.total }} questions
+            </span>
+
+            <div class="flex items-center gap-1.5">
+              <button
+                type="button"
+                :disabled="questionPage <= 1"
+                class="inline-flex items-center gap-1 rounded-md border border-border bg-bg px-2.5 py-1 text-xs font-medium text-text/70 transition-colors hover:border-accent/40 hover:text-accent disabled:opacity-40"
+                @click="loadQuestions(questionPage - 1)">
+                <ChevronLeft class="h-3.5 w-3.5" /> Prev
+              </button>
+
+              <span class="px-2 font-mono text-xs text-text/60"> {{ questionPage }} / {{ questionPagination.last_page }} </span>
+
+              <button
+                type="button"
+                :disabled="questionPage >= questionPagination.last_page"
+                class="inline-flex items-center gap-1 rounded-md border border-border bg-bg px-2.5 py-1 text-xs font-medium text-text/70 transition-colors hover:border-accent/40 hover:text-accent disabled:opacity-40"
+                @click="loadQuestions(questionPage + 1)">
+                Next <ChevronRight class="h-3.5 w-3.5" />
+              </button>
+            </div>
+          </div>
         </div>
-        <div>
-          <dt class="text-xs font-bold uppercase text-text/50 mb-1">Author</dt>
-          <dd class="text-sm font-medium text-text">{{ exam.creator?.name || '—' }}</dd>
+      </section>
+
+      <!-- Composition Section -->
+      <section class="space-y-3">
+        <ExamCompositionEditor
+          v-if="showComposition"
+          :composition="exam.composition"
+          :loading="actionLoading"
+          @save="(composition) => runAction(() => updateExamComposition(exam!.id, composition), 'Composition updated successfully.')" />
+
+        <div v-else class="rounded-xl border border-border bg-surface p-6 shadow-sm">
+          <div class="flex items-center gap-3">
+            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-text/5">
+              <Lock class="h-5 w-5 text-text/40" />
+            </div>
+
+            <div>
+              <h3 class="text-sm font-semibold text-text">Composition is locked</h3>
+              <p class="mt-0.5 text-xs text-text/50">The exam is in {{ exam.status.replaceAll('_', ' ') }} state, so its question composition cannot be modified.</p>
+            </div>
+          </div>
         </div>
-        <div>
-          <dt class="text-xs font-bold uppercase text-text/50 mb-1">Scheduled</dt>
-          <dd class="text-sm font-medium text-text">{{ exam.scheduled_start || 'Not set' }}</dd>
-        </div>
-      </dl>
-    </BaseCard>
+      </section>
+    </template>
   </div>
-
-  <BaseDialog :model-value="showRejectModal" title="Reject exam" @update:model-value="showRejectModal = false">
-    <label class="text-xs font-bold uppercase text-text/70 mb-1.5 block">Reason *</label>
-    <textarea v-model="rejectReason" rows="3" class="w-full px-3 py-2.5 rounded-lg border border-border bg-bg text-sm" placeholder="Explain what needs to change…" />
-    <template #footer>
-      <div class="flex justify-end gap-2">
-        <BaseButton variant="secondary" @click="showRejectModal = false">Cancel</BaseButton>
-        <BaseButton :disabled="!rejectReason.trim() || busy" @click="submitReject">Reject Exam</BaseButton>
-      </div>
-    </template>
-  </BaseDialog>
-
-  <BaseDialog :model-value="showScheduleModal" title="Schedule exam" @update:model-value="showScheduleModal = false">
-    <label class="text-xs font-bold uppercase text-text/70 mb-1.5 block">Start date & time *</label>
-    <input v-model="scheduleDate" type="datetime-local" class="w-full px-3 py-2.5 rounded-lg border border-border bg-bg text-sm" />
-    <template #footer>
-      <div class="flex justify-end gap-2">
-        <BaseButton variant="secondary" @click="showScheduleModal = false">Cancel</BaseButton>
-        <BaseButton :disabled="!scheduleDate || busy" @click="submitSchedule">Schedule</BaseButton>
-      </div>
-    </template>
-  </BaseDialog>
-
-  <BaseDialog :model-value="showExtendModal" title="Extend exam time" @update:model-value="showExtendModal = false">
-    <label class="text-xs font-bold uppercase text-text/70 mb-1.5 block">Additional minutes</label>
-    <input v-model.number="extendMinutes" type="number" min="1" class="w-full px-3 py-2.5 rounded-lg border border-border bg-bg text-sm" />
-    <template #footer>
-      <div class="flex justify-end gap-2">
-        <BaseButton variant="secondary" @click="showExtendModal = false">Cancel</BaseButton>
-        <BaseButton :disabled="busy" @click="submitExtend">Extend</BaseButton>
-      </div>
-    </template>
-  </BaseDialog>
-
-  <ConfirmModal
-    :show="showCancelModal"
-    title="Cancel this exam?"
-    description="Students will no longer be able to see or take this exam."
-    confirm-text="Cancel Exam"
-    variant="danger"
-    :icon="Ban"
-    :loading="busy"
-    @close="showCancelModal = false"
-    @confirm="submitCancel" />
-  <ConfirmModal
-    :show="showEndModal"
-    title="End this exam now?"
-    description="All in-progress attempts will be auto-submitted immediately."
-    confirm-text="End Exam"
-    variant="danger"
-    :icon="Square"
-    :loading="busy"
-    @close="showEndModal = false"
-    @confirm="submitEnd" />
 </template>

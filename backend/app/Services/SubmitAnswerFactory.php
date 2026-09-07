@@ -17,10 +17,11 @@ class SubmitAnswerFactory
 
     public static function create(string $type)
     {
-        if (! array_key_exists($type, self::$map)) {
-            throw new InvalidArgumentException("Invalid import type: {$type}");
+        $normalizedType = strtoupper($type);
+        if (! array_key_exists($normalizedType, self::$map)) {
+            throw new InvalidArgumentException("Invalid question type: {$type}");
         }
-        
-        return new self::$map[$type];
+
+        return new self::$map[$normalizedType];
     }
 }

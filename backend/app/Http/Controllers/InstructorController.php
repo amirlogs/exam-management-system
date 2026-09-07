@@ -15,6 +15,16 @@ class InstructorController extends Controller
         $perPage = GetRequestsValidator::validate($request);
         $query = Instructor::query();
         RequestFilters::apply($query, $request, ['department_id', 'status']);
+
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+
+            $query->whereHas('user', function ($query) use ($search) {
+                $query->where('first_name', 'ILIKE', "%{$search}%")
+                      ->orWhere('last_name', 'ILIKE', "%{$search}%")
+                      ->orWhere('email', 'ILIKE', "%{$search}%");
+            });
+        }
         $instructors = $query->with(['user', 'department'])->paginate($perPage);
 
         return $this->paginate($instructors, InstructorResource::class, 'Instructors fetched successfully');

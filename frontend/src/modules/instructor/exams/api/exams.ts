@@ -1,70 +1,189 @@
-import apiClient from '@/api/axios';
+import api from '@/api/axios';
 
-function unwrap<T>(res: { data: any }): T {
-  if (res.data?.success === false) throw new Error(res.data?.message || 'Request failed');
-  return res.data?.data ?? res.data;
-}
-function unwrapPaginated<T>(res: { data: any }) {
-  if (res.data?.success === false) throw new Error(res.data?.message || 'Request failed');
-  return { data: res.data.data as T[], pagination: res.data.pagination };
-}
+import type {
+  AddExamQuestionPayload,
+  ApiResponse,
+  BulkExamQuestionPayload,
+  CreateExamPayload,
+  Exam,
+  ExamQuestion,
+  Pagination,
+  PaginatedResponse,
+  ScheduleExamPayload,
+  UpdateSchedulePayload,
+} from '../types/exam';
 
-export function getExams(courseOfferingId: number, page = 1, filters: Record<string, any> = {}) {
-  return apiClient.get(`/course-offerings/${courseOfferingId}/exams`, { params: { page, ...filters } }).then(unwrapPaginated<import('../types/exam').Exam>);
-}
-export function getExam(examId: number) {
-  return apiClient.get(`/exams/${examId}`).then(unwrap<import('../types/exam').Exam>);
-}
-export function createExam(courseOfferingId: number, payload: { title: string; type: string; duration_minutes: number; composition: Record<string, { marks_each?: number }> }) {
-  return apiClient.post(`/course-offerings/${courseOfferingId}/exams`, payload).then(unwrap<import('../types/exam').Exam>);
-}
-export function updateComposition(examId: number, composition: Record<string, { marks_each?: number }>) {
-  return apiClient.patch(`/exams/${examId}/composition`, { composition }).then(unwrap<import('../types/exam').Exam>);
-}
-export function addQuestion(examId: number, questionId: number, marks?: number) {
-  return apiClient.post(`/exams/${examId}/questions`, { question_id: questionId, ...(marks ? { marks } : {}) }).then(unwrap<any>);
+interface RawResponse<T> {
+  success: boolean;
+  message: string;
+  data: T;
+  pagination?: Pagination;
+  errors: unknown;
 }
 
-export function getExamQuestions(examId: number, page = 1, filters: Record<string, any> = {}) {
-  return apiClient.get(`/exams/${examId}/questions`, { params: { page, ...filters } }).then(unwrapPaginated<import('../types/exam').Question>);
-}
-export function removeExamQuestion(examId: number, examQuestionId: number) {
-  return apiClient.delete(`/exams/${examId}/questions/${examQuestionId}`).then(unwrap<null>);
-}
-export function submitApproval(examId: number) {
-  return apiClient.post(`/exams/${examId}/submit-approval`).then(unwrap<import('../types/exam').Exam>);
-}
-export function revertToDraft(examId: number) {
-  return apiClient.post(`/exams/${examId}/revert-to-draft`).then(unwrap<import('../types/exam').Exam>);
-}
-export function approveExam(examId: number) {
-  return apiClient.post(`/exams/${examId}/approve`).then(unwrap<import('../types/exam').Exam>);
-}
-export function rejectExam(examId: number, reason: string) {
-  return apiClient.post(`/exams/${examId}/reject`, { reason }).then(unwrap<import('../types/exam').Exam>);
-}
-export function scheduleExam(examId: number, scheduledStart: string) {
-  return apiClient.post(`/exams/${examId}/schedule`, { scheduled_start: scheduledStart }).then(unwrap<import('../types/exam').Exam>);
-}
-export function updateSchedule(examId: number, payload: { scheduled_start?: string; duration_minutes?: number }) {
-  return apiClient.patch(`/exams/${examId}/schedule`, payload).then(unwrap<import('../types/exam').Exam>);
-}
-export function extendTime(examId: number, minutes: number) {
-  return apiClient.post(`/exams/${examId}/extend-time`, { duration_minutes: minutes }).then(unwrap<import('../types/exam').Exam>);
-}
-export function publishExam(examId: number) {
-  return apiClient.post(`/exams/${examId}/publish`).then(unwrap<import('../types/exam').Exam>);
-}
-export function endExam(examId: number) {
-  return apiClient.post(`/exams/${examId}/end`).then(unwrap<import('../types/exam').Exam>);
-}
-export function cancelExam(examId: number) {
-  return apiClient.post(`/exams/${examId}/cancel`).then(unwrap<import('../types/exam').Exam>);
-}
-export function archiveExam(examId: number) {
-  return apiClient.delete(`/exams/${examId}`).then(unwrap<import('../types/exam').Exam>);
+export async function listExams(
+  courseOfferingId: number,
+  page = 1,
+  perPage = 100,
+  filters: {
+    type?: string;
+    status?: string;
+  } = {},
+) {
+  const response = await api.get<PaginatedResponse<Exam>>(`/course-offerings/${courseOfferingId}/exams`, {
+    params: {
+      page,
+      per_page: perPage,
+      ...filters,
+    },
+  });
+
+  return response.data;
 }
 
-export function addQuestionsBulk(examId: number, questions: { question_id: number; marks?: number }[]) {
-  return apiClient.post(`/exams/${examId}/questions/bulk`, { questions }).then(unwrap<{ created: any[]; errors: Record<number, string[]> }>);
+export async function getExam(examId: number) {
+  const response = await api.get<ApiResponse<Exam>>(`/exams/${examId}`);
+
+  return response.data;
+}
+
+export async function createExam(courseOfferingId: number, payload: CreateExamPayload) {
+  const response = await api.post<ApiResponse<Exam>>(`/course-offerings/${courseOfferingId}/exams`, payload);
+
+  return response.data;
+}
+
+export async function updateExamComposition(examId: number, composition: Record<string, { marks_each?: number }>) {
+  const response = await api.patch<ApiResponse<Exam>>(`/exams/${examId}/composition`, {
+    composition,
+  });
+
+  return response.data;
+}
+
+export async function addExamQuestion(examId: number, payload: AddExamQuestionPayload) {
+  const response = await api.post<ApiResponse<ExamQuestion>>(`/exams/${examId}/questions`, payload);
+
+  return response.data;
+}
+
+export async function addExamQuestionsBulk(examId: number, payload: BulkExamQuestionPayload) {
+  const response = await api.post<
+    ApiResponse<{
+      created: ExamQuestion[];
+      errors: Record<string, string[]>;
+    }>
+  >(`/exams/${examId}/questions/bulk`, payload);
+
+  return response.data;
+}
+
+export async function listExamQuestions(
+  examId: number,
+  page = 1,
+  perPage = 100,
+  filters: {
+    type?: string;
+    status?: string;
+  } = {},
+) {
+  const response = await api.get<PaginatedResponse<any>>(`/exams/${examId}/questions`, {
+    params: {
+      page,
+      per_page: perPage,
+      ...filters,
+    },
+  });
+
+  return response.data;
+}
+
+export async function removeExamQuestion(examId: number, examQuestionId: number) {
+  const response = await api.delete<ApiResponse<null>>(`/exams/${examId}/questions/${examQuestionId}`);
+
+  return response.data;
+}
+
+export async function submitExamForApproval(examId: number) {
+  const response = await api.post<ApiResponse<Exam>>(`/exams/${examId}/submit-approval`);
+
+  return response.data;
+}
+
+export async function revertExamToDraft(examId: number) {
+  const response = await api.post<ApiResponse<Exam>>(`/exams/${examId}/revert-to-draft`);
+
+  return response.data;
+}
+
+export async function approveExam(examId: number) {
+  const response = await api.post<ApiResponse<Exam>>(`/exams/${examId}/approve`);
+
+  return response.data;
+}
+
+export async function rejectExam(examId: number, reason: string) {
+  const response = await api.post<ApiResponse<Exam>>(`/exams/${examId}/reject`, {
+    reason,
+  });
+
+  return response.data;
+}
+
+export async function scheduleExam(examId: number, payload: ScheduleExamPayload) {
+  const start = payload.scheduled_start || payload.scheduled_start_time;
+  const response = await api.post<ApiResponse<Exam>>(`/exams/${examId}/schedule`, {
+    scheduled_start: start,
+    scheduled_start_time: start,
+  });
+
+  return response.data;
+}
+
+export async function updateExamSchedule(examId: number, payload: UpdateSchedulePayload) {
+  const start = payload.scheduled_start || payload.scheduled_start_time;
+  const body: Record<string, any> = {};
+  if (start) {
+    body.scheduled_start = start;
+    body.scheduled_start_time = start;
+  }
+  if (payload.duration_minutes) {
+    body.duration_minutes = payload.duration_minutes;
+  }
+
+  const response = await api.patch<ApiResponse<Exam>>(`/exams/${examId}/schedule`, body);
+
+  return response.data;
+}
+
+export async function extendExamTime(examId: number, durationMinutes: number) {
+  const response = await api.post<ApiResponse<Exam>>(`/exams/${examId}/extend-time`, {
+    duration_minutes: durationMinutes,
+  });
+
+  return response.data;
+}
+
+export async function publishExam(examId: number) {
+  const response = await api.post<ApiResponse<Exam>>(`/exams/${examId}/publish`);
+
+  return response.data;
+}
+
+export async function endExam(examId: number) {
+  const response = await api.post<ApiResponse<Exam>>(`/exams/${examId}/end`);
+
+  return response.data;
+}
+
+export async function cancelExam(examId: number) {
+  const response = await api.post<ApiResponse<Exam>>(`/exams/${examId}/cancel`);
+
+  return response.data;
+}
+
+export async function archiveExam(examId: number) {
+  const response = await api.delete<ApiResponse<Exam>>(`/exams/${examId}`);
+
+  return response.data;
 }

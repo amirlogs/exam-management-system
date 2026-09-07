@@ -1,7 +1,6 @@
-u
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue';
-import { Archive, Edit, Lock, LockOpen, Maximize2, Minimize2, Plus, RefreshCw, RotateCcw } from 'lucide-vue-next';
+import { Archive, Building, Edit, Lock, LockOpen, Plus, RotateCcw } from 'lucide-vue-next';
 
 import ResourceToolbar from '@/shared/components/ResourceToolbar.vue';
 import BaseDialog from '@/shared/components/ui/BaseDialog.vue';
@@ -15,7 +14,7 @@ import ConfirmModal from '@/shared/components/ConfirmModal.vue';
 import { useResourceForm } from '@/shared/composables/useResourceForm';
 import { semesterSchema } from '../schemas/semester.schema';
 
-import { getSemesters, getArchivedSemesters, createSemester, updateSemester, openSemester, closeSemester, archiveSemester, restoreSemester } from '../api/semesters';
+import { getSemesters, getArchivedSemesters, createSemester, updateSemester, openSemester, closeSemester, archiveSemester, restoreSemester, type SemesterFilters } from '../api/semesters';
 
 import { handleApiError } from '@/shared/utils/apiError';
 
@@ -27,9 +26,51 @@ import { useUiStore } from '@/stores/ui';
 const uiStore = useUiStore();
 
 const semesters = ref<Semester[]>([]);
+const activeSemester = ref<Semester | null>(null);
+const loadingActive = ref(false);
+
 const showArchived = ref(false);
 const loading = ref(false);
 const refreshing = ref(false);
+const activeTotal = ref(0);
+const archivedTotal = ref(0);
+
+// Search & Backend filters: academic_year, status, search
+const searchQuery = ref('');
+const selectedStatus = ref('');
+const selectedAcademicYear = ref('');
+
+const statusFilterOptions = [
+  { value: '', label: 'All statuses' },
+  { value: 'upcoming', label: 'Upcoming' },
+  { value: 'active', label: 'Active' },
+  { value: 'completed', label: 'Completed' },
+];
+
+const hasActiveFilters = computed(() => !!selectedStatus.value || !!selectedAcademicYear.value);
+
+const filterCount = computed(() => {
+  let count = 0;
+  if (selectedStatus.value) count++;
+  if (selectedAcademicYear.value) count++;
+  return count;
+});
+
+function clearFilters() {
+  selectedStatus.value = '';
+  selectedAcademicYear.value = '';
+  searchQuery.value = '';
+  load(1);
+}
+
+function onSearchChange(value: string) {
+  searchQuery.value = value;
+  load(1);
+}
+
+function onFilterChange() {
+  load(1);
+}
 
 const emptyPagination = (): Pagination => ({
   current_page: 1,
@@ -41,12 +82,6 @@ const emptyPagination = (): Pagination => ({
 });
 
 const pagination = ref<Pagination>(emptyPagination());
-
-const activeSemester = computed(() => semesters.value.find((semester) => semester.status === 'active') ?? null);
-
-const otherSemesters = computed(() => semesters.value.filter((semester) => semester.id !== activeSemester.value?.id));
-
-const displayedSemesters = computed(() => (showArchived.value ? semesters.value : otherSemesters.value));
 
 const openMenuId = ref<number | null>(null);
 const menuPosition = ref({
@@ -66,8 +101,6 @@ const archiving = ref(false);
 const restoring = ref(false);
 const toggling = ref(false);
 
-const isFullscreen = ref(false);
-
 const { form, errors, validate, reset, applyServerErrors } = useResourceForm(semesterSchema, {
   academic_year: new Date().getFullYear(),
   name: 1,
@@ -86,7 +119,8 @@ const nameOptions = [
   },
 ];
 
-function semesterTitle(semester: Semester) {
+function semesterTitle(semester?: Semester | null) {
+  if (!semester) return '';
   return `Semester ${semester.name} · ${semester.academic_year}`;
 }
 
@@ -101,14 +135,57 @@ function statusLabel(status: SemesterStatus) {
   return status.charAt(0).toUpperCase() + status.slice(1);
 }
 
+function toDateInput(val?: string | null): string {
+  if (!val) return '';
+  if (/^\d{4}-\d{2}-\d{2}/.test(val)) return val.slice(0, 10);
+  const parsed = new Date(val);
+  if (isNaN(parsed.getTime())) return '';
+  return parsed.toISOString().slice(0, 10);
+}
+
+async function loadActiveSemester() {
+  loadingActive.value = true;
+  try {
+    const res = await getSemesters(1, 1, { status: 'active' });
+    activeSemester.value = res.data?.[0] ?? null;
+  } catch {
+    activeSemester.value = null;
+  } finally {
+    loadingActive.value = false;
+  }
+}
+
+async function updateArchivedCount() {
+  try {
+    const res = await getArchivedSemesters(1, 1);
+    archivedTotal.value = res.pagination?.total ?? res.data?.length ?? 0;
+  } catch {}
+}
+
 async function load(page = 1) {
   loading.value = true;
 
   try {
-    const response = showArchived.value ? await getArchivedSemesters(page) : await getSemesters(page);
+    const filters: SemesterFilters = {
+      status: selectedStatus.value || undefined,
+      academic_year: selectedAcademicYear.value ? Number(selectedAcademicYear.value) : undefined,
+      search: searchQuery.value.trim() || undefined,
+    };
+
+    const response = showArchived.value
+      ? await getArchivedSemesters(page, 12, filters)
+      : await getSemesters(page, 12, filters);
 
     semesters.value = response.data ?? [];
     pagination.value = response.pagination ?? emptyPagination();
+
+    if (!hasActiveFilters.value && !searchQuery.value.trim()) {
+      if (showArchived.value) {
+        archivedTotal.value = response.pagination?.total ?? response.data?.length ?? 0;
+      } else {
+        activeTotal.value = response.pagination?.total ?? response.data?.length ?? 0;
+      }
+    }
   } catch (error) {
     handleApiError(error, uiStore, undefined, 'Failed to load semesters.');
   } finally {
@@ -120,7 +197,11 @@ async function refresh() {
   refreshing.value = true;
 
   try {
-    await load(pagination.value.current_page);
+    await Promise.all([
+      loadActiveSemester(),
+      load(pagination.value.current_page),
+      updateArchivedCount(),
+    ]);
   } finally {
     refreshing.value = false;
   }
@@ -132,22 +213,6 @@ function toggleArchivedView(value?: boolean) {
   openMenuId.value = null;
 
   load(1);
-}
-
-async function toggleFullscreen() {
-  try {
-    if (!document.fullscreenElement) {
-      await document.documentElement.requestFullscreen();
-    } else {
-      await document.exitFullscreen();
-    }
-  } catch (error) {
-    console.error('Fullscreen error:', error);
-  }
-}
-
-function handleFullscreenChange() {
-  isFullscreen.value = !!document.fullscreenElement;
 }
 
 function toggleMenu(id: number, event: MouseEvent) {
@@ -201,8 +266,8 @@ function openEdit(semester: Semester) {
   reset({
     academic_year: Number(semester.academic_year),
     name: Number(semester.name),
-    start_date: semester.start_date.slice(0, 10),
-    end_date: semester.end_date.slice(0, 10),
+    start_date: toDateInput(semester.start_date),
+    end_date: toDateInput(semester.end_date),
   });
 
   showFormModal.value = true;
@@ -232,7 +297,11 @@ async function submitForm() {
 
     uiStore.showToast(isEditing ? 'Semester updated.' : 'Semester created.', 'success');
 
-    await load(pagination.value.current_page);
+    await Promise.all([
+      loadActiveSemester(),
+      load(selected.value ? pagination.value.current_page : 1),
+      updateArchivedCount(),
+    ]);
   } catch (error) {
     handleApiError(error, uiStore, applyServerErrors, isEditing ? 'Failed to update semester.' : 'Failed to create semester.');
   } finally {
@@ -267,7 +336,10 @@ async function confirmToggleOpen() {
     showToggleModal.value = false;
     semesterToToggle.value = null;
 
-    await load(pagination.value.current_page);
+    await Promise.all([
+      loadActiveSemester(),
+      load(pagination.value.current_page),
+    ]);
   } catch (error) {
     handleApiError(error, uiStore, undefined, 'Failed to update semester status.');
   } finally {
@@ -294,7 +366,11 @@ async function confirmArchive() {
 
     uiStore.showToast('Semester archived.', 'success');
 
-    await load(pagination.value.current_page);
+    await Promise.all([
+      loadActiveSemester(),
+      load(pagination.value.current_page),
+      updateArchivedCount(),
+    ]);
   } catch (error) {
     handleApiError(error, uiStore, undefined, 'Failed to archive semester.');
   } finally {
@@ -310,7 +386,11 @@ async function restoreOne(semester: Semester) {
 
     uiStore.showToast('Semester restored.', 'success');
 
-    await load(pagination.value.current_page);
+    await Promise.all([
+      loadActiveSemester(),
+      load(pagination.value.current_page),
+      updateArchivedCount(),
+    ]);
   } catch (error) {
     handleApiError(error, uiStore, undefined, 'Failed to restore semester.');
   } finally {
@@ -319,10 +399,13 @@ async function restoreOne(semester: Semester) {
   }
 }
 
-onMounted(() => {
-  load(1);
+onMounted(async () => {
+  await Promise.all([
+    loadActiveSemester(),
+    load(1),
+  ]);
 
-  document.addEventListener('fullscreenchange', handleFullscreenChange);
+  updateArchivedCount();
 
   document.addEventListener('click', handleClickOutside);
 
@@ -330,8 +413,6 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  document.removeEventListener('fullscreenchange', handleFullscreenChange);
-
   document.removeEventListener('click', handleClickOutside);
 
   window.removeEventListener('scroll', closeMenus, true);
@@ -340,140 +421,161 @@ onUnmounted(() => {
 
 <template>
   <div class="mx-auto w-full max-w-260 space-y-6 px-6 py-6">
-    <ResourceToolbar title="Semesters" description="Manage academic terms and the currently active semester." :show-refresh="false">
-      <template #actions>
-        <div class="flex items-center gap-2">
-          <button
-            type="button"
-            class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-surface text-text/60 transition-colors hover:border-accent/40 hover:text-accent disabled:opacity-50"
-            title="Refresh"
-            :disabled="loading || refreshing"
-            @click="refresh">
-            <RefreshCw
-              class="h-4 w-4"
-              :class="{
-                'animate-spin': refreshing,
-              }" />
-          </button>
-
-          <button
-            type="button"
-            class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-surface text-text/60 transition-colors hover:border-accent/40 hover:text-accent"
-            :title="isFullscreen ? 'Exit fullscreen' : 'Fullscreen'"
-            @click="toggleFullscreen">
-            <Minimize2 v-if="isFullscreen" class="h-4 w-4" />
-
-            <Maximize2 v-else class="h-4 w-4" />
-          </button>
-        </div>
-      </template>
-    </ResourceToolbar>
-
-    <div class="flex items-center justify-between border-b border-border pb-4">
-      <div class="flex items-center gap-1 rounded-lg border border-border bg-bg p-1">
-        <button
-          type="button"
-          class="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors"
-          :class="!showArchived ? 'bg-accent/10 text-accent' : 'text-text/60 hover:bg-text/5 hover:text-text'"
-          @click="toggleArchivedView(false)">
-          <span class="h-1.5 w-1.5 rounded-full" :class="!showArchived ? 'bg-accent' : 'bg-text/30'" />
-
-          Active
-        </button>
-
-        <button
-          type="button"
-          class="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors"
-          :class="showArchived ? 'bg-accent/10 text-accent' : 'text-text/60 hover:bg-text/5 hover:text-text'"
-          @click="toggleArchivedView(true)">
-          <Archive class="h-3.5 w-3.5" />
-
-          Archived
-        </button>
-      </div>
-    </div>
-    <section v-if="!showArchived && activeSemester" class="relative overflow-hidden rounded-xl border border-border bg-surface p-8">
+    <!-- ========================================================= -->
+    <!-- ACTIVE SEMESTER HERO CARD (ABOVE)                         -->
+    <!-- ========================================================= -->
+    <section
+      v-if="activeSemester"
+      class="relative overflow-hidden rounded-2xl border border-border bg-surface p-6 sm:p-8 shadow-xs">
       <div class="flex flex-col justify-between gap-6 md:flex-row md:items-start">
-        <div class="flex-1">
-          <div class="mb-3 flex items-center gap-3">
+        <div class="flex-1 min-w-0">
+          <div class="mb-3 flex flex-wrap items-center gap-2.5">
             <span class="inline-flex items-center gap-1.5 rounded-full border border-success/30 bg-success/10 px-3 py-1">
-              <span class="h-2 w-2 rounded-full bg-success" />
-
-              <span class="text-xs font-bold uppercase tracking-wide text-success"> Active </span>
+              <span class="relative flex h-2 w-2">
+                <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-75"></span>
+                <span class="relative inline-flex h-2 w-2 rounded-full bg-success"></span>
+              </span>
+              <span class="text-xs font-bold uppercase tracking-wider text-success">Active Semester</span>
             </span>
 
-            <span class="text-xs uppercase tracking-wide text-text/50">
-              Academic year
-              {{ activeSemester.academic_year }}
+            <span class="text-xs font-semibold uppercase tracking-wider text-text/50">
+              Academic year {{ activeSemester.academic_year }}
             </span>
           </div>
 
-          <h2 class="font-display text-3xl text-text">
+          <h2 class="font-display text-2xl sm:text-3xl font-bold text-text">
             {{ semesterTitle(activeSemester) }}
           </h2>
 
-          <div class="mt-6 flex gap-8">
+          <div class="mt-5 flex flex-wrap items-center gap-6 sm:gap-10">
             <div>
-              <p class="mb-1 text-xs uppercase tracking-wide text-text/50">Start date</p>
-
-              <p class="font-mono text-sm text-text">
-                {{ activeSemester.start_date.slice(0, 10) }}
+              <p class="mb-1 text-xs font-bold uppercase tracking-wider text-text/50">Start date</p>
+              <p class="font-mono text-sm font-medium text-text">
+                {{ activeSemester.start_date ? activeSemester.start_date.slice(0, 10) : '—' }}
               </p>
             </div>
 
             <div>
-              <p class="mb-1 text-xs uppercase tracking-wide text-text/50">End date</p>
-
-              <p class="font-mono text-sm text-text">
-                {{ activeSemester.end_date.slice(0, 10) }}
+              <p class="mb-1 text-xs font-bold uppercase tracking-wider text-text/50">End date</p>
+              <p class="font-mono text-sm font-medium text-text">
+                {{ activeSemester.end_date ? activeSemester.end_date.slice(0, 10) : '—' }}
               </p>
             </div>
           </div>
         </div>
 
-        <BaseButton v-can="'semester.close'" :loading="toggling" variant="secondary" @click="askToggleOpen(activeSemester)">
-          <template #icon>
-            <Lock class="h-4 w-4" />
-          </template>
+        <div class="flex shrink-0 items-center gap-2 pt-1">
+          <BaseButton
+            v-can="'semester.update'"
+            variant="ghost"
+            size="sm"
+            @click="openEdit(activeSemester)">
+            <template #icon>
+              <Edit class="h-4 w-4" />
+            </template>
+            Edit
+          </BaseButton>
 
-          Close semester
-        </BaseButton>
+          <BaseButton
+            v-can="'semester.close'"
+            :loading="toggling"
+            variant="secondary"
+            @click="askToggleOpen(activeSemester)">
+            <template #icon>
+              <Lock class="h-4 w-4" />
+            </template>
+            Close semester
+          </BaseButton>
+        </div>
       </div>
     </section>
 
-    <section v-else-if="!showArchived" class="rounded-md border border-dashed border-border p-6 text-center text-sm text-text/55">No semester is currently active.</section>
-
-    <section>
-      <div class="mb-4 flex items-center justify-between">
+    <!-- INACTIVE NOTICE (WHEN NO SEMESTER IS ACTIVE) -->
+    <section
+      v-else-if="!loadingActive"
+      class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-xl border border-dashed border-border bg-surface/60 p-6">
+      <div class="flex items-center gap-3">
+        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border bg-bg text-text/40">
+          <Building class="h-5 w-5" />
+        </div>
         <div>
-          <h2 class="text-lg font-semibold text-text">
-            {{ showArchived ? 'Archived semesters' : 'Other semesters' }}
-          </h2>
-
-          <p class="mt-1 text-sm text-text/50">
-            {{ showArchived ? 'Previously archived academic semesters.' : 'Manage upcoming and completed academic semesters.' }}
+          <h3 class="text-sm font-semibold text-text">No Active Semester</h3>
+          <p class="text-xs text-text/55 mt-0.5">
+            There is currently no academic term set to active. You can open an upcoming semester below or create a new one.
           </p>
         </div>
-
-        <BaseButton v-if="!showArchived" v-can="'semester.create'" variant="secondary" @click="openCreate">
-          <template #icon>
-            <Plus class="h-4 w-4" />
-          </template>
-
-          New semester
-        </BaseButton>
       </div>
+      <BaseButton v-can="'semester.create'" variant="secondary" size="sm" @click="openCreate">
+        <template #icon>
+          <Plus class="h-3.5 w-3.5" />
+        </template>
+        New semester
+      </BaseButton>
+    </section>
 
-      <div class="overflow-hidden rounded-md border border-border bg-surface">
+    <!-- ========================================================= -->
+    <!-- SEMESTERS DIRECTORY (TOOLBAR, TABS, FILTERS & TABLE)      -->
+    <!-- ========================================================= -->
+    <div class="space-y-4">
+      <ResourceToolbar
+        title="Semesters"
+        description="Manage academic terms, upcoming sessions, and semester records."
+        :show-search="true"
+        :search="searchQuery"
+        search-placeholder="Search semesters..."
+        :show-tabs="true"
+        :active-tab="showArchived ? 'archived' : 'active'"
+        :active-count="activeTotal"
+        :archived-count="archivedTotal"
+        :show-filter="true"
+        :has-active-filters="hasActiveFilters"
+        :filter-count="filterCount"
+        :show-refresh="true"
+        :refreshing="loading || refreshing"
+        @update:search="onSearchChange"
+        @change-tab="(tab) => toggleArchivedView(tab === 'archived')"
+        @clear-filters="clearFilters"
+        @refresh="refresh">
+        <template #actions>
+          <BaseButton v-if="!showArchived" v-can="'semester.create'" variant="secondary" @click="openCreate">
+            <template #icon>
+              <Plus class="h-4 w-4" />
+            </template>
+            New semester
+          </BaseButton>
+        </template>
+
+        <template #filters>
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label class="mb-1.5 block text-xs font-semibold text-text/60">Status</label>
+              <BaseSelect
+                v-model="selectedStatus"
+                :options="statusFilterOptions"
+                placeholder="All statuses"
+                @update:model-value="onFilterChange" />
+            </div>
+
+            <div>
+              <label class="mb-1.5 block text-xs font-semibold text-text/60">Academic Year</label>
+              <BaseInput
+                v-model="selectedAcademicYear"
+                type="number"
+                placeholder="e.g. 2026"
+                @update:model-value="onFilterChange" />
+            </div>
+          </div>
+        </template>
+      </ResourceToolbar>
+
+      <div class="overflow-hidden rounded-xl border border-border bg-surface">
         <table class="w-full border-collapse">
           <thead>
             <tr class="border-b border-border bg-text/2.5">
               <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-text/50">Semester</th>
-
+              <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-text/50">Academic Year</th>
               <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-text/50">Status</th>
-
               <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-text/50">Duration</th>
-
               <th class="w-16 px-4 py-3 text-right">
                 <span class="sr-only"> Actions </span>
               </th>
@@ -482,31 +584,35 @@ onUnmounted(() => {
 
           <tbody v-if="loading" class="divide-y divide-border">
             <tr v-for="row in 4" :key="row">
-              <td colspan="4" class="px-4 py-4">
+              <td colspan="5" class="px-4 py-4">
                 <div class="h-3.5 w-full max-w-xs animate-pulse rounded bg-text/5" />
               </td>
             </tr>
           </tbody>
 
-          <tbody v-else-if="displayedSemesters.length" class="divide-y divide-border">
-            <tr v-for="semester in displayedSemesters" :key="semester.id" class="hover:bg-text/2">
-              <td class="px-4 py-3 text-sm font-medium text-text">
-                {{ semesterTitle(semester) }}
+          <tbody v-else-if="semesters.length" class="divide-y divide-border">
+            <tr v-for="semester in semesters" :key="semester.id" class="transition-colors hover:bg-text/2">
+              <td class="px-4 py-3.5 text-sm font-medium text-text">
+                Semester {{ semester.name }}
               </td>
 
-              <td class="px-4 py-3">
+              <td class="px-4 py-3.5 font-mono text-xs text-text/70">
+                {{ semester.academic_year }}
+              </td>
+
+              <td class="px-4 py-3.5">
                 <BaseBadge :variant="statusVariant(semester.status)">
                   {{ statusLabel(semester.status) }}
                 </BaseBadge>
               </td>
 
-              <td class="px-4 py-3 font-mono text-xs text-text/60">
-                {{ semester.start_date.slice(0, 10) }}
+              <td class="px-4 py-3.5 font-mono text-xs text-text/60">
+                {{ semester.start_date ? semester.start_date.slice(0, 10) : '—' }}
                 –
-                {{ semester.end_date.slice(0, 10) }}
+                {{ semester.end_date ? semester.end_date.slice(0, 10) : '—' }}
               </td>
 
-              <td class="px-4 py-3 text-right">
+              <td class="px-4 py-3.5 text-right">
                 <button
                   type="button"
                   data-action-trigger
@@ -585,16 +691,19 @@ onUnmounted(() => {
 
           <tbody v-else>
             <tr>
-              <td colspan="4" class="px-6 py-12 text-center text-sm text-text/55">
-                {{ showArchived ? 'No archived semesters' : 'No other semesters yet' }}
+              <td colspan="5" class="px-6 py-12 text-center text-sm text-text/55">
+                {{ searchQuery.trim() || hasActiveFilters ? 'No matching semesters found.' : (showArchived ? 'No archived semesters found.' : 'No semesters found.') }}
               </td>
             </tr>
           </tbody>
         </table>
-      </div>
 
-      <AppPagination :pagination="pagination" @change-page="load" />
-    </section>
+        <!-- PAGINATION -->
+        <div class="border-t border-border px-4 py-3">
+          <AppPagination :pagination="pagination" :loading="loading" @change-page="load" />
+        </div>
+      </div>
+    </div>
   </div>
 
   <BaseDialog :model-value="showFormModal" :title="selected ? 'Edit semester' : 'New semester'" @update:model-value="closeFormModal">

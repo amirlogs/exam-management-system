@@ -12,7 +12,8 @@ import ImportProcessingStep from '@/modules/admin/imports/components/ImportProce
 import ImportQuestionsReviewTable from '@/modules/admin/imports/components/ImportQuestionsReviewTable.vue';
 
 import { useImportWizard } from '@/modules/admin/imports/composables/useImportWizard';
-
+import { getTeaching } from '@/modules/instructor/teaching/api/teaching';
+import { handleApiError } from '@/shared/utils/apiError';
 import { useUiStore } from '@/stores/ui';
 
 const router = useRouter();
@@ -26,6 +27,29 @@ const showConfirmModal = ref(false);
 const showCancelModal = ref(false);
 
 const loadingExisting = ref(false);
+const courseOptions = ref<{ value: string; label: string }[]>([]);
+
+async function loadCourses() {
+  try {
+    const res = await getTeaching(1, 1000);
+    const unique = new Map<number, { value: string; label: string }>();
+
+    for (const teaching of res.data) {
+      if (!teaching.course) {
+        continue;
+      }
+      if (!unique.has(teaching.course.id)) {
+        unique.set(teaching.course.id, {
+          value: String(teaching.course.id),
+          label: `${teaching.course.code} - ${teaching.course.name}`,
+        });
+      }
+    }
+    courseOptions.value = Array.from(unique.values());
+  } catch (error) {
+    handleApiError(error, uiStore, undefined, 'Failed to load your teaching courses.');
+  }
+}
 
 const hasRecord = computed(() => !!record.value);
 
@@ -62,10 +86,7 @@ function back() {
 }
 
 onMounted(() => {
-  // This page starts a fresh question import.
-  // Existing records are handled by the same reusable
-  // import components/composable when coming from
-  // the Admin workflow.
+  loadCourses();
 });
 
 onUnmounted(() => {
@@ -92,7 +113,7 @@ onUnmounted(() => {
       </template>
     </ResourceToolbar>
 
-    <ImportUploadStep v-if="!hasRecord" :type="type" :uploading="isUploading" :error="uploadError" @upload="handleUpload" />
+    <ImportUploadStep v-if="!hasRecord" :type="type" :course-options="courseOptions" :uploading="isUploading" :error="uploadError" @upload="handleUpload" />
 
     <ImportProcessingStep v-else-if="record?.status === 'pending' || record?.status === 'processing'" :total-rows="record?.total_rows ?? 0" />
 

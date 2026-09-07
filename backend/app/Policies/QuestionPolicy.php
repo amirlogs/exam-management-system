@@ -24,7 +24,6 @@ class QuestionPolicy
             ->where('course_id', $question->course_id) ->exists();
     }
 
-
     public function update(User $user, Question $question): bool
     {
         if ($user->hasPermission('question.update_all')) {

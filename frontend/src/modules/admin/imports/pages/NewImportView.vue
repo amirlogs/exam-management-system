@@ -13,7 +13,7 @@ import { useUiStore } from '@/stores/ui';
 const router = useRouter();
 const uiStore = useUiStore();
 
-const ADMIN_IMPORT_TYPES: ImportType[] = ['students', 'instructors', 'sections', 'users'];
+const ADMIN_IMPORT_TYPES: ImportType[] = ['students', 'instructors', 'sections', 'users', 'questions'];
 
 const TYPE_ICONS: Record<ImportType, any> = {
   students: Users,

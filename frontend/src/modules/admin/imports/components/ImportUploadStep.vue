@@ -1,22 +1,41 @@
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, watch } from 'vue';
-import { UploadCloud, FileText, X, Download } from 'lucide-vue-next';
+import { computed, onMounted, ref, watch } from 'vue';
+
+import { Download, FileText, UploadCloud, X } from 'lucide-vue-next';
 
 import BaseButton from '@/shared/components/ui/BaseButton.vue';
 import BaseInput from '@/shared/components/ui/BaseInput.vue';
 import BaseSelect from '@/shared/components/ui/BaseSelect.vue';
 
-import { IMPORT_TYPE_CONFIG } from '../config/importTypes';
 import { getSemesters } from '@/modules/admin/semesters/api/semesters';
 import { getCourses } from '@/modules/admin/courses/api/courses';
 
+import { IMPORT_TYPE_CONFIG } from '../config/importTypes';
+
 import type { ImportType } from '../types/import';
 
-const props = defineProps<{
-  type: ImportType;
-  uploading: boolean;
-  error: string | null;
-}>();
+const props = withDefaults(
+  defineProps<{
+    type: ImportType;
+
+    uploading?: boolean;
+    error?: string | null;
+
+    courseOptions?: {
+      value: string;
+      label: string;
+    }[];
+    fixedContext?: Record<string, any>;
+    fixedCourseLabel?: string;
+  }>(),
+  {
+    uploading: false,
+    error: null,
+    courseOptions: undefined,
+    fixedContext: undefined,
+    fixedCourseLabel: undefined,
+  },
+);
 
 const emit = defineEmits<{
   upload: [
@@ -29,24 +48,35 @@ const emit = defineEmits<{
 
 const config = computed(() => IMPORT_TYPE_CONFIG[props.type]);
 
-const context = reactive<Record<string, any>>({});
+const context = ref<Record<string, any>>({});
 
-const semesterOptions = ref<{ value: string; label: string }[]>([]);
+const semesterOptions = ref<
+  {
+    value: string;
+    label: string;
+  }[]
+>([]);
 
-const courseOptions = ref<{ value: string; label: string }[]>([]);
+const internalCourseOptions = ref<
+  {
+    value: string;
+    label: string;
+  }[]
+>([]);
+
+const availableCourseOptions = computed(() => {
+  return props.courseOptions !== undefined ? props.courseOptions : internalCourseOptions.value;
+});
 
 const isDragging = ref(false);
-const fileInput = ref<HTMLInputElement>();
+const fileInput = ref<HTMLInputElement | null>(null);
 const selectedFile = ref<File | null>(null);
 const localError = ref<string | null>(null);
 
 watch(
   () => props.type,
   () => {
-    Object.keys(context).forEach((key) => {
-      delete context[key];
-    });
-
+    context.value = props.fixedContext ? { ...props.fixedContext } : {};
     selectedFile.value = null;
     localError.value = null;
 
@@ -54,23 +84,50 @@ watch(
       fileInput.value.value = '';
     }
   },
-  { immediate: true },
+  {
+    immediate: true,
+  },
+);
+
+watch(
+  () => props.fixedContext,
+  (fc) => {
+    if (fc) {
+      context.value = { ...context.value, ...fc };
+    }
+  },
+  {
+    immediate: true,
+    deep: true,
+  },
+);
+
+watch(
+  availableCourseOptions,
+  (opts) => {
+    if (opts && opts.length === 1 && !context.value.course_id) {
+      context.value.course_id = opts[0].value;
+    }
+  },
+  {
+    immediate: true,
+  },
 );
 
 onMounted(async () => {
-  if (config.value.contextFields.some((field) => field.kind === 'semester_select')) {
+  if (config.value?.contextFields?.some((field) => field.kind === 'semester_select')) {
     const res = await getSemesters(1, 100);
 
-    semesterOptions.value = res.data.map((semester) => ({
+    semesterOptions.value = (res.data ?? []).map((semester) => ({
       value: String(semester.id),
       label: `Semester ${semester.name} · ${semester.academic_year}`,
     }));
   }
 
-  if (config.value.contextFields.some((field) => field.kind === 'course_select')) {
+  if (config.value?.contextFields?.some((field) => field.kind === 'course_select') && props.courseOptions === undefined) {
     const res = await getCourses(1, 200);
 
-    courseOptions.value = res.data.map((course) => ({
+    internalCourseOptions.value = (res.data ?? []).map((course) => ({
       value: String(course.id),
       label: `${course.code} - ${course.name}`,
     }));
@@ -115,11 +172,11 @@ function clearSelection() {
 }
 
 const canSubmit = computed(() => {
-  if (!selectedFile.value) {
+  if (!selectedFile.value || !config.value) {
     return false;
   }
 
-  return config.value.contextFields.filter((field) => field.required).every((field) => context[field.key] !== undefined && context[field.key] !== '');
+  return config.value.contextFields.filter((field) => field.required).every((field) => context.value[field.key] !== undefined && context.value[field.key] !== '');
 });
 
 function submit() {
@@ -129,12 +186,20 @@ function submit() {
 
   emit('upload', {
     file: selectedFile.value,
-    context: { ...context },
+    context: {
+      ...context.value,
+    },
   });
 }
 
 function downloadSample() {
-  const blob = new Blob([config.value.sampleContent], { type: 'text/csv;charset=utf-8;' });
+  if (!config.value) {
+    return;
+  }
+
+  const blob = new Blob([config.value.sampleContent], {
+    type: 'text/csv;charset=utf-8;',
+  });
 
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');
@@ -151,7 +216,7 @@ function downloadSample() {
 </script>
 
 <template>
-  <div class="space-y-6 rounded-md border border-border bg-surface p-8">
+  <div v-if="config" class="space-y-6 rounded-md border border-border bg-surface p-8">
     <div class="flex items-start justify-between gap-4 rounded-md border border-border bg-bg p-4">
       <div class="min-w-0">
         <p class="text-xs font-bold uppercase tracking-wide text-text/50">Expected CSV columns</p>
@@ -165,6 +230,7 @@ function downloadSample() {
         <template #icon>
           <Download class="h-4 w-4" />
         </template>
+
         Sample CSV
       </BaseButton>
     </div>
@@ -177,7 +243,12 @@ function downloadSample() {
 
         <BaseSelect v-if="field.kind === 'semester_select'" v-model="context[field.key]" :options="semesterOptions" placeholder="Select semester" />
 
-        <BaseSelect v-else-if="field.kind === 'course_select'" v-model="context[field.key]" :options="courseOptions" placeholder="Select course" />
+        <div v-else-if="field.kind === 'course_select'">
+          <div v-if="props.fixedCourseLabel" class="flex h-10 w-full items-center rounded-lg border border-border bg-bg/70 px-3 text-sm font-medium text-text">
+            {{ props.fixedCourseLabel }}
+          </div>
+          <BaseSelect v-else v-model="context[field.key]" :options="availableCourseOptions" placeholder="Select course" />
+        </div>
 
         <BaseInput v-else v-model="context[field.key]" :type="field.kind === 'number' ? 'number' : 'text'" />
       </div>
@@ -219,7 +290,10 @@ function downloadSample() {
               {{ selectedFile.name }}
             </p>
 
-            <p class="text-xs text-text/50">{{ (selectedFile.size / 1024).toFixed(1) }} KB</p>
+            <p class="text-xs text-text/50">
+              {{ (selectedFile.size / 1024).toFixed(1) }}
+              KB
+            </p>
           </div>
         </div>
 
@@ -236,5 +310,9 @@ function downloadSample() {
     <div class="flex justify-end border-t border-border pt-6">
       <BaseButton :loading="uploading" :disabled="!canSubmit" @click="submit"> Upload and process </BaseButton>
     </div>
+  </div>
+
+  <div v-else class="rounded-md border border-error/30 bg-error/5 p-5">
+    <p class="text-sm font-medium text-error">Unable to load the configuration for this import type.</p>
   </div>
 </template>

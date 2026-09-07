@@ -105,7 +105,7 @@ async function submitForm() {
     closeFormModal();
     saving.value = false;
     uiStore.showToast(isEditing.value ? 'User updated.' : 'User created.', 'success');
-await load(pagination.value.current_page, search.value);
+    await load(pagination.value.current_page, search.value);
   } catch (err: any) {
     saving.value = false;
     if (err?.response?.status === 422) {
@@ -158,12 +158,10 @@ function initials(u: User) {
   return combined || '—';
 }
 
-
 const refreshing = ref(false);
 
 //pass searchQuery.value to the serch
 const activeView = ref<'active' | 'archived'>('active');
-
 
 function handleSearch(query: string) {
   searchQuery.value = query;
@@ -179,19 +177,21 @@ async function handleRefresh() {
 
 <template>
   <div class="mx-auto w-full max-w-360 space-y-6 px-6 py-6">
-      <ResourceToolbar
-        title="Users"
-        description="Manage institutional accounts and role assignments."
-        search-placeholder="Search by name or email…"
-        :search="search"
-        :show-search="true"
-        :show-refresh="true"
-        :refreshing="refreshing"
-        @update:search="(value) => {
+    <ResourceToolbar
+      title="Users"
+      description="Manage institutional accounts and role assignments."
+      search-placeholder="Search by name or email…"
+      :search="search"
+      :show-search="true"
+      :show-refresh="true"
+      :refreshing="refreshing"
+      @update:search="
+        (value) => {
           search = value;
           load(1, value);
-        }"
-        @refresh="handleRefresh">
+        }
+      "
+      @refresh="handleRefresh">
       <template #actions>
         <BaseButton @click="openCreate">
           <template #icon><Plus class="h-4 w-4" /></template>

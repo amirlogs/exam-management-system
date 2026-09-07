@@ -8,8 +8,7 @@ interface ListResponse<T> {
 }
 
 export async function getUsers(page = 1, perPage = 12, search = ''): Promise<ListResponse<User>> {
-  const res = await api.get('/users', { params: { page, per_page: perPage, search, },
-  });
+  const res = await api.get('/users', { params: { page, per_page: perPage, search } });
 
   return res.data;
 }

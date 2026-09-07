@@ -20,8 +20,20 @@ export async function listQuestions(page = 1, perPage = 12, archived = false, fi
 }
 
 export async function getQuestion(id: number): Promise<Question> {
-  const res = await api.get(`/questions/${id}`);
+  try {
+    const res = await api.get(`/questions/${id}`);
+    return res.data.data;
+  } catch (error: any) {
+    if (error?.response?.status === 404) {
+      const res = await api.get(`/questions/archived/${id}`);
+      return res.data.data;
+    }
+    throw error;
+  }
+}
 
+export async function getArchivedQuestion(id: number): Promise<Question> {
+  const res = await api.get(`/questions/archived/${id}`);
   return res.data.data;
 }
 

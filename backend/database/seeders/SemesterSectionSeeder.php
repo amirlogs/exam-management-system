@@ -20,7 +20,7 @@ class SemesterSectionSeeder extends Seeder
         $current = Semester::updateOrCreate(
             [
                 'academic_year' => '2026',
-                'name' => 'Semester 1',
+                'name' => '1',
             ],
             [
                 'term_number' => 1,
@@ -39,7 +39,7 @@ class SemesterSectionSeeder extends Seeder
         Semester::updateOrCreate(
             [
                 'academic_year' => '2025',
-                'name' => 'Semester 2',
+                'name' => '2',
             ],
             [
                 'term_number' => 2,

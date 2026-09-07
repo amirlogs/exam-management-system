@@ -160,9 +160,7 @@ function discard() {
           <p class="mt-0.5 text-xs text-text/55">{{ role.description || '—' }}</p>
         </div>
 
-        <span class="shrink-0 rounded-full border border-border bg-surface px-2.5 py-1 text-xs font-semibold text-text/50">
-          {{ selectedIds.size }} selected
-        </span>
+        <span class="shrink-0 rounded-full border border-border bg-surface px-2.5 py-1 text-xs font-semibold text-text/50"> {{ selectedIds.size }} selected </span>
       </div>
 
       <div v-if="!loading && grouped.size" class="mt-3 flex justify-end">
@@ -190,10 +188,7 @@ function discard() {
         :key="category"
         class="overflow-hidden rounded-lg border border-border transition-colors"
         :class="isAllSelected(perms) ? 'border-accent/30' : ''">
-        <button
-          type="button"
-          class="flex w-full items-center justify-between bg-bg px-4 py-3 transition-colors hover:bg-bg/70"
-          @click="toggleCategory(category)">
+        <button type="button" class="flex w-full items-center justify-between bg-bg px-4 py-3 transition-colors hover:bg-bg/70" @click="toggleCategory(category)">
           <div class="flex items-center gap-2.5">
             <span class="text-xs font-bold uppercase tracking-wide text-text/70">{{ category }}</span>
             <span class="text-[11px] font-medium text-text/40">{{ categorySelectedCount(perms) }}/{{ perms.length }}</span>
@@ -225,11 +220,7 @@ function discard() {
               </p>
             </div>
 
-            <input
-              type="checkbox"
-              :checked="selectedIds.has(p.id)"
-              class="h-4 w-4 shrink-0 cursor-pointer rounded accent-accent"
-              @change="toggle(p.id)" />
+            <input type="checkbox" :checked="selectedIds.has(p.id)" class="h-4 w-4 shrink-0 cursor-pointer rounded accent-accent" @change="toggle(p.id)" />
           </label>
         </div>
       </div>
@@ -238,13 +229,9 @@ function discard() {
     <!-- Sticky save bar -->
     <div class="flex shrink-0 items-center justify-between gap-2 border-t border-border bg-bg/70 px-4 py-3">
       <span class="text-xs font-medium text-text/60">
-        <template v-if="hasChanges">
-          {{ changeCount }} unsaved change{{ changeCount === 1 ? '' : 's' }}
-        </template>
+        <template v-if="hasChanges"> {{ changeCount }} unsaved change{{ changeCount === 1 ? '' : 's' }} </template>
 
-        <template v-else>
-          No unsaved changes
-        </template>
+        <template v-else> No unsaved changes </template>
       </span>
 
       <div class="flex gap-2">

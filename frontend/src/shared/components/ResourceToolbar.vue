@@ -169,7 +169,7 @@ onBeforeUnmount(() => {
       </div>
     </div>
 
-    <div v-if="showTabs" class="border-b border-border">
+    <div v-if="showTabs" class="flex items-center justify-between border-b border-border">
       <div class="flex min-w-0 items-center gap-6">
         <button
           type="button"
@@ -203,9 +203,21 @@ onBeforeUnmount(() => {
           <span v-if="activeTab === 'archived'" class="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-accent" />
         </button>
       </div>
+
+      <!-- Right end of tabs row when there is no search/filter toolbar below -->
+      <div v-if="showRefresh && !showSearch && !showFilter && !showColumns" class="flex shrink-0 items-center pb-1">
+        <button
+          type="button"
+          :disabled="refreshing"
+          class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-surface text-text/60 transition-colors hover:border-accent/40 hover:text-accent disabled:opacity-50 cursor-pointer"
+          title="Refresh"
+          @click="emit('refresh')">
+          <RefreshCw class="h-4 w-4" :class="{ 'animate-spin': refreshing }" />
+        </button>
+      </div>
     </div>
 
-    <div v-if="showSearch || showFilter || showRefresh || showColumns || showFullscreen" class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div v-if="showSearch || showFilter || showColumns || (!showTabs && showRefresh)" class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div v-if="showSearch" class="relative w-full sm:w-80">
         <Search class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text/35" />
 
@@ -246,35 +258,39 @@ onBeforeUnmount(() => {
           </span>
         </button>
 
+        <!-- Columns Button & Dropdown Slot -->
+        <div v-if="showColumns" class="relative">
+          <button
+            type="button"
+            class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-surface text-text/60 transition-colors hover:border-accent/40 hover:text-accent cursor-pointer"
+            title="Show/hide columns"
+            @click="emit('columns')">
+            <Columns3 class="h-4 w-4" />
+          </button>
+          <slot name="columns" />
+        </div>
+
+        <!-- Refresh Button -->
         <button
-          v-if="showRefresh"
+          v-if="showRefresh && (!showTabs || showSearch || showFilter || showColumns)"
           type="button"
           :disabled="refreshing"
-          class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-surface text-text/60 transition-colors hover:border-accent/40 hover:text-accent disabled:opacity-50"
+          class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-surface text-text/60 transition-colors hover:border-accent/40 hover:text-accent disabled:opacity-50 cursor-pointer"
           title="Refresh"
           @click="emit('refresh')">
           <RefreshCw class="h-4 w-4" :class="{ 'animate-spin': refreshing }" />
         </button>
 
-        <button
-          v-if="showColumns"
-          type="button"
-          class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-surface text-text/60 transition-colors hover:border-accent/40 hover:text-accent"
-          title="Show/hide columns"
-          @click="emit('columns')">
-          <Columns3 class="h-4 w-4" />
-        </button>
-
-        <button
-          v-if="showFullscreen"
-          type="button"
-          class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-surface text-text/60 transition-colors hover:border-accent/40 hover:text-accent"
-          :title="isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'"
-          @click="toggleFullscreen">
-          <Minimize2 v-if="isFullscreen" class="h-4 w-4" />
-
-          <Maximize2 v-else class="h-4 w-4" />
-        </button>
+        <!-- <button -->
+        <!--   v-if="showFullscreen" -->
+        <!--   type="button" -->
+        <!--   class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-surface text-text/60 transition-colors hover:border-accent/40 hover:text-accent" -->
+        <!--   :title="isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'" -->
+        <!--   @click="toggleFullscreen"> -->
+        <!--   <Minimize2 v-if="isFullscreen" class="h-4 w-4" /> -->
+        <!---->
+        <!--   <Maximize2 v-else class="h-4 w-4" /> -->
+        <!-- </button> -->
       </div>
     </div>
 

@@ -18,6 +18,7 @@ use App\Http\Controllers\QuestionFlagController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SectionController;
 use App\Http\Controllers\SemesterController;
+use App\Http\Controllers\StudentController;
 // use App\Http\Controllers\Student\StudentResultController;
 use App\Http\Controllers\StudentExamController;
 use App\Http\Controllers\TeachingController;
@@ -171,6 +172,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/me/teaching', [TeachingController::class, 'index']) ->middleware('permission:course_offering.view');
     Route::get('/me/teaching/{courseOffering}', [TeachingController::class, 'show']) ->middleware('permission:course_offering.view');
 
+    //========================== Students ========================
+    Route::get('/students', [StudentController::class, 'index'])->middleware('permission:student.view');
+
     // ======================== EXAMS(admin/instructor side) ========================
     Route::get('/course-offerings/{courseOffering}/exams', [ExamController::class, 'index'])->middleware('permission:exam.view');
     Route::get('/exams/{exam}', [ExamController::class, 'show'])->middleware('permission:exam.view');
@@ -201,12 +205,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/grades/publish', [GradingController::class, 'publish'])->middleware('permission:grade.publish');
 
 
-
     // ======================== QUESTION FLAGS ========================
     Route::post('/questions/{question}/flags', [QuestionFlagController::class, 'store'])->middleware('permission:question.flag');
     Route::get('/questions/{question}/flags', [QuestionFlagController::class, 'index'])->middleware('permission:question.view');
     Route::patch('/question-flags/{flag}/resolve', [QuestionFlagController::class, 'resolve'])->middleware('permission:question.update');
-
 
     // ====================== RESULTS =============================
     // Route::post('/results/generate', [ResultController::class, 'generate'])->middleware('permission:result.generate');
@@ -218,6 +220,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
 // ======================= EXAMS (student) =======================
 Route::middleware('auth:sanctum')->prefix('student')->group(function () {
+    Route::get('/exams', [StudentExamController::class, 'index']);
     Route::get('/exams/{exam}', [StudentExamController::class, 'show']);
     Route::get('/exams/{exam}/questions', [StudentExamController::class, 'questions']);
     Route::post('/exams/{exam}/start', [StudentExamController::class, 'start']);

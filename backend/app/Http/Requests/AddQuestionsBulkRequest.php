@@ -20,7 +20,7 @@ class AddQuestionsBulkRequest extends FormRequest
         return [
             'questions' => ['required', 'array', 'min:1'],
             'questions.*.question_id' => ['required', 'exists:questions,id', 'distinct'],
-            'questions.*.marks' => ['sometimes', 'numeric', 'min:0.5'],
+            'questions.*.marks' => ['sometimes', 'nullable', 'numeric', 'min:0.5'],
         ];
     }
 

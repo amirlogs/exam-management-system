@@ -6,6 +6,7 @@ use App\Http\Filters\RequestFilters;
 use App\Http\Requests\StoreSemesterRequest;
 use App\Http\Requests\UpdateSemesterRequest;
 use App\Http\Resources\SemesterResource;
+use App\Http\Search\RequestSearch;
 use App\Models\Semester;
 use App\Validation\GetRequestsValidator;
 use Illuminate\Http\Request;
@@ -30,6 +31,7 @@ class SemesterController extends Controller
     {
         $per_page = GetRequestsValidator::validate($request);
         $query = Semester::query();
+        RequestSearch::apply($query, $request, ['academic_year', 'status']);
         RequestFilters::apply($query, $request, ['academic_year', 'status']);
         $semesters = $query->paginate($per_page);
 
@@ -102,6 +104,7 @@ class SemesterController extends Controller
     {
         $per_page = GetRequestsValidator::validate($request);
         $query = Semester::query();
+        RequestSearch::apply($query, $request, ['name', 'academic_year']);
         RequestFilters::apply($query, $request, ['academic_year', 'status']);
         $semesters = $query->onlyTrashed()->paginate($per_page);
 

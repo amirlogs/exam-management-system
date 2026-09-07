@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -18,7 +17,6 @@ return new class extends Migration
             $table->string('student_number')->unique();
             $table->foreignId('program_id')->constrained();
             $table->foreignId('section_id')->constrained();
-
             $table->foreignId('curriculum_id')->constrained();
             $table->unsignedSmallInteger('entry_year');
             $table->string('status')->default('active');

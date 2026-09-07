@@ -111,9 +111,7 @@ async function confirmRestore() {
 
 const emptyStateText = computed(() => {
   if (crud.search.value) return 'No colleges found';
-  return crud.activeTab.value === 'archived'
-    ? 'No archived colleges'
-    : 'No colleges yet';
+  return crud.activeTab.value === 'archived' ? 'No archived colleges' : 'No colleges yet';
 });
 
 function retry() {

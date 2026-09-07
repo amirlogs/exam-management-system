@@ -154,7 +154,6 @@ async function loadDepartmentOptions() {
   }
 }
 
-
 function clearFilters() {
   filters.value.department_id = null;
 }
@@ -303,26 +302,26 @@ onBeforeUnmount(() => {
 <template>
   <div class="mx-auto w-full max-w-360 space-y-6 px-6 py-6">
     <div data-columns-container class="relative">
-        <ResourceToolbar
-          title="Programs"
-          description="Manage academic programs under each department."
-          search-placeholder="Search programs..."
-          :search="crud.search.value"
-          :show-search="true"
-          :show-filter="true"
-          :show-refresh="true"
-          :show-columns="true"
-          :show-fullscreen="true"
-          :show-tabs="true"
-          :active-tab="crud.activeTab.value"
-          :active-count="crud.activePagination.value.total"
-          :archived-count="crud.archivedPagination.value.total"
-          :has-active-filters="hasActiveFilters"
-          @clear-filters="clearFilters"
-          @change-tab="crud.changeTab"
-          @update:search="crud.setSearch"
-          @refresh="retry"
-          @columns="showColumns = !showColumns">
+      <ResourceToolbar
+        title="Programs"
+        description="Manage academic programs under each department."
+        search-placeholder="Search programs..."
+        :search="crud.search.value"
+        :show-search="true"
+        :show-filter="true"
+        :show-refresh="true"
+        :show-columns="true"
+        :show-fullscreen="true"
+        :show-tabs="true"
+        :active-tab="crud.activeTab.value"
+        :active-count="crud.activePagination.value.total"
+        :archived-count="crud.archivedPagination.value.total"
+        :has-active-filters="hasActiveFilters"
+        @clear-filters="clearFilters"
+        @change-tab="crud.changeTab"
+        @update:search="crud.setSearch"
+        @refresh="retry"
+        @columns="showColumns = !showColumns">
         <template #actions>
           <BaseButton v-can="'program.create'" :icon="Plus" @click="openCreate"> Add program </BaseButton>
         </template>
@@ -496,8 +495,7 @@ onBeforeUnmount(() => {
                     {{ emptyStateText }}
                   </p>
 
-<p v-if="crud.search.value || hasActiveFilters" class="mt-1 text-xs text-text/45">
-                      Try adjusting your search or filters.</p>
+                  <p v-if="crud.search.value || hasActiveFilters" class="mt-1 text-xs text-text/45">Try adjusting your search or filters.</p>
                 </div>
               </td>
             </tr>
