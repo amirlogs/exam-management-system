@@ -112,11 +112,7 @@ onMounted(() => {
           :key="tab.key"
           type="button"
           class="px-3 py-1 rounded-md text-xs font-medium transition-all cursor-pointer whitespace-nowrap"
-          :class="
-            activeTab === tab.key
-              ? 'bg-accent text-white shadow-xs font-semibold'
-              : 'bg-surface border border-border text-text/70 hover:text-text hover:border-text/40'
-          "
+          :class="activeTab === tab.key ? 'bg-accent text-white shadow-xs font-semibold' : 'bg-surface border border-border text-text/70 hover:text-text hover:border-text/40'"
           @click="setTab(tab.key)">
           {{ tab.label }}
         </button>
@@ -153,9 +149,7 @@ onMounted(() => {
         :key="exam.id"
         class="relative bg-surface rounded-xl border border-border shadow-2xs p-5 sm:p-6 overflow-hidden transition-all duration-150 hover:border-accent/40 group">
         <!-- Left accent line for active/in-progress exams -->
-        <div
-          v-if="isExamActive(exam)"
-          class="absolute left-0 top-0 bottom-0 w-1 bg-accent rounded-l-xl" />
+        <div v-if="isExamActive(exam)" class="absolute left-0 top-0 bottom-0 w-1 bg-accent rounded-l-xl" />
 
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <!-- Left: meta + title + metrics -->
@@ -179,9 +173,7 @@ onMounted(() => {
               </span>
 
               <!-- Submitted (attempt finished) -->
-              <span
-                v-else-if="isAttemptDone(exam)"
-                class="inline-flex items-center gap-1 font-mono text-[11px] px-2.5 py-0.5 rounded-full bg-accent/10 text-accent font-semibold">
+              <span v-else-if="isAttemptDone(exam)" class="inline-flex items-center gap-1 font-mono text-[11px] px-2.5 py-0.5 rounded-full bg-accent/10 text-accent font-semibold">
                 <Check class="w-3 h-3" />
                 Submitted
               </span>
@@ -195,9 +187,7 @@ onMounted(() => {
               </span>
 
               <!-- Scheduled -->
-              <span
-                v-else
-                class="inline-flex items-center gap-1 font-mono text-[11px] px-2.5 py-0.5 rounded-full bg-bg border border-border text-text/60 font-medium">
+              <span v-else class="inline-flex items-center gap-1 font-mono text-[11px] px-2.5 py-0.5 rounded-full bg-bg border border-border text-text/60 font-medium">
                 <Calendar class="w-3 h-3" />
                 Scheduled
               </span>
@@ -218,9 +208,7 @@ onMounted(() => {
 
             <!-- Title + Course Code -->
             <div>
-              <span class="font-mono text-xs font-semibold text-accent uppercase tracking-wider block">
-                {{ exam.course?.code }} · {{ exam.course?.name }}
-              </span>
+              <span class="font-mono text-xs font-semibold text-accent uppercase tracking-wider block"> {{ exam.course?.code }} · {{ exam.course?.name }} </span>
               <h2 class="text-lg sm:text-xl font-bold tracking-tight text-text font-display group-hover:text-accent transition-colors leading-snug">
                 {{ exam.title }}
               </h2>
@@ -248,31 +236,19 @@ onMounted(() => {
           <!-- Right: CTA -->
           <div class="sm:shrink-0 flex items-center justify-start sm:justify-end">
             <!-- Active: Start or Resume -->
-            <BaseButton
-              v-if="isExamActive(exam)"
-              variant="primary"
-              class="w-full sm:w-auto font-semibold shadow-xs"
-              @click="navigateToExam(exam)">
+            <BaseButton v-if="isExamActive(exam)" variant="primary" class="w-full sm:w-auto font-semibold shadow-xs" @click="navigateToExam(exam)">
               <span>{{ exam.attempt?.status === 'in_progress' ? 'Resume Exam' : 'Start Exam' }}</span>
               <ArrowRight class="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
             </BaseButton>
 
             <!-- Completed / Submitted: View Results -->
-            <BaseButton
-              v-else-if="isExamCompleted(exam)"
-              variant="secondary"
-              class="w-full sm:w-auto font-medium"
-              @click="navigateToExam(exam)">
+            <BaseButton v-else-if="isExamCompleted(exam)" variant="secondary" class="w-full sm:w-auto font-medium" @click="navigateToExam(exam)">
               <span>View Results</span>
               <ChevronRight class="w-4 h-4 text-text/50" />
             </BaseButton>
 
             <!-- Scheduled: details -->
-            <BaseButton
-              v-else
-              variant="secondary"
-              class="w-full sm:w-auto text-xs"
-              @click="navigateToExam(exam)">
+            <BaseButton v-else variant="secondary" class="w-full sm:w-auto text-xs" @click="navigateToExam(exam)">
               <span>Details</span>
             </BaseButton>
           </div>
@@ -284,7 +260,8 @@ onMounted(() => {
     <div class="pt-4 flex items-start gap-2.5 text-text/60 text-xs leading-relaxed border-t border-border/40">
       <Info class="w-4 h-4 text-accent shrink-0 mt-0.5" />
       <p>
-        Examination links activate precisely at scheduled start times. Ensure your browser is up to date and a stable internet connection is maintained throughout the evaluation window.
+        Examination links activate precisely at scheduled start times. Ensure your browser is up to date and a stable internet connection is maintained throughout the evaluation
+        window.
       </p>
     </div>
 

@@ -35,14 +35,7 @@ const columns = [
   { key: 'status' as StudentColumn, label: 'Status', required: false },
 ];
 
-const visibleColumns = ref<StudentColumn[]>([
-  'student',
-  'student_number',
-  'program',
-  'section',
-  'entry_year',
-  'status',
-]);
+const visibleColumns = ref<StudentColumn[]>(['student', 'student_number', 'program', 'section', 'entry_year', 'status']);
 
 const isColumnVisible = (column: StudentColumn) => visibleColumns.value.includes(column);
 
@@ -342,18 +335,10 @@ onUnmounted(() => {
       @clear-filters="clearFilters">
       <!-- Column Picker Menu -->
       <template #columns>
-        <div
-          v-if="showColumns"
-          data-columns-menu
-          class="absolute right-0 top-full mt-2 z-50 w-56 rounded-xl border border-border bg-surface p-2 shadow-xl">
+        <div v-if="showColumns" data-columns-menu class="absolute right-0 top-full mt-2 z-50 w-56 rounded-xl border border-border bg-surface p-2 shadow-xl">
           <div class="flex items-center justify-between px-2 py-1.5">
             <span class="text-xs font-semibold text-text">Columns</span>
-            <button
-              type="button"
-              class="text-xs font-medium text-text/50 transition-colors hover:text-accent cursor-pointer"
-              @click="resetColumns">
-              Reset
-            </button>
+            <button type="button" class="text-xs font-medium text-text/50 transition-colors hover:text-accent cursor-pointer" @click="resetColumns">Reset</button>
           </div>
 
           <div class="my-1 border-t border-border" />
@@ -374,15 +359,11 @@ onUnmounted(() => {
               {{ column.label }}
             </span>
 
-            <span v-if="column.required" class="text-[10px] font-mono text-text/40">
-              Req
-            </span>
+            <span v-if="column.required" class="text-[10px] font-mono text-text/40"> Req </span>
           </button>
 
           <div class="mt-1 border-t border-border pt-1">
-            <div class="px-2 py-1 text-[11px] text-text/40">
-              {{ visibleColumnCount }} columns visible
-            </div>
+            <div class="px-2 py-1 text-[11px] text-text/40">{{ visibleColumnCount }} columns visible</div>
           </div>
         </div>
       </template>

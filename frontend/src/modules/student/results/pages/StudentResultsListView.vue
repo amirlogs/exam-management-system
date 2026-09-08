@@ -104,9 +104,7 @@ onMounted(() => {
           <span class="text-text/60">recorded assessment{{ pagination.total !== 1 ? 's' : '' }}</span>
         </div>
         <div class="hidden sm:block w-px h-4 bg-border" />
-        <span class="hidden sm:flex items-center gap-1 text-xs text-text/60 font-mono">
-          Verified Academic Record
-        </span>
+        <span class="hidden sm:flex items-center gap-1 text-xs text-text/60 font-mono"> Verified Academic Record </span>
       </div>
 
       <!-- Search -->
@@ -130,9 +128,7 @@ onMounted(() => {
     <div v-else-if="results.length === 0" class="text-center py-20 bg-surface rounded-2xl border border-border space-y-3">
       <Award class="w-12 h-12 mx-auto text-text/30" />
       <h3 class="text-base font-semibold text-text">No assessment results recorded</h3>
-      <p class="text-xs text-text/60 max-w-sm mx-auto">
-        Submitted examination papers will appear here once grading is verified by the academic faculty.
-      </p>
+      <p class="text-xs text-text/60 max-w-sm mx-auto">Submitted examination papers will appear here once grading is verified by the academic faculty.</p>
     </div>
 
     <!-- ── Result Cards ────────────────────────────────────────────── -->
@@ -199,10 +195,7 @@ onMounted(() => {
               <span>Submitted: {{ exam.attempt?.submitted_at ? new Date(exam.attempt.submitted_at).toLocaleDateString() : 'Verified' }}</span>
             </div>
 
-            <BaseButton
-              variant="secondary"
-              class="text-xs font-semibold group/btn"
-              @click="router.push({ name: 'student.exams.overview', params: { examId: exam.id } })">
+            <BaseButton variant="secondary" class="text-xs font-semibold group/btn" @click="router.push({ name: 'student.exams.overview', params: { examId: exam.id } })">
               <span>Overview &amp; Breakdown</span>
               <ArrowRight class="w-3.5 h-3.5 group-hover/btn:translate-x-0.5 transition-transform" />
             </BaseButton>

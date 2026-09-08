@@ -10,9 +10,7 @@ export function handleApiError(
   if (status === 403) {
     const rawMessage = data?.errors?.message || data?.message;
     const isGenericInternalError = typeof rawMessage === 'string' && rawMessage.toLowerCase().includes('internal server error');
-    const displayMsg = !isGenericInternalError && rawMessage
-      ? rawMessage
-      : 'You do not have permission to perform this action.';
+    const displayMsg = !isGenericInternalError && rawMessage ? rawMessage : 'You do not have permission to perform this action.';
     uiStore.showToast(displayMsg, 'error');
     return;
   }

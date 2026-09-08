@@ -14,7 +14,17 @@ import ConfirmModal from '@/shared/components/ConfirmModal.vue';
 import { useResourceForm } from '@/shared/composables/useResourceForm';
 import { semesterSchema } from '../schemas/semester.schema';
 
-import { getSemesters, getArchivedSemesters, createSemester, updateSemester, openSemester, closeSemester, archiveSemester, restoreSemester, type SemesterFilters } from '../api/semesters';
+import {
+  getSemesters,
+  getArchivedSemesters,
+  createSemester,
+  updateSemester,
+  openSemester,
+  closeSemester,
+  archiveSemester,
+  restoreSemester,
+  type SemesterFilters,
+} from '../api/semesters';
 
 import { handleApiError } from '@/shared/utils/apiError';
 
@@ -172,9 +182,7 @@ async function load(page = 1) {
       search: searchQuery.value.trim() || undefined,
     };
 
-    const response = showArchived.value
-      ? await getArchivedSemesters(page, 12, filters)
-      : await getSemesters(page, 12, filters);
+    const response = showArchived.value ? await getArchivedSemesters(page, 12, filters) : await getSemesters(page, 12, filters);
 
     semesters.value = response.data ?? [];
     pagination.value = response.pagination ?? emptyPagination();
@@ -197,11 +205,7 @@ async function refresh() {
   refreshing.value = true;
 
   try {
-    await Promise.all([
-      loadActiveSemester(),
-      load(pagination.value.current_page),
-      updateArchivedCount(),
-    ]);
+    await Promise.all([loadActiveSemester(), load(pagination.value.current_page), updateArchivedCount()]);
   } finally {
     refreshing.value = false;
   }
@@ -297,11 +301,7 @@ async function submitForm() {
 
     uiStore.showToast(isEditing ? 'Semester updated.' : 'Semester created.', 'success');
 
-    await Promise.all([
-      loadActiveSemester(),
-      load(selected.value ? pagination.value.current_page : 1),
-      updateArchivedCount(),
-    ]);
+    await Promise.all([loadActiveSemester(), load(selected.value ? pagination.value.current_page : 1), updateArchivedCount()]);
   } catch (error) {
     handleApiError(error, uiStore, applyServerErrors, isEditing ? 'Failed to update semester.' : 'Failed to create semester.');
   } finally {
@@ -336,10 +336,7 @@ async function confirmToggleOpen() {
     showToggleModal.value = false;
     semesterToToggle.value = null;
 
-    await Promise.all([
-      loadActiveSemester(),
-      load(pagination.value.current_page),
-    ]);
+    await Promise.all([loadActiveSemester(), load(pagination.value.current_page)]);
   } catch (error) {
     handleApiError(error, uiStore, undefined, 'Failed to update semester status.');
   } finally {
@@ -366,11 +363,7 @@ async function confirmArchive() {
 
     uiStore.showToast('Semester archived.', 'success');
 
-    await Promise.all([
-      loadActiveSemester(),
-      load(pagination.value.current_page),
-      updateArchivedCount(),
-    ]);
+    await Promise.all([loadActiveSemester(), load(pagination.value.current_page), updateArchivedCount()]);
   } catch (error) {
     handleApiError(error, uiStore, undefined, 'Failed to archive semester.');
   } finally {
@@ -386,11 +379,7 @@ async function restoreOne(semester: Semester) {
 
     uiStore.showToast('Semester restored.', 'success');
 
-    await Promise.all([
-      loadActiveSemester(),
-      load(pagination.value.current_page),
-      updateArchivedCount(),
-    ]);
+    await Promise.all([loadActiveSemester(), load(pagination.value.current_page), updateArchivedCount()]);
   } catch (error) {
     handleApiError(error, uiStore, undefined, 'Failed to restore semester.');
   } finally {
@@ -400,10 +389,7 @@ async function restoreOne(semester: Semester) {
 }
 
 onMounted(async () => {
-  await Promise.all([
-    loadActiveSemester(),
-    load(1),
-  ]);
+  await Promise.all([loadActiveSemester(), load(1)]);
 
   updateArchivedCount();
 
@@ -424,9 +410,7 @@ onUnmounted(() => {
     <!-- ========================================================= -->
     <!-- ACTIVE SEMESTER HERO CARD (ABOVE)                         -->
     <!-- ========================================================= -->
-    <section
-      v-if="activeSemester"
-      class="relative overflow-hidden rounded-2xl border border-border bg-surface p-6 sm:p-8 shadow-xs">
+    <section v-if="activeSemester" class="relative overflow-hidden rounded-2xl border border-border bg-surface p-6 sm:p-8 shadow-xs">
       <div class="flex flex-col justify-between gap-6 md:flex-row md:items-start">
         <div class="flex-1 min-w-0">
           <div class="mb-3 flex flex-wrap items-center gap-2.5">
@@ -438,9 +422,7 @@ onUnmounted(() => {
               <span class="text-xs font-bold uppercase tracking-wider text-success">Active Semester</span>
             </span>
 
-            <span class="text-xs font-semibold uppercase tracking-wider text-text/50">
-              Academic year {{ activeSemester.academic_year }}
-            </span>
+            <span class="text-xs font-semibold uppercase tracking-wider text-text/50"> Academic year {{ activeSemester.academic_year }} </span>
           </div>
 
           <h2 class="font-display text-2xl sm:text-3xl font-bold text-text">
@@ -465,22 +447,14 @@ onUnmounted(() => {
         </div>
 
         <div class="flex shrink-0 items-center gap-2 pt-1">
-          <BaseButton
-            v-can="'semester.update'"
-            variant="ghost"
-            size="sm"
-            @click="openEdit(activeSemester)">
+          <BaseButton v-can="'semester.update'" variant="ghost" size="sm" @click="openEdit(activeSemester)">
             <template #icon>
               <Edit class="h-4 w-4" />
             </template>
             Edit
           </BaseButton>
 
-          <BaseButton
-            v-can="'semester.close'"
-            :loading="toggling"
-            variant="secondary"
-            @click="askToggleOpen(activeSemester)">
+          <BaseButton v-can="'semester.close'" :loading="toggling" variant="secondary" @click="askToggleOpen(activeSemester)">
             <template #icon>
               <Lock class="h-4 w-4" />
             </template>
@@ -491,18 +465,14 @@ onUnmounted(() => {
     </section>
 
     <!-- INACTIVE NOTICE (WHEN NO SEMESTER IS ACTIVE) -->
-    <section
-      v-else-if="!loadingActive"
-      class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-xl border border-dashed border-border bg-surface/60 p-6">
+    <section v-else-if="!loadingActive" class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-xl border border-dashed border-border bg-surface/60 p-6">
       <div class="flex items-center gap-3">
         <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border bg-bg text-text/40">
           <Building class="h-5 w-5" />
         </div>
         <div>
           <h3 class="text-sm font-semibold text-text">No Active Semester</h3>
-          <p class="text-xs text-text/55 mt-0.5">
-            There is currently no academic term set to active. You can open an upcoming semester below or create a new one.
-          </p>
+          <p class="text-xs text-text/55 mt-0.5">There is currently no academic term set to active. You can open an upcoming semester below or create a new one.</p>
         </div>
       </div>
       <BaseButton v-can="'semester.create'" variant="secondary" size="sm" @click="openCreate">
@@ -549,20 +519,12 @@ onUnmounted(() => {
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label class="mb-1.5 block text-xs font-semibold text-text/60">Status</label>
-              <BaseSelect
-                v-model="selectedStatus"
-                :options="statusFilterOptions"
-                placeholder="All statuses"
-                @update:model-value="onFilterChange" />
+              <BaseSelect v-model="selectedStatus" :options="statusFilterOptions" placeholder="All statuses" @update:model-value="onFilterChange" />
             </div>
 
             <div>
               <label class="mb-1.5 block text-xs font-semibold text-text/60">Academic Year</label>
-              <BaseInput
-                v-model="selectedAcademicYear"
-                type="number"
-                placeholder="e.g. 2026"
-                @update:model-value="onFilterChange" />
+              <BaseInput v-model="selectedAcademicYear" type="number" placeholder="e.g. 2026" @update:model-value="onFilterChange" />
             </div>
           </div>
         </template>
@@ -592,9 +554,7 @@ onUnmounted(() => {
 
           <tbody v-else-if="semesters.length" class="divide-y divide-border">
             <tr v-for="semester in semesters" :key="semester.id" class="transition-colors hover:bg-text/2">
-              <td class="px-4 py-3.5 text-sm font-medium text-text">
-                Semester {{ semester.name }}
-              </td>
+              <td class="px-4 py-3.5 text-sm font-medium text-text">Semester {{ semester.name }}</td>
 
               <td class="px-4 py-3.5 font-mono text-xs text-text/70">
                 {{ semester.academic_year }}
@@ -692,7 +652,7 @@ onUnmounted(() => {
           <tbody v-else>
             <tr>
               <td colspan="5" class="px-6 py-12 text-center text-sm text-text/55">
-                {{ searchQuery.trim() || hasActiveFilters ? 'No matching semesters found.' : (showArchived ? 'No archived semesters found.' : 'No semesters found.') }}
+                {{ searchQuery.trim() || hasActiveFilters ? 'No matching semesters found.' : showArchived ? 'No archived semesters found.' : 'No semesters found.' }}
               </td>
             </tr>
           </tbody>

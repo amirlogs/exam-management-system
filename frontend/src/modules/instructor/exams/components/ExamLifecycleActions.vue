@@ -204,15 +204,9 @@ function submitExtend() {
         </div>
 
         <div class="mt-4 space-y-4 overflow-y-auto pr-1 flex-1">
-          <CalendarSelector
-            v-model="scheduleStart"
-            label="Examination Start Window" />
+          <CalendarSelector v-model="scheduleStart" label="Examination Start Window" />
 
-          <DurationSelector
-            v-if="status === 'scheduled'"
-            v-model="scheduleDuration"
-            :min="30"
-            label="Adjust Duration" />
+          <DurationSelector v-if="status === 'scheduled'" v-model="scheduleDuration" :min="30" label="Adjust Duration" />
         </div>
 
         <div class="mt-6 flex justify-end gap-2">
@@ -249,11 +243,7 @@ function submitExtend() {
                 :key="mins"
                 type="button"
                 class="rounded-lg border py-1.5 text-xs font-semibold transition cursor-pointer"
-                :class="
-                  extendMinutes === mins
-                    ? 'border-accent bg-accent/10 text-accent'
-                    : 'border-border bg-bg/50 text-text/75 hover:border-text/30 hover:bg-bg'
-                "
+                :class="extendMinutes === mins ? 'border-accent bg-accent/10 text-accent' : 'border-border bg-bg/50 text-text/75 hover:border-text/30 hover:bg-bg'"
                 @click="extendMinutes = mins">
                 +{{ mins }}m
               </button>

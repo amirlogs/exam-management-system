@@ -38,12 +38,8 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
       leave-active-class="transition duration-100 ease-in"
       leave-from-class="transform scale-100 opacity-100 translate-y-0"
       leave-to-class="transform scale-95 opacity-0 -translate-y-1">
-      <div
-        v-if="isOpen"
-        class="absolute right-0 mt-2 w-52 bg-surface border border-border rounded-2xl shadow-xl p-1.5 z-30">
-        <div class="px-2.5 py-1.5 text-[10px] font-mono font-semibold uppercase tracking-wider text-text/40">
-          Color Theme
-        </div>
+      <div v-if="isOpen" class="absolute right-0 mt-2 w-52 bg-surface border border-border rounded-2xl shadow-xl p-1.5 z-30">
+        <div class="px-2.5 py-1.5 text-[10px] font-mono font-semibold uppercase tracking-wider text-text/40">Color Theme</div>
         <div class="space-y-0.5">
           <button
             v-for="t in themes"

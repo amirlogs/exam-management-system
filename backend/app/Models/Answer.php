@@ -6,7 +6,17 @@ use Illuminate\Database\Eloquent\Model;
 
 class Answer extends Model
 {
-    protected $fillable = ['exam_attempt_id', 'selected_option_id', 'question_id', 'exam_question_id', 'answer_text', 'marks_awarded', 'graded_by'];
+    protected $fillable = [
+        'exam_attempt_id',
+        'selected_option_id',
+        'question_id',
+        'exam_question_id',
+        'answer_text',
+        'marks_awarded',
+        'graded_by',
+        'is_correct',
+        'graded_at',
+    ];
 
     public function examAttempt()
     {
@@ -30,7 +40,7 @@ class Answer extends Model
 
     public function isCorrect()
     {
-        return $this->selectedOption->is_correct;
+        return $this->selectedOption?->is_correct ?? false;
     }
 
     public function question()

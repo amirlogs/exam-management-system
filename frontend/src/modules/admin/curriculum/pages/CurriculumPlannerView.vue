@@ -424,11 +424,7 @@ async function confirmRemove() {
           <div class="mt-4 w-full max-w-xs">
             <label class="mb-1.5 block text-xs font-bold uppercase tracking-wide text-text/60"> Program </label>
 
-            <BaseSelect
-              :model-value="String(selectedProgramId ?? '')"
-              :options="programOptions"
-              placeholder="Select program"
-              @update:model-value="onProgramChange" />
+            <BaseSelect :model-value="String(selectedProgramId ?? '')" :options="programOptions" placeholder="Select program" @update:model-value="onProgramChange" />
           </div>
         </div>
 

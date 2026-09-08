@@ -110,24 +110,16 @@ onMounted(() => {
         <!-- Header -->
         <div class="space-y-2">
           <div class="flex items-center justify-between gap-2">
-            <span class="font-mono text-xs font-semibold text-accent uppercase tracking-wider">
-              {{ exam.course?.code }} · {{ exam.course?.name }}
-            </span>
-            <span
-              v-if="isAttemptInProgress"
-              class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-warning/15 text-warning font-mono text-[11px] font-semibold">
+            <span class="font-mono text-xs font-semibold text-accent uppercase tracking-wider"> {{ exam.course?.code }} · {{ exam.course?.name }} </span>
+            <span v-if="isAttemptInProgress" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-warning/15 text-warning font-mono text-[11px] font-semibold">
               <span class="w-1.5 h-1.5 rounded-full bg-warning animate-pulse" />
               In Progress
             </span>
-            <span
-              v-else-if="canStart"
-              class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-success/15 text-success font-mono text-[11px] font-semibold">
+            <span v-else-if="canStart" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-success/15 text-success font-mono text-[11px] font-semibold">
               <span class="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
               Active
             </span>
-            <span
-              v-else-if="isAttemptDone"
-              class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-accent/10 text-accent font-mono text-[11px] font-semibold">
+            <span v-else-if="isAttemptDone" class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-accent/10 text-accent font-mono text-[11px] font-semibold">
               Submitted
             </span>
             <span
@@ -135,9 +127,7 @@ onMounted(() => {
               class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-bg border border-border text-text/60 font-mono text-[11px] font-semibold">
               Completed
             </span>
-            <span
-              v-else
-              class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-bg border border-border text-text/60 font-mono text-[11px] font-semibold">
+            <span v-else class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-bg border border-border text-text/60 font-mono text-[11px] font-semibold">
               Scheduled
             </span>
           </div>
@@ -158,9 +148,7 @@ onMounted(() => {
               <Clock class="w-3.5 h-3.5 text-accent" />
               Duration
             </span>
-            <p class="font-mono text-base font-bold text-text">
-              {{ exam.duration_minutes }} <span class="text-xs font-normal text-text/50">mins</span>
-            </p>
+            <p class="font-mono text-base font-bold text-text">{{ exam.duration_minutes }} <span class="text-xs font-normal text-text/50">mins</span></p>
           </div>
 
           <div class="space-y-1">
@@ -178,9 +166,7 @@ onMounted(() => {
               <CheckCircle2 class="w-3.5 h-3.5 text-accent" />
               Total Marks
             </span>
-            <p class="font-mono text-base font-bold text-text">
-              {{ exam.total_marks }} <span class="text-xs font-normal text-text/50">pts</span>
-            </p>
+            <p class="font-mono text-base font-bold text-text">{{ exam.total_marks }} <span class="text-xs font-normal text-text/50">pts</span></p>
           </div>
         </div>
 
@@ -189,9 +175,7 @@ onMounted(() => {
           <AlertCircle class="w-4 h-4 text-warning shrink-0 mt-0.5" />
           <div class="space-y-0.5 text-left">
             <span class="font-semibold text-text block">Assessment Session Active</span>
-            <span class="text-text/70 leading-relaxed">
-              You have an active session in progress. Time remaining continues to elapse on the server.
-            </span>
+            <span class="text-text/70 leading-relaxed"> You have an active session in progress. Time remaining continues to elapse on the server. </span>
           </div>
         </div>
 
@@ -215,7 +199,9 @@ onMounted(() => {
             </div>
           </div>
           <span class="font-bold text-text font-mono text-sm">
-            {{ exam.attempt?.score !== null && exam.attempt?.score !== undefined ? `${exam.attempt.score} / ${exam.total_marks} pts` : (isAttemptDone ? 'Pending grading' : 'Closed') }}
+            {{
+              exam.attempt?.score !== null && exam.attempt?.score !== undefined ? `${exam.attempt.score} / ${exam.total_marks} pts` : isAttemptDone ? 'Pending grading' : 'Closed'
+            }}
           </span>
         </div>
 
@@ -242,11 +228,7 @@ onMounted(() => {
             <ArrowRight class="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
           </BaseButton>
 
-          <BaseButton
-            v-else-if="isExamCompleted"
-            variant="secondary"
-            class="w-full py-3"
-            @click="router.push({ name: 'student.results.list' })">
+          <BaseButton v-else-if="isExamCompleted" variant="secondary" class="w-full py-3" @click="router.push({ name: 'student.results.list' })">
             <Award class="w-4 h-4 mr-1.5" />
             View Results
           </BaseButton>
