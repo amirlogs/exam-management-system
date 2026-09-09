@@ -1,14 +1,16 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { ArrowLeft, FileQuestion, FileSpreadsheet, Plus, RefreshCw, Upload } from 'lucide-vue-next';
+import { ArrowLeft, FileQuestion, FileSpreadsheet, Plus, RefreshCw, Sparkles, Upload } from 'lucide-vue-next';
 
 import BaseButton from '@/shared/components/ui/BaseButton.vue';
 import ExamStatusBadge from '../components/ExamStatusBadge.vue';
 import ExamQuestionsTable from '../components/ExamQuestionsTable.vue';
 import ExamQuestionPicker from '../components/ExamQuestionPicker.vue';
+import AiQuestionGeneratorModal from '@/modules/instructor/questions/components/AiQuestionGeneratorModal.vue';
 
 import { addExamQuestion, addExamQuestionsBulk, getExam, listExamQuestions, removeExamQuestion } from '../api/exams';
+import { getTeaching } from '@/modules/instructor/teaching/api/teaching';
 import { useUiStore } from '@/stores/ui';
 import { handleApiError } from '@/shared/utils/apiError';
 
@@ -22,11 +24,14 @@ const examId = computed(() => Number(route.params.examId));
 
 const exam = ref<Exam | null>(null);
 const questions = ref<ExamQuestionItem[]>([]);
+const examCourseId = ref<number | null>(null);
+const examCourseLabel = ref<string>('');
 
 const loading = ref(true);
 const actionLoading = ref(false);
 
 const showPicker = ref(false);
+const showAiModal = ref(false);
 const removingId = ref<number | null>(null);
 
 const canEdit = computed(() => exam.value?.status === 'draft');
@@ -35,10 +40,22 @@ const questionIds = computed(() => questions.value.map((item) => item.question?.
 async function load() {
   loading.value = true;
   try {
-    const [examResponse, questionResponse] = await Promise.all([getExam(examId.value), listExamQuestions(examId.value, 1, 100)]);
+    const [examResponse, questionResponse, teachingResponse] = await Promise.all([
+      getExam(examId.value),
+      listExamQuestions(examId.value, 1, 100),
+      getTeaching(1, 1000).catch(() => ({ data: [] })),
+    ]);
 
     exam.value = examResponse.data;
     questions.value = questionResponse.data ?? [];
+
+    const teaching = (teachingResponse.data || []).find(
+      (item: any) => item?.id === exam.value?.course_offering_id
+    );
+    if (teaching?.course) {
+      examCourseId.value = teaching.course.id;
+      examCourseLabel.value = `${teaching.course.code} — ${teaching.course.name || teaching.course.title}`;
+    }
   } catch (error) {
     handleApiError(error, uiStore, undefined, 'Unable to load exam questions.');
   } finally {
@@ -187,7 +204,7 @@ onMounted(load);
           </div>
         </div>
 
-        <div v-if="canEdit" class="flex flex-wrap items-center gap-2">
+        <div v-if="canEdit" class="flex items-center gap-2 shrink-0 flex-wrap sm:flex-nowrap">
           <BaseButton v-can="'exam.update'" @click="openPicker">
             <template #icon>
               <Plus class="h-4 w-4" />
@@ -202,9 +219,16 @@ onMounted(load);
             Import CSV
           </BaseButton>
 
+          <BaseButton v-can="'exam.update'" variant="secondary" @click="showAiModal = true">
+            <template #icon>
+              <Sparkles class="h-4 w-4 text-accent" />
+            </template>
+            Generate with AI
+          </BaseButton>
+
           <button
             type="button"
-            class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-surface text-text/60 transition-colors hover:border-accent/40 hover:text-accent disabled:opacity-50"
+            class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-surface text-text/60 transition-colors hover:border-accent/40 hover:text-accent disabled:opacity-50 cursor-pointer"
             title="Refresh"
             @click="load">
             <RefreshCw class="h-4 w-4" :class="{ 'animate-spin': loading }" />
@@ -231,5 +255,15 @@ onMounted(load);
       :error-message="pickerErrorMessage"
       @add-bulk="handleAddBulk"
       @close="showPicker = false" />
+
+    <!-- AI Question Generator Modal -->
+    <AiQuestionGeneratorModal
+      v-model="showAiModal"
+      :exam-id="examId"
+      :course-id="examCourseId"
+      :course-name="examCourseLabel || exam?.title"
+      scope="exam"
+      @confirmed="load"
+    />
   </div>
 </template>
