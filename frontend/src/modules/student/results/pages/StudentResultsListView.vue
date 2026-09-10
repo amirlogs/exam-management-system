@@ -1,7 +1,20 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { Award, BookOpen, Calendar, CheckCircle2, Clock, ArrowRight, TrendingUp, FileCheck, ShieldCheck, Search, School } from 'lucide-vue-next';
+import {
+  Award,
+  BookOpen,
+  Calendar,
+  CheckCircle2,
+  Clock,
+  ArrowRight,
+  TrendingUp,
+  FileCheck,
+  ShieldCheck,
+  Search,
+  School,
+  AlertCircle,
+} from 'lucide-vue-next';
 
 import BaseBadge from '@/shared/components/ui/BaseBadge.vue';
 import BaseButton from '@/shared/components/ui/BaseButton.vue';
@@ -32,15 +45,17 @@ const pagination = ref<Pagination>({
 async function loadResults(page = 1) {
   loading.value = true;
   try {
-    const params: Record<string, any> = {
-      status: 'completed',
-    };
+    const params: Record<string, any> = {};
     if (search.value) params.search = search.value;
 
     const res = await api.getStudentExams(page, pagination.value.per_page, params);
+    // Filter to exams the student actually took
     results.value = (res.data || []).filter((e) => e.attempt !== null);
     if (res.pagination) {
-      pagination.value = res.pagination;
+      pagination.value = {
+        ...res.pagination,
+        total: results.value.length,
+      };
     }
   } catch (err: any) {
     handleApiError(err, uiStore, undefined, 'Failed to load results.');
@@ -59,22 +74,30 @@ function handlePageChange(page: number) {
   loadResults(page);
 }
 
-function calculateGrade(score: number, total: number): { letter: string; color: string } {
-  if (total <= 0) return { letter: 'N/A', color: 'bg-bg text-text/60 border border-border' };
-  const pct = (score / total) * 100;
+function calculateGrade(score: number | string | null | undefined, total: number | string | null | undefined): { letter: string; color: string } {
+  if (score === null || score === undefined) {
+    return { letter: '—', color: 'bg-bg text-text/50 border border-border' };
+  }
+  const scoreNum = Number(score);
+  const totalNum = Number(total);
+  if (totalNum <= 0) return { letter: 'N/A', color: 'bg-bg text-text/50 border border-border' };
+
+  const pct = (scoreNum / totalNum) * 100;
   if (pct >= 90) return { letter: 'A', color: 'bg-success/15 text-success' };
   if (pct >= 85) return { letter: 'A-', color: 'bg-success/15 text-success' };
   if (pct >= 80) return { letter: 'B+', color: 'bg-accent/15 text-accent' };
   if (pct >= 75) return { letter: 'B', color: 'bg-accent/15 text-accent' };
   if (pct >= 70) return { letter: 'C+', color: 'bg-warning/15 text-warning' };
   if (pct >= 60) return { letter: 'C', color: 'bg-warning/15 text-warning' };
+  if (pct >= 50) return { letter: 'D', color: 'bg-warning/15 text-warning' };
   return { letter: 'F', color: 'bg-error/15 text-error' };
 }
 
 function scorePercent(exam: StudentExam): number | null {
   if (exam.attempt?.score === null || exam.attempt?.score === undefined) return null;
-  if (!exam.total_marks) return null;
-  return Math.round((exam.attempt.score / exam.total_marks) * 100);
+  const total = Number(exam.total_marks);
+  if (!total || total <= 0) return null;
+  return Math.round((Number(exam.attempt.score) / total) * 100);
 }
 
 onMounted(() => {
@@ -88,10 +111,10 @@ onMounted(() => {
     <header class="space-y-2">
       <div class="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-text/60">
         <span class="w-1.5 h-1.5 rounded-full bg-accent inline-block" />
-        <span>Candidate Portal · Official Records</span>
+        <span>Academic Performance &amp; Evaluation Records</span>
       </div>
       <h1 class="text-3xl sm:text-4xl font-bold tracking-tight text-text font-display">My Results</h1>
-      <p class="text-sm text-text/60">Official performance records and graded examination transcripts.</p>
+      <p class="text-sm text-text/60">Official examination transcripts, scored submissions, and academic grades.</p>
     </header>
 
     <!-- ── Summary stats + Search bar ─────────────────────────────── -->
@@ -100,11 +123,9 @@ onMounted(() => {
       <div class="flex items-center gap-5">
         <div class="flex items-center gap-1.5 text-xs">
           <ShieldCheck class="w-4 h-4 text-success" />
-          <span class="font-medium text-text">{{ pagination.total }}</span>
-          <span class="text-text/60">recorded assessment{{ pagination.total !== 1 ? 's' : '' }}</span>
+          <span class="font-medium text-text">{{ results.length }}</span>
+          <span class="text-text/60">completed assessment{{ results.length !== 1 ? 's' : '' }}</span>
         </div>
-        <div class="hidden sm:block w-px h-4 bg-border" />
-        <span class="hidden sm:flex items-center gap-1 text-xs text-text/60 font-mono"> Verified Academic Record </span>
       </div>
 
       <!-- Search -->
@@ -115,7 +136,8 @@ onMounted(() => {
           type="text"
           placeholder="Search by exam or course..."
           class="w-full bg-surface border border-border rounded-lg pl-8 pr-3 py-2 text-sm text-text placeholder:text-text/40 focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-colors"
-          @keyup.enter="handleSearch" />
+          @keyup.enter="handleSearch"
+        />
       </div>
     </div>
 
@@ -128,7 +150,9 @@ onMounted(() => {
     <div v-else-if="results.length === 0" class="text-center py-20 bg-surface rounded-2xl border border-border space-y-3">
       <Award class="w-12 h-12 mx-auto text-text/30" />
       <h3 class="text-base font-semibold text-text">No assessment results recorded</h3>
-      <p class="text-xs text-text/60 max-w-sm mx-auto">Submitted examination papers will appear here once grading is verified by the academic faculty.</p>
+      <p class="text-xs text-text/60 max-w-sm mx-auto">
+        Submitted examinations will appear here once evaluation is completed.
+      </p>
     </div>
 
     <!-- ── Result Cards ────────────────────────────────────────────── -->
@@ -136,7 +160,8 @@ onMounted(() => {
       <article
         v-for="exam in results"
         :key="exam.id"
-        class="bg-surface rounded-2xl border border-border shadow-xs hover:shadow-md hover:border-accent/30 transition-all overflow-hidden group">
+        class="bg-surface rounded-2xl border border-border shadow-xs hover:shadow-md hover:border-accent/30 transition-all overflow-hidden group"
+      >
         <div class="p-5 sm:p-6 flex flex-col gap-4">
           <!-- Top row: icon + title + grade -->
           <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
@@ -145,10 +170,14 @@ onMounted(() => {
               <div
                 v-if="exam.attempt?.score !== null && exam.attempt?.score !== undefined"
                 class="w-12 h-12 rounded-full flex items-center justify-center text-sm font-bold shrink-0 shadow-2xs font-mono"
-                :class="calculateGrade(exam.attempt.score, exam.total_marks).color">
+                :class="calculateGrade(exam.attempt.score, exam.total_marks).color"
+              >
                 {{ calculateGrade(exam.attempt.score, exam.total_marks).letter }}
               </div>
-              <div v-else class="w-12 h-12 rounded-full flex items-center justify-center shrink-0 bg-bg text-text/60 text-xs font-semibold border border-border font-mono">
+              <div
+                v-else
+                class="w-12 h-12 rounded-full flex items-center justify-center shrink-0 bg-bg text-text/50 text-[11px] font-semibold border border-border font-mono text-center leading-tight"
+              >
                 Pending
               </div>
 
@@ -170,21 +199,25 @@ onMounted(() => {
             <!-- Score block -->
             <div class="text-right shrink-0">
               <div class="font-mono text-lg font-bold text-text">
-                {{ exam.attempt?.score !== null && exam.attempt?.score !== undefined ? `${exam.attempt.score} / ${exam.total_marks}` : '— / —' }}
+                {{ exam.attempt?.score !== null && exam.attempt?.score !== undefined ? `${exam.attempt.score} / ${exam.total_marks}` : 'Under Review' }}
               </div>
               <div class="font-mono text-xs text-text/60">
-                {{ exam.attempt?.score !== null && exam.attempt?.score !== undefined ? `${scorePercent(exam)}% Mark` : 'Under Review' }}
+                {{ exam.attempt?.score !== null && exam.attempt?.score !== undefined ? `${scorePercent(exam)}% Total` : 'Grading in progress' }}
               </div>
             </div>
           </div>
 
-          <!-- Progress bar -->
-          <div v-if="exam.attempt?.score !== null && exam.attempt?.score !== undefined && exam.total_marks > 0" class="space-y-1">
+          <!-- Progress bar for graded attempts -->
+          <div
+            v-if="exam.attempt?.score !== null && exam.attempt?.score !== undefined && exam.total_marks > 0"
+            class="space-y-1"
+          >
             <div class="h-2 w-full bg-bg rounded-full overflow-hidden border border-border/80">
               <div
                 class="h-full rounded-full transition-all duration-300"
-                :class="(scorePercent(exam) ?? 0) >= 60 ? 'bg-success' : 'bg-error'"
-                :style="{ width: `${scorePercent(exam)}%` }" />
+                :class="(scorePercent(exam) ?? 0) >= 50 ? 'bg-success' : 'bg-error'"
+                :style="{ width: `${scorePercent(exam)}%` }"
+              />
             </div>
           </div>
 
@@ -192,10 +225,14 @@ onMounted(() => {
           <div class="flex items-center justify-between text-xs text-text/60 border-t border-border/40 pt-3">
             <div class="flex items-center gap-1.5">
               <Calendar class="w-3.5 h-3.5 text-text/40" />
-              <span>Submitted: {{ exam.attempt?.submitted_at ? new Date(exam.attempt.submitted_at).toLocaleDateString() : 'Verified' }}</span>
+              <span>Completed: {{ exam.attempt?.submitted_at ? new Date(exam.attempt.submitted_at).toLocaleDateString() : 'Recorded' }}</span>
             </div>
 
-            <BaseButton variant="secondary" class="text-xs font-semibold group/btn" @click="router.push({ name: 'student.exams.overview', params: { examId: exam.id } })">
+            <BaseButton
+              variant="secondary"
+              class="text-xs font-semibold group/btn"
+              @click="router.push({ name: 'student.exams.overview', params: { examId: exam.id } })"
+            >
               <span>Overview &amp; Breakdown</span>
               <ArrowRight class="w-3.5 h-3.5 group-hover/btn:translate-x-0.5 transition-transform" />
             </BaseButton>
@@ -207,10 +244,8 @@ onMounted(() => {
     <!-- ── Pagination ──────────────────────────────────────────────── -->
     <AppPagination
       v-if="pagination.last_page > 1"
-      :current-page="pagination.current_page"
-      :last-page="pagination.last_page"
-      :total="pagination.total"
-      :per-page="pagination.per_page"
-      @page-change="handlePageChange" />
+      :pagination="pagination"
+      @change-page="handlePageChange"
+    />
   </div>
 </template>

@@ -254,7 +254,7 @@ async function handleTimeoutSubmission() {
 function isExamEndedError(err: any): boolean {
   const msg = (err?.response?.data?.message || err?.message || '').toLowerCase();
   const status = err?.response?.status;
-  return status === 403 && (msg.includes('completed') || msg.includes('not in progress') || msg.includes('already submitted') || msg.includes('ended') || msg.includes('closed'));
+  return status === 403 || status === 409 || msg.includes('completed') || msg.includes('not in progress') || msg.includes('already submitted') || msg.includes('ended') || msg.includes('closed') || msg.includes('unauthorized');
 }
 
 function handleExamEnded() {

@@ -134,6 +134,20 @@ watch(
   { immediate: true },
 );
 
+const settingsTo = computed(() => {
+  if (props.activeTo.startsWith('/admin')) {
+    return { name: 'admin.profile', query: { tab: 'preferences' } };
+  }
+  if (props.activeTo.startsWith('/student')) {
+    return { name: 'student.profile', query: { tab: 'preferences' } };
+  }
+  return { name: 'instructor.profile', query: { tab: 'preferences' } };
+});
+
+const isSettingsActive = computed(() => {
+  return props.activeTo.includes('/profile') || props.activeTo.startsWith('/settings');
+});
+
 function handleKeyDown(e: KeyboardEvent) {
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
     const tag = (e.target as HTMLElement)?.tagName;
@@ -329,22 +343,22 @@ onUnmounted(() => {
     <!-- Footer / Settings (Fixed at bottom) -->
     <div class="border-t border-border shrink-0 transition-all duration-300" :class="isCollapsed ? 'px-2 py-2.5' : 'px-3 py-2.5'">
       <router-link
-        to="/settings"
+        :to="settingsTo"
         @click="handleNavigate"
         class="group relative flex items-center rounded-lg text-sm transition-colors"
         :class="[
-          activeTo.startsWith('/settings') ? 'bg-text/[0.08] text-text font-medium' : 'text-text/70 hover:bg-text/[0.04] hover:text-text',
+          isSettingsActive ? 'bg-text/[0.08] text-text font-medium' : 'text-text/70 hover:bg-text/[0.04] hover:text-text',
           isCollapsed ? 'md:justify-center md:h-10 md:w-full' : 'gap-2.5 px-2.5 py-2',
         ]">
-        <Settings class="w-5 h-5 md:w-4.5 md:h-4.5 shrink-0 transition-colors" :class="activeTo.startsWith('/settings') ? 'text-text' : 'text-text/45 group-hover:text-text/75'" />
+        <Settings class="w-5 h-5 md:w-4.5 md:h-4.5 shrink-0 transition-colors" :class="isSettingsActive ? 'text-accent' : 'text-text/45 group-hover:text-text/75'" />
 
         <span class="overflow-hidden whitespace-nowrap transition-all duration-300 truncate" :class="isCollapsed ? 'md:w-0 md:opacity-0' : 'w-auto opacity-100'"> Settings </span>
 
         <!-- Minimalist Active Indicator Pip -->
-        <span v-if="activeTo.startsWith('/settings')" class="w-1.5 h-1.5 rounded-full bg-accent shrink-0 ml-auto" :class="isCollapsed ? 'hidden' : 'block'" />
+        <span v-if="isSettingsActive" class="w-1.5 h-1.5 rounded-full bg-accent shrink-0 ml-auto" :class="isCollapsed ? 'hidden' : 'block'" />
 
         <!-- Collapsed Rail Pip -->
-        <span v-if="isCollapsed && activeTo.startsWith('/settings')" class="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-accent" />
+        <span v-if="isCollapsed && isSettingsActive" class="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-accent" />
 
         <!-- Floating Tooltip for Settings -->
         <div

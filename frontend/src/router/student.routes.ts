@@ -9,6 +9,11 @@ export default [
     component: () => import('@/modules/student/dashboard/pages/StudentDashboardView.vue'),
   },
   {
+    path: 'profile',
+    name: 'student.profile',
+    component: () => import('@/modules/profile/pages/ProfileView.vue'),
+  },
+  {
     path: 'exams',
     name: 'student.exams.list',
     component: () => import('@/modules/student/exams/pages/StudentExamsListView.vue'),

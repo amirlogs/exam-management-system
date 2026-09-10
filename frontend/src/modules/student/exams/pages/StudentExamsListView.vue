@@ -1,11 +1,28 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { FileText, Clock, CheckCircle2, Play, ArrowRight, BookOpen, Calendar, Layers, ShieldCheck, Lock, Info, Check, ChevronRight, Search, Filter } from 'lucide-vue-next';
+import {
+  FileText,
+  Clock,
+  CheckCircle2,
+  Play,
+  ArrowRight,
+  BookOpen,
+  Calendar,
+  Layers,
+  ShieldCheck,
+  Lock,
+  Info,
+  Check,
+  ChevronRight,
+  Search,
+  Filter,
+  Award,
+  AlertCircle,
+} from 'lucide-vue-next';
 
 import BaseBadge from '@/shared/components/ui/BaseBadge.vue';
 import BaseButton from '@/shared/components/ui/BaseButton.vue';
-import BaseInput from '@/shared/components/ui/BaseInput.vue';
 import AppPagination from '@/shared/components/AppPagination.vue';
 import { useUiStore } from '@/stores/ui';
 import { handleApiError } from '@/shared/utils/apiError';
@@ -17,7 +34,7 @@ import type { Pagination } from '../api/studentExams';
 const router = useRouter();
 const uiStore = useUiStore();
 
-const exams = ref<StudentExam[]>([]);
+const rawExams = ref<StudentExam[]>([]);
 const loading = ref(false);
 const search = ref('');
 const activeTab = ref<'all' | 'active' | 'scheduled' | 'completed'>('all');
@@ -25,10 +42,53 @@ const activeTab = ref<'all' | 'active' | 'scheduled' | 'completed'>('all');
 const pagination = ref<Pagination>({
   current_page: 1,
   last_page: 1,
-  per_page: 10,
+  per_page: 15,
   total: 0,
   from: null,
   to: null,
+});
+
+type ExamDisplayState = 'graded' | 'submitted' | 'in_progress' | 'active' | 'scheduled' | 'closed';
+
+function getExamState(exam: StudentExam): ExamDisplayState {
+  if (exam.attempt) {
+    if (exam.attempt.status === 'graded' || (exam.attempt.score !== null && exam.attempt.score !== undefined)) {
+      return 'graded';
+    }
+    if (exam.attempt.status === 'in_progress') {
+      return 'in_progress';
+    }
+    if (exam.attempt.status === 'completed' || exam.attempt.status === 'auto_submitted' || exam.attempt.status === 'submitted') {
+      return 'submitted';
+    }
+  }
+
+  if (exam.status === 'active') {
+    return 'active';
+  }
+
+  if (exam.status === 'completed' || exam.status === 'cancelled' || exam.status === 'archived') {
+    return 'closed';
+  }
+
+  return 'scheduled';
+}
+
+const filteredExams = computed(() => {
+  return rawExams.value.filter((exam) => {
+    const state = getExamState(exam);
+
+    if (activeTab.value === 'active') {
+      return state === 'active' || state === 'in_progress';
+    }
+    if (activeTab.value === 'scheduled') {
+      return state === 'scheduled';
+    }
+    if (activeTab.value === 'completed') {
+      return state === 'graded' || state === 'submitted' || state === 'closed';
+    }
+    return true;
+  });
 });
 
 async function load(page = 1) {
@@ -36,12 +96,9 @@ async function load(page = 1) {
   try {
     const params: Record<string, any> = {};
     if (search.value) params.search = search.value;
-    if (activeTab.value !== 'all') {
-      params.status = activeTab.value;
-    }
 
     const res = await api.getStudentExams(page, pagination.value.per_page, params);
-    exams.value = res.data || [];
+    rawExams.value = res.data || [];
     if (res.pagination) {
       pagination.value = res.pagination;
     }
@@ -59,26 +116,11 @@ function handleSearch() {
 
 function setTab(tab: 'all' | 'active' | 'scheduled' | 'completed') {
   activeTab.value = tab;
-  pagination.value.current_page = 1;
-  load(1);
 }
 
 function handlePageChange(page: number) {
   pagination.value.current_page = page;
   load(page);
-}
-
-function isAttemptDone(exam: StudentExam): boolean {
-  const s = exam.attempt?.status;
-  return s === 'completed' || s === 'submitted' || s === 'auto_submitted' || s === 'graded';
-}
-
-function isExamActive(exam: StudentExam): boolean {
-  return exam.status === 'active' && !isAttemptDone(exam);
-}
-
-function isExamCompleted(exam: StudentExam): boolean {
-  return isAttemptDone(exam) || exam.status === 'completed' || exam.status === 'published';
 }
 
 function navigateToExam(exam: StudentExam) {
@@ -136,7 +178,7 @@ onMounted(() => {
     </div>
 
     <!-- ── Empty State ─────────────────────────────────────────────── -->
-    <div v-else-if="exams.length === 0" class="text-center py-16 bg-surface rounded-2xl border border-border space-y-2">
+    <div v-else-if="filteredExams.length === 0" class="text-center py-16 bg-surface rounded-2xl border border-border space-y-2">
       <FileText class="w-10 h-10 mx-auto text-text/30" />
       <h3 class="text-sm font-semibold text-text">No examinations found</h3>
       <p class="text-xs text-text/50 max-w-xs mx-auto">There are no examinations matching your selected filter.</p>
@@ -145,20 +187,36 @@ onMounted(() => {
     <!-- ── Exam Cards ──────────────────────────────────────────────── -->
     <div v-else class="space-y-3.5">
       <article
-        v-for="exam in exams"
+        v-for="exam in filteredExams"
         :key="exam.id"
         class="relative bg-surface rounded-xl border border-border shadow-2xs p-5 sm:p-6 overflow-hidden transition-all duration-150 hover:border-accent/40 group">
         <!-- Left accent line for active/in-progress exams -->
-        <div v-if="isExamActive(exam)" class="absolute left-0 top-0 bottom-0 w-1 bg-accent rounded-l-xl" />
+        <div v-if="getExamState(exam) === 'active' || getExamState(exam) === 'in_progress'" class="absolute left-0 top-0 bottom-0 w-1 bg-accent rounded-l-xl" />
 
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <!-- Left: meta + title + metrics -->
           <div class="flex flex-col min-w-0 space-y-2">
             <!-- Status badges row -->
             <div class="flex items-center flex-wrap gap-2 text-xs">
+              <!-- Graded -->
+              <span
+                v-if="getExamState(exam) === 'graded'"
+                class="inline-flex items-center gap-1.5 font-mono text-[11px] px-2.5 py-0.5 rounded-full bg-success/15 text-success font-semibold">
+                <CheckCircle2 class="w-3.5 h-3.5" />
+                Graded · {{ exam.attempt?.score }} / {{ exam.total_marks }} pts
+              </span>
+
+              <!-- Submitted / Under Review -->
+              <span
+                v-else-if="getExamState(exam) === 'submitted'"
+                class="inline-flex items-center gap-1.5 font-mono text-[11px] px-2.5 py-0.5 rounded-full bg-accent/10 text-accent font-semibold">
+                <Check class="w-3.5 h-3.5" />
+                Submitted · Under Review
+              </span>
+
               <!-- In Progress -->
               <span
-                v-if="exam.status === 'active' && exam.attempt?.status === 'in_progress'"
+                v-else-if="getExamState(exam) === 'in_progress'"
                 class="inline-flex items-center gap-1.5 font-mono text-[11px] px-2.5 py-0.5 rounded-full bg-warning/15 text-warning font-semibold">
                 <span class="w-1.5 h-1.5 rounded-full bg-warning animate-pulse" />
                 In Progress
@@ -166,24 +224,17 @@ onMounted(() => {
 
               <!-- Active Now -->
               <span
-                v-else-if="isExamActive(exam)"
+                v-else-if="getExamState(exam) === 'active'"
                 class="inline-flex items-center gap-1.5 font-mono text-[11px] px-2.5 py-0.5 rounded-full bg-success/15 text-success font-semibold">
                 <span class="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
-                Active
+                Active Now
               </span>
 
-              <!-- Submitted (attempt finished) -->
-              <span v-else-if="isAttemptDone(exam)" class="inline-flex items-center gap-1 font-mono text-[11px] px-2.5 py-0.5 rounded-full bg-accent/10 text-accent font-semibold">
-                <Check class="w-3 h-3" />
-                Submitted
-              </span>
-
-              <!-- Completed on exam level -->
+              <!-- Closed / Missed -->
               <span
-                v-else-if="isExamCompleted(exam)"
-                class="inline-flex items-center gap-1 font-mono text-[11px] px-2.5 py-0.5 rounded-full bg-bg border border-border text-text/60 font-semibold">
-                <CheckCircle2 class="w-3 h-3 text-text/50" />
-                Completed
+                v-else-if="getExamState(exam) === 'closed'"
+                class="inline-flex items-center gap-1 font-mono text-[11px] px-2.5 py-0.5 rounded-full bg-bg border border-border text-text/50 font-medium">
+                Concluded
               </span>
 
               <!-- Scheduled -->
@@ -192,15 +243,8 @@ onMounted(() => {
                 Scheduled
               </span>
 
-              <!-- Score if available -->
-              <span
-                v-if="exam.attempt?.score !== null && exam.attempt?.score !== undefined"
-                class="inline-flex items-center font-mono text-[11px] px-2 py-0.5 rounded bg-bg border border-border text-text font-semibold">
-                Score: {{ exam.attempt.score }} / {{ exam.total_marks }}
-              </span>
-
               <!-- Scheduled start if not completed -->
-              <span v-if="exam.scheduled_start && !isExamCompleted(exam)" class="inline-flex items-center gap-1 text-text/50 font-mono text-[11px]">
+              <span v-if="exam.scheduled_start && (getExamState(exam) === 'scheduled' || getExamState(exam) === 'active')" class="inline-flex items-center gap-1 text-text/50 font-mono text-[11px]">
                 <Clock class="w-3 h-3 text-text/40" />
                 {{ exam.scheduled_start }}
               </span>
@@ -208,7 +252,9 @@ onMounted(() => {
 
             <!-- Title + Course Code -->
             <div>
-              <span class="font-mono text-xs font-semibold text-accent uppercase tracking-wider block"> {{ exam.course?.code }} · {{ exam.course?.name }} </span>
+              <span class="font-mono text-xs font-semibold text-accent uppercase tracking-wider block">
+                {{ exam.course?.code }} · {{ exam.course?.name }}
+              </span>
               <h2 class="text-lg sm:text-xl font-bold tracking-tight text-text font-display group-hover:text-accent transition-colors leading-snug">
                 {{ exam.title }}
               </h2>
@@ -227,28 +273,46 @@ onMounted(() => {
               </span>
               <span class="text-border">·</span>
               <span class="flex items-center gap-1 font-mono">
-                <CheckCircle2 class="w-3.5 h-3.5 text-text/40" />
+                <Award class="w-3.5 h-3.5 text-text/40" />
                 {{ exam.total_marks }} pts
               </span>
             </div>
           </div>
 
-          <!-- Right: CTA -->
+          <!-- Right: Action CTA -->
           <div class="sm:shrink-0 flex items-center justify-start sm:justify-end">
-            <!-- Active: Start or Resume -->
-            <BaseButton v-if="isExamActive(exam)" variant="primary" class="w-full sm:w-auto font-semibold shadow-xs" @click="navigateToExam(exam)">
-              <span>{{ exam.attempt?.status === 'in_progress' ? 'Resume Exam' : 'Start Exam' }}</span>
+            <!-- Active / Resume -->
+            <BaseButton
+              v-if="getExamState(exam) === 'active' || getExamState(exam) === 'in_progress'"
+              variant="primary"
+              class="w-full sm:w-auto font-semibold shadow-xs"
+              @click="navigateToExam(exam)">
+              <span>{{ getExamState(exam) === 'in_progress' ? 'Resume Exam' : 'Start Exam' }}</span>
               <ArrowRight class="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
             </BaseButton>
 
-            <!-- Completed / Submitted: View Results -->
-            <BaseButton v-else-if="isExamCompleted(exam)" variant="secondary" class="w-full sm:w-auto font-medium" @click="navigateToExam(exam)">
+            <!-- Graded: View Results -->
+            <BaseButton
+              v-else-if="getExamState(exam) === 'graded'"
+              variant="secondary"
+              class="w-full sm:w-auto font-medium"
+              @click="router.push({ name: 'student.results.list' })">
               <span>View Results</span>
               <ChevronRight class="w-4 h-4 text-text/50" />
             </BaseButton>
 
-            <!-- Scheduled: details -->
-            <BaseButton v-else variant="secondary" class="w-full sm:w-auto text-xs" @click="navigateToExam(exam)">
+            <!-- Submitted: Overview -->
+            <BaseButton
+              v-else-if="getExamState(exam) === 'submitted'"
+              variant="secondary"
+              class="w-full sm:w-auto font-medium"
+              @click="navigateToExam(exam)">
+              <span>Overview</span>
+              <ChevronRight class="w-4 h-4 text-text/50" />
+            </BaseButton>
+
+            <!-- Scheduled or Closed: Details -->
+            <BaseButton v-else variant="secondary" class="w-full sm:w-auto font-medium" @click="navigateToExam(exam)">
               <span>Details</span>
             </BaseButton>
           </div>
@@ -256,22 +320,18 @@ onMounted(() => {
       </article>
     </div>
 
-    <!-- ── Footer note ─────────────────────────────────────────────── -->
+    <!-- ── Footer Note ─────────────────────────────────────────────── -->
     <div class="pt-4 flex items-start gap-2.5 text-text/60 text-xs leading-relaxed border-t border-border/40">
       <Info class="w-4 h-4 text-accent shrink-0 mt-0.5" />
       <p>
-        Examination links activate precisely at scheduled start times. Ensure your browser is up to date and a stable internet connection is maintained throughout the evaluation
-        window.
+        Examination links activate precisely at scheduled start times. Ensure your browser is up to date and a stable internet connection is maintained throughout the evaluation window.
       </p>
     </div>
 
     <!-- ── Pagination ──────────────────────────────────────────────── -->
     <AppPagination
       v-if="pagination.last_page > 1"
-      :current-page="pagination.current_page"
-      :last-page="pagination.last_page"
-      :total="pagination.total"
-      :per-page="pagination.per_page"
-      @page-change="handlePageChange" />
+      :pagination="pagination"
+      @change-page="handlePageChange" />
   </div>
 </template>
