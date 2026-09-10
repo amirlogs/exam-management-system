@@ -122,9 +122,7 @@ function handleInput(event: Event) {
           :disabled="disabled"
           class="w-full rounded-lg border border-border bg-surface py-2 pl-3 pr-16 text-center font-mono text-sm font-semibold text-text outline-none transition focus:border-accent disabled:opacity-50"
           @input="handleInput" />
-        <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-text/40">
-          minutes
-        </span>
+        <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-text/40"> minutes </span>
       </div>
 
       <button
@@ -139,8 +137,6 @@ function handleInput(event: Event) {
     </div>
 
     <!-- Hint / Minimum notice -->
-    <p v-if="hint" class="text-[11px] text-text/45">
-      {{ hint }} (Minimum: {{ min }}m, Maximum: {{ max }}m)
-    </p>
+    <p v-if="hint" class="text-[11px] text-text/45">{{ hint }} (Minimum: {{ min }}m, Maximum: {{ max }}m)</p>
   </div>
 </template>

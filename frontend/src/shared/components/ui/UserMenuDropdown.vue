@@ -45,14 +45,8 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
       class="h-9 pl-2 pr-2.5 rounded-xl border border-border bg-surface hover:bg-bg hover:border-accent/40 shadow-2xs flex items-center gap-2.5 transition-all cursor-pointer group active:scale-98"
       :class="{ 'border-accent/50 bg-bg': isOpen }">
       <!-- Avatar -->
-      <img
-        v-if="userAvatar"
-        :src="userAvatar"
-        class="w-6.5 h-6.5 rounded-lg object-cover border border-border"
-        alt="Avatar" />
-      <div
-        v-else
-        class="w-6.5 h-6.5 rounded-lg bg-accent/10 border border-accent/20 flex items-center justify-center text-accent text-[11px] font-mono font-bold">
+      <img v-if="userAvatar" :src="userAvatar" class="w-6.5 h-6.5 rounded-lg object-cover border border-border" alt="Avatar" />
+      <div v-else class="w-6.5 h-6.5 rounded-lg bg-accent/10 border border-accent/20 flex items-center justify-center text-accent text-[11px] font-mono font-bold">
         {{ initials(userName) }}
       </div>
 
@@ -62,9 +56,7 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
       </span>
 
       <!-- Chevron -->
-      <ChevronDown
-        class="w-3.5 h-3.5 text-text/40 group-hover:text-text transition-transform duration-200"
-        :class="{ 'rotate-180 text-accent': isOpen }" />
+      <ChevronDown class="w-3.5 h-3.5 text-text/40 group-hover:text-text transition-transform duration-200" :class="{ 'rotate-180 text-accent': isOpen }" />
     </button>
 
     <Transition
@@ -74,9 +66,7 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
       leave-active-class="transition duration-100 ease-in"
       leave-from-class="transform scale-100 opacity-100 translate-y-0"
       leave-to-class="transform scale-95 opacity-0 -translate-y-1">
-      <div
-        v-if="isOpen"
-        class="absolute right-0 mt-2 w-54 bg-surface border border-border rounded-2xl shadow-xl p-1.5 z-30">
+      <div v-if="isOpen" class="absolute right-0 mt-2 w-54 bg-surface border border-border rounded-2xl shadow-xl p-1.5 z-30">
         <!-- Header -->
         <div class="px-2.5 py-2 border-b border-border/50 mb-1">
           <div class="text-xs font-semibold text-text truncate">{{ userName || 'User' }}</div>

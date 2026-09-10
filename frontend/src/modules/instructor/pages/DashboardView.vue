@@ -68,9 +68,7 @@ const totalCourses = computed(() => teachingList.value.length);
 
 const totalSections = computed(() => {
   const sectionIds = new Set(
-    teachingList.value.flatMap((item) =>
-      item.assignments?.map((assignment) => assignment.section?.id).filter((id): id is number => id !== undefined) ?? []
-    )
+    teachingList.value.flatMap((item) => item.assignments?.map((assignment) => assignment.section?.id).filter((id): id is number => id !== undefined) ?? []),
   );
   return sectionIds.size;
 });
@@ -186,9 +184,7 @@ const attentionItems = computed(() => {
 });
 
 // Assessment Readiness metrics
-const readyExamsCount = computed(
-  () => scheduledExams.value.length + activeExams.value.length + completedExams.value.length
-);
+const readyExamsCount = computed(() => scheduledExams.value.length + activeExams.value.length + completedExams.value.length);
 
 function formatRelativeDate(value?: string | null) {
   if (!value) return '—';
@@ -287,22 +283,16 @@ onMounted(() => {
       <div>
         <p class="text-xs font-mono font-medium uppercase tracking-wider text-text/40">Instructor Workspace</p>
         <h1 class="mt-1 text-2xl font-semibold tracking-tight text-text md:text-3xl">Dashboard</h1>
-        <p class="mt-1 max-w-2xl text-sm text-text/50">
-          A current overview of your teaching load, active examinations, and assessment readiness.
-        </p>
+        <p class="mt-1 max-w-2xl text-sm text-text/50">A current overview of your teaching load, active examinations, and assessment readiness.</p>
       </div>
 
       <div class="flex flex-wrap items-center gap-2.5">
         <!-- Active Semester Pill -->
-        <div
-          v-if="activeSemester"
-          class="flex items-center gap-2.5 rounded-xl border border-border bg-surface px-3 py-2 text-xs shadow-2xs">
+        <div v-if="activeSemester" class="flex items-center gap-2.5 rounded-xl border border-border bg-surface px-3 py-2 text-xs shadow-2xs">
           <CalendarDays class="h-4 w-4 text-text/50 shrink-0" />
           <div class="min-w-0">
             <p class="text-[10px] font-mono font-medium uppercase tracking-wide text-text/40">Active semester</p>
-            <p class="font-medium text-text truncate">
-              {{ activeSemester.name }} · {{ activeSemester.academic_year }}
-            </p>
+            <p class="font-medium text-text truncate">{{ activeSemester.name }} · {{ activeSemester.academic_year }}</p>
           </div>
         </div>
 
@@ -319,15 +309,11 @@ onMounted(() => {
     </div>
 
     <!-- Error Banner -->
-    <div
-      v-if="error"
-      class="flex items-start gap-3 rounded-xl border border-error/30 bg-error/5 p-4 text-sm text-error">
+    <div v-if="error" class="flex items-start gap-3 rounded-xl border border-error/30 bg-error/5 p-4 text-sm text-error">
       <AlertCircle class="mt-0.5 h-4 w-4 shrink-0" />
       <div class="min-w-0 flex-1">
         <p class="font-medium">{{ error }}</p>
-        <button type="button" class="mt-1 text-xs font-semibold underline cursor-pointer" @click="retry">
-          Try again
-        </button>
+        <button type="button" class="mt-1 text-xs font-semibold underline cursor-pointer" @click="retry">Try again</button>
       </div>
     </div>
 
@@ -374,9 +360,7 @@ onMounted(() => {
           :to="item.to"
           class="group relative flex flex-col justify-between rounded-xl border border-border bg-surface p-4 transition-all duration-150 hover:border-text/30 hover:shadow-2xs cursor-pointer">
           <div class="flex items-center justify-between">
-            <component
-              :is="item.icon"
-              class="h-4 w-4 text-text/40 transition-colors group-hover:text-text" />
+            <component :is="item.icon" class="h-4 w-4 text-text/40 transition-colors group-hover:text-text" />
             <ArrowRight class="h-3.5 w-3.5 text-text/25 opacity-0 transition-all group-hover:opacity-100 group-hover:translate-x-0.5" />
           </div>
 
@@ -401,9 +385,7 @@ onMounted(() => {
           <p class="text-xs text-text/40">Examination breakdown across your course offerings.</p>
         </div>
 
-        <span v-if="activeSemester" class="text-xs font-mono text-text/40">
-          {{ formatDate(activeSemester.start_date) }} – {{ formatDate(activeSemester.end_date) }}
-        </span>
+        <span v-if="activeSemester" class="text-xs font-mono text-text/40"> {{ formatDate(activeSemester.start_date) }} – {{ formatDate(activeSemester.end_date) }} </span>
       </div>
 
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -466,9 +448,7 @@ onMounted(() => {
             <h2 class="text-sm font-semibold text-text">Needs Attention</h2>
             <p class="text-xs text-text/40">Actionable items requiring your follow-up.</p>
           </div>
-          <span
-            v-if="attentionItems.length"
-            class="px-2 py-0.5 rounded-full text-[11px] font-mono font-semibold bg-accent/10 text-accent border border-accent/20">
+          <span v-if="attentionItems.length" class="px-2 py-0.5 rounded-full text-[11px] font-mono font-semibold bg-accent/10 text-accent border border-accent/20">
             {{ attentionItems.length }}
           </span>
           <AlertCircle v-else class="h-4 w-4 text-text/40 shrink-0" />
@@ -484,10 +464,7 @@ onMounted(() => {
 
         <!-- Attention Items List -->
         <div v-else-if="attentionItems.length" class="divide-y divide-border/60 flex-1">
-          <div
-            v-for="item in attentionItems"
-            :key="`${item.label}-${item.title}`"
-            class="flex items-start justify-between gap-4 p-4.5 transition-colors hover:bg-text/[0.02]">
+          <div v-for="item in attentionItems" :key="`${item.label}-${item.title}`" class="flex items-start justify-between gap-4 p-4.5 transition-colors hover:bg-text/[0.02]">
             <div class="flex items-start gap-3 min-w-0">
               <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-text/[0.04] border border-border/70 text-text/70">
                 <component :is="item.icon" class="h-4 w-4" />
@@ -545,9 +522,7 @@ onMounted(() => {
           <div>
             <div class="mb-2 flex items-center justify-between text-xs">
               <span class="font-medium text-text/60">Scheduled &amp; Concluded</span>
-              <span class="tabular-nums font-mono text-text/50">
-                {{ readyExamsCount }} / {{ allExams.length }}
-              </span>
+              <span class="tabular-nums font-mono text-text/50"> {{ readyExamsCount }} / {{ allExams.length }} </span>
             </div>
             <div class="h-2 overflow-hidden rounded-full bg-text/5">
               <div
@@ -562,9 +537,7 @@ onMounted(() => {
           <div>
             <div class="mb-2 flex items-center justify-between text-xs">
               <span class="font-medium text-text/60">In Preparation / Draft</span>
-              <span class="tabular-nums font-mono text-text/50">
-                {{ draftExams.length }} / {{ allExams.length || 1 }}
-              </span>
+              <span class="tabular-nums font-mono text-text/50"> {{ draftExams.length }} / {{ allExams.length || 1 }} </span>
             </div>
             <div class="h-2 overflow-hidden rounded-full bg-text/5">
               <div
@@ -603,9 +576,7 @@ onMounted(() => {
           <p class="text-xs text-text/40">Latest assessment activity and scheduling.</p>
         </div>
 
-        <router-link
-          to="/instructor/exams"
-          class="text-xs font-medium text-text/60 hover:text-text transition-colors flex items-center gap-1">
+        <router-link to="/instructor/exams" class="text-xs font-medium text-text/60 hover:text-text transition-colors flex items-center gap-1">
           <span>View all</span>
           <ArrowRight class="w-3.5 h-3.5" />
         </router-link>
@@ -641,17 +612,13 @@ onMounted(() => {
               <ExamStatusBadge :status="exam.status" />
             </div>
 
-            <p class="mt-0.5 font-mono text-xs text-text/40">
-              {{ exam.courseCode ?? 'EXAM' }} · {{ exam.type }}
-            </p>
+            <p class="mt-0.5 font-mono text-xs text-text/40">{{ exam.courseCode ?? 'EXAM' }} · {{ exam.type }}</p>
           </div>
 
           <div class="hidden items-center gap-6 text-right sm:flex">
             <div>
               <p class="text-[11px] font-mono uppercase text-text/40">Duration</p>
-              <p class="text-sm font-medium text-text tabular-nums">
-                {{ exam.duration_minutes }}m
-              </p>
+              <p class="text-sm font-medium text-text tabular-nums">{{ exam.duration_minutes }}m</p>
             </div>
 
             <div>

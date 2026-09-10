@@ -19,3 +19,12 @@ export const allowedRoutes = async (workspace: string) => {
 export const setWorkspace = async (workspace: string) => {
   return await api.post('/me/workspace', { workspace });
 };
+
+export const updateProfile = async (data: { first_name: string; last_name: string }) => {
+  return await api.patch('/auth/profile', data);
+};
+
+export const changePassword = async (data: { current_password: string; new_password: string; new_password_confirmation: string }) => {
+  return await api.post('/auth/change-password', data);
+};
+

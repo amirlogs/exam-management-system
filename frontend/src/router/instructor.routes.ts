@@ -25,6 +25,11 @@ export default [
     component: DashboardView,
   },
   {
+    path: 'profile',
+    name: 'instructor.profile',
+    component: () => import('@/modules/profile/pages/ProfileView.vue'),
+  },
+  {
     path: 'teaching',
     name: 'instructor.teaching.list',
     component: TeachingView,
@@ -67,6 +72,12 @@ export default [
     name: 'instructor.questions.import',
     component: QuestionImportView,
     meta: { permissions: ['question.import'], permissionMode: 'any' },
+  },
+  {
+    path: 'questions/ai-generate',
+    name: 'instructor.questions.ai-generate',
+    component: () => import('@/modules/instructor/questions/pages/QuestionAiGenerateView.vue'),
+    meta: { permissions: ['question.create'], permissionMode: 'any' },
   },
   {
     path: 'questions/:questionId/edit',
@@ -125,16 +136,28 @@ export default [
     meta: { permissions: ['exam.update'], permissionMode: 'any' },
   },
   {
+    path: 'exams/:examId/questions/ai-generate',
+    name: 'instructor.exams.questions.ai-generate',
+    component: () => import('@/modules/instructor/questions/pages/QuestionAiGenerateView.vue'),
+    meta: { permissions: ['exam.update'], permissionMode: 'any' },
+  },
+  {
     path: 'exams/:examId/build',
     name: 'instructor.exams.build',
     redirect: (to) => ({ name: 'instructor.exams.questions', params: { examId: to.params.examId } }),
   },
 
-  // ==================== GRADING (not built yet) ====================
-  // {
-  //   path: 'grading',
-  //   name: 'instructor.grading.list',
-  //   component: GradingQueueView,
-  //   meta: { permissions: ['grade.create'], permissionMode: 'any' },
-  // },
+  // ==================== GRADING ====================
+  {
+    path: 'grading',
+    name: 'instructor.grading.list',
+    component: () => import('@/modules/instructor/grading/pages/GradingQueueView.vue'),
+    meta: { permissions: ['grade.create'], permissionMode: 'any' },
+  },
+  {
+    path: 'grading/exams/:examId',
+    name: 'instructor.grading.submissions',
+    component: () => import('@/modules/instructor/grading/pages/ExamSubmissionsView.vue'),
+    meta: { permissions: ['grade.create'], permissionMode: 'any' },
+  },
 ];

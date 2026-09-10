@@ -23,6 +23,11 @@ export default [
     name: 'admin.dashboard',
     component: DashboardView,
   },
+  {
+    path: 'profile',
+    name: 'admin.profile',
+    component: () => import('@/modules/profile/pages/ProfileView.vue'),
+  },
 
   // // ---------------- Academic Structure ----------------
   {
@@ -169,9 +174,13 @@ export default [
   },
 
   // // ---------------- Results ----------------
-  // {
-  //   path: 'results',
-  //   name: 'admin.results.list',
-  //   component: () => import('@/modules/admin/pages/results/ResultsView.vue'),
-  // },
+  {
+    path: 'results',
+    name: 'admin.results.list',
+    component: () => import('@/modules/admin/results/pages/ResultsView.vue'),
+    meta: {
+      permissions: ['result.view', 'result.view_archived'],
+      permission_mode: 'any',
+    },
+  },
 ];

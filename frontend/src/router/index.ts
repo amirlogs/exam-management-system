@@ -12,6 +12,7 @@ import adminRoutes from './admin.routes';
 import { authGuard, permissionGuard } from './guards';
 import teachingRoutes from './instructor.routes';
 import studentRoutes from './student.routes';
+import { usePermissionsStore } from '@/stores/permission';
 const routes = [
   {
     path: '/',
@@ -73,6 +74,24 @@ const routes = [
       workspace: 'student',
     },
     children: studentRoutes,
+  },
+  {
+    path: '/profile',
+    meta: { requiresAuth: true },
+    redirect: () => {
+      const permissionsStore = usePermissionsStore();
+      const ws = permissionsStore.activeWorkspace || 'instructor';
+      return `/${ws}/profile`;
+    },
+  },
+  {
+    path: '/settings',
+    meta: { requiresAuth: true },
+    redirect: () => {
+      const permissionsStore = usePermissionsStore();
+      const ws = permissionsStore.activeWorkspace || 'instructor';
+      return { path: `/${ws}/profile`, query: { tab: 'preferences' } };
+    },
   },
   {
     path: '/:pathMatch(.*)*',

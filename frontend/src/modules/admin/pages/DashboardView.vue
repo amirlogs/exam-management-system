@@ -124,15 +124,7 @@ async function loadDashboard(refresh = false) {
   error.value = '';
 
   try {
-    const [
-      collegesRes,
-      departmentsRes,
-      programsRes,
-      coursesRes,
-      usersRes,
-      instructorsRes,
-      semesterRes,
-    ] = await Promise.allSettled([
+    const [collegesRes, departmentsRes, programsRes, coursesRes, usersRes, instructorsRes, semesterRes] = await Promise.allSettled([
       getCount('/colleges'),
       getCount('/departments'),
       getCount('/programs'),
@@ -158,10 +150,7 @@ async function loadDashboard(refresh = false) {
 
     if (semesterRes.status === 'fulfilled') {
       const semesters = semesterRes.value.data.data;
-      activeSemester.value =
-        semesters.find((semester) => semester.status === 'active') ??
-        semesters.find((semester) => semester.status === 'upcoming') ??
-        null;
+      activeSemester.value = semesters.find((semester) => semester.status === 'active') ?? semesters.find((semester) => semester.status === 'upcoming') ?? null;
 
       if (activeSemester.value) {
         try {
@@ -248,11 +237,7 @@ const attentionItems = computed(() => {
   return items.slice(0, 5);
 });
 
-const recentOfferings = computed(() =>
-  [...offerings.value]
-    .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
-    .slice(0, 5),
-);
+const recentOfferings = computed(() => [...offerings.value].sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()).slice(0, 5));
 
 function formatRelativeDate(value: string) {
   const date = new Date(value);
@@ -301,22 +286,16 @@ onMounted(() => {
       <div>
         <p class="text-xs font-mono font-medium uppercase tracking-wider text-text/40">Administration</p>
         <h1 class="mt-1 text-2xl font-semibold tracking-tight text-text md:text-3xl">Dashboard</h1>
-        <p class="mt-1 max-w-2xl text-sm text-text/50">
-          A current overview of university structure, semester operations, and academic activity.
-        </p>
+        <p class="mt-1 max-w-2xl text-sm text-text/50">A current overview of university structure, semester operations, and academic activity.</p>
       </div>
 
       <div class="flex flex-wrap items-center gap-2.5">
         <!-- Active Semester Pill -->
-        <div
-          v-if="activeSemester"
-          class="flex items-center gap-2.5 rounded-xl border border-border bg-surface px-3 py-2 text-xs shadow-2xs">
+        <div v-if="activeSemester" class="flex items-center gap-2.5 rounded-xl border border-border bg-surface px-3 py-2 text-xs shadow-2xs">
           <CalendarDays class="h-4 w-4 text-text/50 shrink-0" />
           <div class="min-w-0">
             <p class="text-[10px] font-mono font-medium uppercase tracking-wide text-text/40">Active semester</p>
-            <p class="font-medium text-text truncate">
-              {{ activeSemester.name }} · {{ activeSemester.academic_year }}
-            </p>
+            <p class="font-medium text-text truncate">{{ activeSemester.name }} · {{ activeSemester.academic_year }}</p>
           </div>
         </div>
 
@@ -333,15 +312,11 @@ onMounted(() => {
     </div>
 
     <!-- Error Banner -->
-    <div
-      v-if="error"
-      class="flex items-start gap-3 rounded-xl border border-error/30 bg-error/5 p-4 text-sm text-error">
+    <div v-if="error" class="flex items-start gap-3 rounded-xl border border-error/30 bg-error/5 p-4 text-sm text-error">
       <AlertCircle class="mt-0.5 h-4 w-4 shrink-0" />
       <div class="min-w-0 flex-1">
         <p class="font-medium">{{ error }}</p>
-        <button type="button" class="mt-1 text-xs font-semibold underline cursor-pointer" @click="retry">
-          Try again
-        </button>
+        <button type="button" class="mt-1 text-xs font-semibold underline cursor-pointer" @click="retry">Try again</button>
       </div>
     </div>
 
@@ -388,9 +363,7 @@ onMounted(() => {
           :to="item.to"
           class="group relative flex flex-col justify-between rounded-xl border border-border bg-surface p-4 transition-all duration-150 hover:border-text/30 hover:shadow-2xs cursor-pointer">
           <div class="flex items-center justify-between">
-            <component
-              :is="item.icon"
-              class="h-4 w-4 text-text/40 transition-colors group-hover:text-text" />
+            <component :is="item.icon" class="h-4 w-4 text-text/40 transition-colors group-hover:text-text" />
             <ArrowRight class="h-3.5 w-3.5 text-text/25 opacity-0 transition-all group-hover:opacity-100 group-hover:translate-x-0.5" />
           </div>
 
@@ -415,9 +388,7 @@ onMounted(() => {
           <p class="text-xs text-text/40">Course offering activity for the active term.</p>
         </div>
 
-        <span v-if="activeSemester" class="text-xs font-mono text-text/40">
-          {{ formatDate(activeSemester.start_date) }} – {{ formatDate(activeSemester.end_date) }}
-        </span>
+        <span v-if="activeSemester" class="text-xs font-mono text-text/40"> {{ formatDate(activeSemester.start_date) }} – {{ formatDate(activeSemester.end_date) }} </span>
       </div>
 
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -480,9 +451,7 @@ onMounted(() => {
             <h2 class="text-sm font-semibold text-text">Needs Attention</h2>
             <p class="text-xs text-text/40">Actionable items requiring administrative follow-up.</p>
           </div>
-          <span
-            v-if="attentionItems.length"
-            class="px-2 py-0.5 rounded-full text-[11px] font-mono font-semibold bg-accent/10 text-accent border border-accent/20">
+          <span v-if="attentionItems.length" class="px-2 py-0.5 rounded-full text-[11px] font-mono font-semibold bg-accent/10 text-accent border border-accent/20">
             {{ attentionItems.length }}
           </span>
           <AlertCircle v-else class="h-4 w-4 text-text/40 shrink-0" />
@@ -498,10 +467,7 @@ onMounted(() => {
 
         <!-- Attention Items List -->
         <div v-else-if="attentionItems.length" class="divide-y divide-border/60 flex-1">
-          <div
-            v-for="item in attentionItems"
-            :key="`${item.label}-${item.title}`"
-            class="flex items-start justify-between gap-4 p-4.5 transition-colors hover:bg-text/[0.02]">
+          <div v-for="item in attentionItems" :key="`${item.label}-${item.title}`" class="flex items-start justify-between gap-4 p-4.5 transition-colors hover:bg-text/[0.02]">
             <div class="flex items-start gap-3 min-w-0">
               <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-text/[0.04] border border-border/70 text-text/70">
                 <component :is="item.icon" class="h-4 w-4" />
@@ -560,9 +526,7 @@ onMounted(() => {
           <div>
             <div class="mb-2 flex items-center justify-between text-xs">
               <span class="font-medium text-text/60">Approved Offerings</span>
-              <span class="tabular-nums font-mono text-text/50">
-                {{ offeringStats.approved }} / {{ offeringStats.total }}
-              </span>
+              <span class="tabular-nums font-mono text-text/50"> {{ offeringStats.approved }} / {{ offeringStats.total }} </span>
             </div>
             <div class="h-2 overflow-hidden rounded-full bg-text/5">
               <div
@@ -577,9 +541,7 @@ onMounted(() => {
           <div>
             <div class="mb-2 flex items-center justify-between text-xs">
               <span class="font-medium text-text/60">Instructor Coverage</span>
-              <span class="tabular-nums font-mono text-text/50">
-                {{ offeringStats.assignments }} / {{ offeringStats.sections }}
-              </span>
+              <span class="tabular-nums font-mono text-text/50"> {{ offeringStats.assignments }} / {{ offeringStats.sections }} </span>
             </div>
             <div class="h-2 overflow-hidden rounded-full bg-text/5">
               <div
@@ -601,9 +563,7 @@ onMounted(() => {
 
             <div class="rounded-lg bg-text/[0.02] border border-border/50 p-3">
               <p class="text-[11px] font-mono uppercase text-text/40 tracking-wider">Rejected</p>
-              <p
-                class="mt-1 text-xl font-semibold tabular-nums"
-                :class="offeringStats.rejected ? 'text-error' : 'text-text'">
+              <p class="mt-1 text-xl font-semibold tabular-nums" :class="offeringStats.rejected ? 'text-error' : 'text-text'">
                 {{ offeringStats.rejected }}
               </p>
             </div>
@@ -620,9 +580,7 @@ onMounted(() => {
           <p class="text-xs text-text/40">Latest activity in the active semester.</p>
         </div>
 
-        <router-link
-          to="/admin/course-offerings"
-          class="text-xs font-medium text-text/60 hover:text-text transition-colors flex items-center gap-1">
+        <router-link to="/admin/course-offerings" class="text-xs font-medium text-text/60 hover:text-text transition-colors flex items-center gap-1">
           <span>View all</span>
           <ArrowRight class="w-3.5 h-3.5" />
         </router-link>
@@ -641,10 +599,7 @@ onMounted(() => {
 
       <!-- Offerings Rows -->
       <div v-else-if="recentOfferings.length" class="divide-y divide-border/60">
-        <div
-          v-for="offering in recentOfferings"
-          :key="offering.id"
-          class="flex items-center gap-4 px-5 py-3.5 transition-colors hover:bg-text/[0.02]">
+        <div v-for="offering in recentOfferings" :key="offering.id" class="flex items-center gap-4 px-5 py-3.5 transition-colors hover:bg-text/[0.02]">
           <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border/80 bg-surface text-text/50">
             <BookOpen class="h-4 w-4" />
           </div>
@@ -654,16 +609,7 @@ onMounted(() => {
               <p class="truncate text-sm font-medium text-text">
                 {{ offering.course?.name }}
               </p>
-              <BaseBadge
-                :variant="
-                  offering.status === 'approved'
-                    ? 'success'
-                    : offering.status === 'rejected'
-                      ? 'danger'
-                      : offering.status === 'cancelled'
-                        ? 'neutral'
-                        : 'info'
-                ">
+              <BaseBadge :variant="offering.status === 'approved' ? 'success' : offering.status === 'rejected' ? 'danger' : offering.status === 'cancelled' ? 'neutral' : 'info'">
                 {{ offering.status }}
               </BaseBadge>
             </div>
@@ -692,10 +638,7 @@ onMounted(() => {
               {{ formatRelativeDate(offering.updated_at) }}
             </span>
 
-            <router-link
-              to="/admin/course-offerings"
-              class="text-text/30 hover:text-text transition-colors p-1"
-              title="View in course offerings">
+            <router-link to="/admin/course-offerings" class="text-text/30 hover:text-text transition-colors p-1" title="View in course offerings">
               <ArrowRight class="h-4 w-4" />
             </router-link>
           </div>

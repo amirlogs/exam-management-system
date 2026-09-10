@@ -1,15 +1,17 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
-import { useRouter } from 'vue-router';
-import { ArrowLeft, Upload, Users, GraduationCap, Layers, UserRound, Check } from 'lucide-vue-next';
+import { computed, ref, onMounted } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { ArrowLeft, Upload, Users, GraduationCap, Layers, UserRound, Check, Sparkles } from 'lucide-vue-next';
 import BaseButton from '@/shared/components/ui/BaseButton.vue';
 import ResourceToolbar from '@/shared/components/ResourceToolbar.vue';
 import ImportUploadStep from '../components/ImportUploadStep.vue';
+import AiQuestionGeneratorModal from '@/modules/instructor/questions/components/AiQuestionGeneratorModal.vue';
 import { IMPORT_TYPE_CONFIG } from '../config/importTypes';
 import { useImportWizard } from '../composables/useImportWizard';
 import type { ImportType } from '../types/import';
 import { useUiStore } from '@/stores/ui';
 
+const route = useRoute();
 const router = useRouter();
 const uiStore = useUiStore();
 
@@ -24,6 +26,13 @@ const TYPE_ICONS: Record<ImportType, any> = {
 };
 
 const type = ref<ImportType | null>(null);
+const showAiModal = ref(false);
+
+onMounted(() => {
+  if (route.query.type && ADMIN_IMPORT_TYPES.includes(route.query.type as ImportType)) {
+    type.value = route.query.type as ImportType;
+  }
+});
 
 const config = computed(() => (type.value ? IMPORT_TYPE_CONFIG[type.value] : null));
 
@@ -44,6 +53,11 @@ async function submitUpload({ file, context }: { file: File; context: Record<str
       id: record.id,
     },
   });
+}
+
+function handleAiConfirmed() {
+  uiStore.showToast('Questions generated and saved successfully.', 'success');
+  router.push({ name: 'admin-questions' });
 }
 </script>
 
@@ -97,6 +111,43 @@ async function submitUpload({ file, context }: { file: File; context: Record<str
       </div>
     </div>
 
+    <!-- AI Question Generator Option for Questions -->
+    <div
+      v-if="type === 'questions'"
+      v-can:any="['question.create_all', 'question.create']"
+      class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 rounded-xl border border-accent/30 bg-accent/5 shadow-xs"
+    >
+      <div class="flex items-start gap-3.5">
+        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-accent/10 text-accent shrink-0">
+          <Sparkles class="h-5 w-5" />
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h4 class="text-sm font-bold text-text">Generate Questions with AI</h4>
+            <span class="inline-flex items-center rounded-full bg-accent/15 px-2 py-0.5 text-[10px] font-bold text-accent">
+              AI Powered
+            </span>
+          </div>
+          <p class="text-xs text-text/60 mt-0.5">
+            Alternatively synthesize curriculum-aligned questions automatically from topics or course notes without preparing a CSV file.
+          </p>
+        </div>
+      </div>
+      <BaseButton variant="primary" class="shrink-0" @click="showAiModal = true">
+        <template #icon>
+          <Sparkles class="h-4 w-4" />
+        </template>
+        Generate with AI
+      </BaseButton>
+    </div>
+
     <ImportUploadStep v-if="type && config" :type="type" :uploading="isUploading" :error="uploadError" @upload="submitUpload" />
+
+    <!-- AI Question Generator Modal for Admin -->
+    <AiQuestionGeneratorModal
+      v-model="showAiModal"
+      scope="admin"
+      @confirmed="handleAiConfirmed"
+    />
   </div>
 </template>

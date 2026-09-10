@@ -1,21 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
-import {
-  ArrowRight,
-  Award,
-  BookOpen,
-  Calendar,
-  CalendarDays,
-  CheckCircle2,
-  Clock3,
-  ExternalLink,
-  FileCheck,
-  FileText,
-  Play,
-  RefreshCw,
-  TrendingUp,
-} from 'lucide-vue-next';
+import { ArrowRight, Award, BookOpen, Calendar, CalendarDays, CheckCircle2, Clock3, ExternalLink, FileCheck, FileText, Play, RefreshCw, TrendingUp } from 'lucide-vue-next';
 
 import BaseBadge from '@/shared/components/ui/BaseBadge.vue';
 import BaseButton from '@/shared/components/ui/BaseButton.vue';
@@ -69,9 +55,7 @@ const upcomingExams = computed(() => {
 });
 
 const completedExams = computed(() => {
-  return exams.value.filter(
-    (e) => isAttemptDone(e) || e.status === 'completed' || e.status === 'published',
-  );
+  return exams.value.filter((e) => isAttemptDone(e) || e.status === 'completed' || e.status === 'published');
 });
 
 const recentSubmissions = computed(() => {
@@ -80,9 +64,7 @@ const recentSubmissions = computed(() => {
 
 // Graded submissions and computed performance
 const gradedExams = computed(() => {
-  return completedExams.value.filter(
-    (e) => e.attempt?.score !== null && e.attempt?.score !== undefined && Number(e.total_marks) > 0,
-  );
+  return completedExams.value.filter((e) => e.attempt?.score !== null && e.attempt?.score !== undefined && Number(e.total_marks) > 0);
 });
 
 const pendingGradingCount = computed(() => {
@@ -187,19 +169,13 @@ onMounted(() => {
     <div class="flex flex-col gap-4 border-b border-border pb-6 sm:flex-row sm:items-end sm:justify-between">
       <div>
         <p class="text-xs font-mono font-medium uppercase tracking-wider text-text/40">Student Workspace</p>
-        <h1 class="mt-1 font-display text-2xl font-bold tracking-tight text-text md:text-3xl">
-          Welcome back, {{ studentFullName }}.
-        </h1>
-        <p class="mt-1 max-w-2xl text-sm text-text/50">
-          View your assigned examinations, track upcoming schedules, and review completed assessment results.
-        </p>
+        <h1 class="mt-1 font-display text-2xl font-bold tracking-tight text-text md:text-3xl">Welcome back, {{ studentFullName }}.</h1>
+        <p class="mt-1 max-w-2xl text-sm text-text/50">View your assigned examinations, track upcoming schedules, and review completed assessment results.</p>
       </div>
 
       <div class="flex flex-wrap items-center gap-2.5">
         <!-- Active Semester / Academic Term Pill -->
-        <div
-          v-if="activeSemester"
-          class="flex items-center gap-2.5 rounded-xl border border-border bg-surface px-3 py-2 text-xs shadow-2xs">
+        <div v-if="activeSemester" class="flex items-center gap-2.5 rounded-xl border border-border bg-surface px-3 py-2 text-xs shadow-2xs">
           <CalendarDays class="h-4 w-4 text-text/50 shrink-0" />
           <div class="min-w-0">
             <p class="text-[10px] font-mono font-medium uppercase tracking-wide text-text/40">Academic Term</p>
@@ -257,9 +233,7 @@ onMounted(() => {
             </div>
 
             <div>
-              <p class="font-mono text-xs font-semibold uppercase tracking-wider text-accent">
-                {{ featuredActiveExam.course?.code }} — {{ featuredActiveExam.course?.name }}
-              </p>
+              <p class="font-mono text-xs font-semibold uppercase tracking-wider text-accent">{{ featuredActiveExam.course?.code }} — {{ featuredActiveExam.course?.name }}</p>
               <h2 class="mt-1 font-display text-2xl font-bold tracking-tight text-text sm:text-3xl">
                 {{ featuredActiveExam.title }}
               </h2>
@@ -296,9 +270,7 @@ onMounted(() => {
       </div>
 
       <!-- No Active Exam state -->
-      <div
-        v-else
-        class="flex flex-col items-start justify-between gap-4 rounded-2xl border border-border bg-surface p-6 shadow-2xs sm:flex-row sm:items-center">
+      <div v-else class="flex flex-col items-start justify-between gap-4 rounded-2xl border border-border bg-surface p-6 shadow-2xs sm:flex-row sm:items-center">
         <div class="flex items-center gap-3.5">
           <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-success/10 text-success">
             <CheckCircle2 class="h-5 w-5" />
@@ -308,9 +280,7 @@ onMounted(() => {
             <p class="mt-0.5 text-xs text-text/50">There are no active exam papers waiting to be taken right now.</p>
           </div>
         </div>
-        <BaseButton variant="secondary" @click="router.push({ name: 'student.exams.list' })">
-          View Examination Timetable
-        </BaseButton>
+        <BaseButton variant="secondary" @click="router.push({ name: 'student.exams.list' })"> View Examination Timetable </BaseButton>
       </div>
 
       <!-- ── 2. Stat Cards Row (4 Columns) ──────────────────────────── -->
@@ -374,10 +344,7 @@ onMounted(() => {
 
       <!-- ── 3. Quick Links / Workspace Overview ─────────────────────── -->
       <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <BaseCard
-          hover
-          class="cursor-pointer transition-all hover:border-accent/40"
-          @click="router.push({ name: 'student.exams.list' })">
+        <BaseCard hover class="cursor-pointer transition-all hover:border-accent/40" @click="router.push({ name: 'student.exams.list' })">
           <div class="flex items-start justify-between">
             <div>
               <p class="text-xs font-mono font-medium uppercase tracking-wider text-text/40">Timetable & Sitting</p>
@@ -397,10 +364,7 @@ onMounted(() => {
           </div>
         </BaseCard>
 
-        <BaseCard
-          hover
-          class="cursor-pointer transition-all hover:border-accent/40"
-          @click="router.push({ name: 'student.results.list' })">
+        <BaseCard hover class="cursor-pointer transition-all hover:border-accent/40" @click="router.push({ name: 'student.results.list' })">
           <div class="flex items-start justify-between">
             <div>
               <p class="text-xs font-mono font-medium uppercase tracking-wider text-text/40">Grades & Records</p>
@@ -474,12 +438,7 @@ onMounted(() => {
                 </div>
 
                 <div class="flex items-center gap-2 shrink-0">
-                  <BaseButton
-                    variant="secondary"
-                    size="sm"
-                    @click="router.push({ name: 'student.exams.overview', params: { examId: exam.id } })">
-                    View Details
-                  </BaseButton>
+                  <BaseButton variant="secondary" size="sm" @click="router.push({ name: 'student.exams.overview', params: { examId: exam.id } })"> View Details </BaseButton>
                 </div>
               </div>
             </div>
@@ -507,19 +466,14 @@ onMounted(() => {
             </div>
 
             <div v-if="recentSubmissions.length" class="divide-y divide-border">
-              <div
-                v-for="sub in recentSubmissions"
-                :key="sub.id"
-                class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 transition-colors hover:bg-bg/40">
+              <div v-for="sub in recentSubmissions" :key="sub.id" class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 transition-colors hover:bg-bg/40">
                 <div class="space-y-1.5 min-w-0">
                   <div class="flex items-center gap-2">
                     <span class="font-mono text-xs font-semibold text-text/60">
                       {{ sub.course?.code }}
                     </span>
                     <span class="text-border">•</span>
-                    <span class="text-xs text-text/45">
-                      Submitted {{ sub.attempt?.submitted_at || formatDate(sub.created_at) }}
-                    </span>
+                    <span class="text-xs text-text/45"> Submitted {{ sub.attempt?.submitted_at || formatDate(sub.created_at) }} </span>
                   </div>
                   <h3 class="text-sm font-bold text-text truncate">
                     {{ sub.title }}
@@ -530,18 +484,10 @@ onMounted(() => {
                     <div class="h-1.5 w-36 rounded-full bg-bg overflow-hidden border border-border">
                       <div
                         class="h-full rounded-full transition-all"
-                        :class="
-                          (getScorePercentage(sub) ?? 0) >= 80
-                            ? 'bg-success'
-                            : (getScorePercentage(sub) ?? 0) >= 50
-                              ? 'bg-accent'
-                              : 'bg-error'
-                        "
+                        :class="(getScorePercentage(sub) ?? 0) >= 80 ? 'bg-success' : (getScorePercentage(sub) ?? 0) >= 50 ? 'bg-accent' : 'bg-error'"
                         :style="{ width: `${getScorePercentage(sub)}%` }" />
                     </div>
-                    <span class="font-mono text-xs font-bold text-text/75">
-                      {{ getScorePercentage(sub) }}%
-                    </span>
+                    <span class="font-mono text-xs font-bold text-text/75"> {{ getScorePercentage(sub) }}% </span>
                   </div>
                 </div>
 
@@ -550,20 +496,13 @@ onMounted(() => {
                     <p class="font-mono text-base font-bold text-text">
                       {{ sub.attempt.score }} <span class="text-xs text-text/45">/ {{ sub.total_marks }}</span>
                     </p>
-                    <BaseBadge :variant="getScoreBadgeVariant(getScorePercentage(sub))" size="sm">
-                      Graded
-                    </BaseBadge>
+                    <BaseBadge :variant="getScoreBadgeVariant(getScorePercentage(sub))" size="sm"> Graded </BaseBadge>
                   </div>
                   <div v-else class="text-right">
-                    <BaseBadge variant="neutral" size="sm">
-                      Pending Grading
-                    </BaseBadge>
+                    <BaseBadge variant="neutral" size="sm"> Pending Grading </BaseBadge>
                   </div>
 
-                  <BaseButton
-                    variant="ghost"
-                    size="sm"
-                    @click="router.push({ name: 'student.exams.overview', params: { examId: sub.id } })">
+                  <BaseButton variant="ghost" size="sm" @click="router.push({ name: 'student.exams.overview', params: { examId: sub.id } })">
                     <template #icon>
                       <ExternalLink class="h-3.5 w-3.5" />
                     </template>
@@ -595,10 +534,7 @@ onMounted(() => {
             </div>
 
             <div v-if="enrolledCourses.length" class="space-y-2">
-              <div
-                v-for="c in enrolledCourses"
-                :key="c.id"
-                class="flex items-center justify-between rounded-lg border border-border bg-bg/50 p-3 transition-colors hover:bg-bg">
+              <div v-for="c in enrolledCourses" :key="c.id" class="flex items-center justify-between rounded-lg border border-border bg-bg/50 p-3 transition-colors hover:bg-bg">
                 <div class="min-w-0">
                   <span class="font-mono text-xs font-bold text-accent">{{ c.code }}</span>
                   <p class="text-xs font-medium text-text truncate">{{ c.name }}</p>
@@ -609,9 +545,7 @@ onMounted(() => {
               </div>
             </div>
 
-            <div v-else class="text-center py-6 text-xs text-text/40">
-              No registered courses found.
-            </div>
+            <div v-else class="text-center py-6 text-xs text-text/40">No registered courses found.</div>
           </div>
 
           <!-- Academic Performance Summary (Calculated from real attempt data) -->
@@ -626,21 +560,13 @@ onMounted(() => {
             <div v-if="gradedExams.length" class="space-y-3">
               <div class="flex items-baseline justify-between">
                 <span class="text-xs text-text/60">Average Grade</span>
-                <span class="font-display text-2xl font-bold text-text">
-                  {{ averageScorePercentage }}%
-                </span>
+                <span class="font-display text-2xl font-bold text-text"> {{ averageScorePercentage }}% </span>
               </div>
 
               <div class="h-2 w-full rounded-full bg-bg overflow-hidden border border-border">
                 <div
                   class="h-full rounded-full transition-all"
-                  :class="
-                    (averageScorePercentage ?? 0) >= 80
-                      ? 'bg-success'
-                      : (averageScorePercentage ?? 0) >= 50
-                        ? 'bg-accent'
-                        : 'bg-error'
-                  "
+                  :class="(averageScorePercentage ?? 0) >= 80 ? 'bg-success' : (averageScorePercentage ?? 0) >= 50 ? 'bg-accent' : 'bg-error'"
                   :style="{ width: `${averageScorePercentage}%` }" />
               </div>
 

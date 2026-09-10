@@ -76,5 +76,10 @@ export const useAuthStore = defineStore('userAuth', () => {
     }
   }
 
-  return { user, token, error, loading, isInitializing, login, logout, initializeAuth };
+  const setUser = (userData: any) => {
+    user.value = userData;
+  };
+
+  return { user, token, error, loading, isInitializing, login, logout, initializeAuth, setUser };
 });
+

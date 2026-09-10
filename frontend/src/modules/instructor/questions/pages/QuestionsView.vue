@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
-import { Archive, CircleHelp, Eye, Plus, RotateCcw } from 'lucide-vue-next';
+import { Archive, CircleHelp, Eye, Plus, RotateCcw, Sparkles } from 'lucide-vue-next';
 import { useRouter } from 'vue-router';
 
 import ResourceToolbar from '@/shared/components/ResourceToolbar.vue';
@@ -450,6 +450,14 @@ onBeforeUnmount(() => {
         @columns="showColumns = !showColumns"
         @clear-filters="clearFilters">
         <template #actions>
+          <BaseButton v-can="'question.create'" variant="secondary" @click="router.push({ name: 'instructor.questions.ai-generate' })">
+            <template #icon>
+              <Sparkles class="h-4 w-4 text-accent" />
+            </template>
+
+            Generate with AI
+          </BaseButton>
+
           <BaseButton v-can="'question.create'" @click="addQuestion">
             <template #icon>
               <Plus class="h-4 w-4" />

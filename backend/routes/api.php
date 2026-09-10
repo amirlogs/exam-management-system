@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\ChatController;
 use App\Http\Controllers\CollegeController;
 use App\Http\Controllers\CourseController;
 use App\Http\Controllers\CourseOfferingController;
@@ -15,6 +16,7 @@ use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ProgramController;
 use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\QuestionFlagController;
+use App\Http\Controllers\ResultController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SectionController;
 use App\Http\Controllers\SemesterController;
@@ -198,7 +200,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/exams/{exam}', [ExamController::class, 'destroy'])->middleware('permission:exam.archive');
 
     // ====================== GRADING =============================
+    Route::get('/grades', [GradingController::class, 'index'])->middleware('permission:grade.verify');
+    Route::get('/grades/{grade}', [GradingController::class, 'show'])->middleware('permission:grade.verify');
+    Route::get('/course-offerings/{courseOffering}/grades', [GradingController::class, 'courseOfferingGrades'])->middleware('permission:grade.verify');
     Route::post('/exams/{exam}/auto-grade', [GradingController::class, 'autoGrade'])->middleware('permission:grade.autograde');
+    Route::get('/exams/{exam}/submissions', [GradingController::class, 'submissions'])->middleware('permission:grade.create');
+    Route::get('/exams/{exam}/submissions/{attempt}', [GradingController::class, 'submissionDetail'])->middleware('permission:grade.create');
     Route::patch('/answers/{answer}/grade', [GradingController::class, 'gradeAnswer'])->middleware('permission:grade.update');
     Route::post('/course-offerings/{courseOffering}/grades/submit-verification', [GradingController::class, 'submitVerification'])->middleware('permission:grade.submit');
     Route::post('/grades/{grade}/verify', [GradingController::class, 'verify'])->middleware('permission:grade.verify');
@@ -211,11 +218,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/question-flags/{flag}/resolve', [QuestionFlagController::class, 'resolve'])->middleware('permission:question.update');
 
     // ====================== RESULTS =============================
-    // Route::post('/results/generate', [ResultController::class, 'generate'])->middleware('permission:result.generate');
-    // Route::post('/results/publish', [ResultController::class, 'publish'])->middleware('permission:result.publish');
-    // Route::get('/results', [ResultController::class, 'index'])->middleware('permission:result.view');
+    Route::get('/results', [ResultController::class, 'index'])->middleware('permission:result.view');
+    Route::get('/results/{result}', [ResultController::class, 'show'])->middleware('permission:result.view');
+    Route::post('/results/publish', [ResultController::class, 'publish'])->middleware('permission:result.publish');
 
-    // ============================Users ==============================
+
+    // ------------------------- ai endpoints
+    Route::post('/ai/questions/generate', [ChatController::class, 'store']);
+    Route::get('/ai/questions/generate', [ChatController::class, 'index']);
+    Route::get('/ai/questions/{generatedQuestionsHistory}', [ChatController::class, 'show']);
+    Route::post('/ai/questions/{generatedQuestionsHistory}/confirm', [ChatController::class, 'confirm']);
+    Route::post('/ai/questions/{generatedQuestionsHistory}/cancel', [ChatController::class, 'cancel']);
 });
 
 // ======================= EXAMS (student) =======================

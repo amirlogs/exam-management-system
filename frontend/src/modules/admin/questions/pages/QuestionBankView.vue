@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from 'vue';
-import { HelpCircle, Archive, RotateCcw, Upload } from 'lucide-vue-next';
+import { HelpCircle, Archive, RotateCcw, Upload, Sparkles } from 'lucide-vue-next';
 import ResourceToolbar from '@/shared/components/ResourceToolbar.vue';
 import TableRowActions from '@/shared/components/TableRowActions.vue';
 import BaseBadge from '@/shared/components/ui/BaseBadge.vue';
@@ -8,6 +8,7 @@ import BaseButton from '@/shared/components/ui/BaseButton.vue';
 import BaseSelect from '@/shared/components/ui/BaseSelect.vue';
 import ConfirmModal from '@/shared/components/ConfirmModal.vue';
 import AppPagination from '@/shared/components/AppPagination.vue';
+import AiQuestionGeneratorModal from '@/modules/instructor/questions/components/AiQuestionGeneratorModal.vue';
 import { useCrudResource } from '@/shared/composables/useCrudResource';
 import { getQuestions, getArchivedQuestions, archiveQuestion, restoreQuestion } from '../api/questions';
 import { getCourses } from '@/modules/admin/courses/api/courses';
@@ -17,6 +18,7 @@ import { useRouter } from 'vue-router';
 const uiStore = useUiStore();
 const router = useRouter();
 
+const showAiModal = ref(false);
 const search = ref('');
 const filters = ref({ course_id: null as number | null, type: null as string | null, difficulty: null as string | null });
 
@@ -135,7 +137,12 @@ onMounted(async () => {
       @refresh="retry"
       @clear-filters="clearFilters">
       <template #actions>
-        <BaseButton v-can="'question.create_all'" variant="secondary" @click="router.push({ name: 'admin-import-new' })">
+        <BaseButton v-can="'question.create_all'" variant="primary" @click="showAiModal = true">
+          <template #icon><Sparkles class="h-4 w-4" /></template>
+          Generate with AI
+        </BaseButton>
+
+        <BaseButton v-can="'question.create_all'" variant="secondary" @click="router.push({ name: 'admin-import-new', query: { type: 'questions' } })">
           <template #icon><Upload class="h-4 w-4" /></template>
           Import Questions
         </BaseButton>
@@ -215,4 +222,10 @@ onMounted(async () => {
     :loading="restoring"
     @close="showRestoreModal = false"
     @confirm="confirmRestore" />
+
+  <AiQuestionGeneratorModal
+    v-model="showAiModal"
+    scope="admin"
+    @confirmed="crud.load(1)"
+  />
 </template>

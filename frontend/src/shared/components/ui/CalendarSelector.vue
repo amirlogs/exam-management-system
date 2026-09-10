@@ -33,10 +33,7 @@ const selectedHour = ref<number>(9); // 1-12
 const selectedMinute = ref<number>(0); // 0-59
 const selectedPeriod = ref<'AM' | 'PM'>('AM');
 
-const monthNames = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
-];
+const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 const dayLabels = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
 
@@ -159,11 +156,7 @@ const calendarDays = computed(() => {
     dateObj.setHours(0, 0, 0, 0);
 
     const isToday = dateObj.getTime() === todayDate.getTime();
-    const isSelected =
-      !!selectedDate.value &&
-      selectedDate.value.year === year &&
-      selectedDate.value.month === month &&
-      selectedDate.value.day === d;
+    const isSelected = !!selectedDate.value && selectedDate.value.year === year && selectedDate.value.month === month && selectedDate.value.day === d;
 
     const isPast = parsedMinDate.value ? dateObj < parsedMinDate.value : false;
 
@@ -317,9 +310,7 @@ const minuteOptions = [0, 15, 30, 45];
       </label>
 
       <!-- Relative indicator badge -->
-      <span
-        v-if="relativeLabel"
-        class="inline-flex items-center rounded-md bg-accent/10 px-2 py-0.5 text-[11px] font-semibold text-accent">
+      <span v-if="relativeLabel" class="inline-flex items-center rounded-md bg-accent/10 px-2 py-0.5 text-[11px] font-semibold text-accent">
         {{ relativeLabel }}
       </span>
     </div>
@@ -363,9 +354,7 @@ const minuteOptions = [0, 15, 30, 45];
         <ChevronLeft class="h-4 w-4" />
       </button>
 
-      <span class="font-display text-sm font-bold text-text">
-        {{ monthNames[viewMonth] }} {{ viewYear }}
-      </span>
+      <span class="font-display text-sm font-bold text-text"> {{ monthNames[viewMonth] }} {{ viewYear }} </span>
 
       <button
         type="button"
@@ -378,10 +367,7 @@ const minuteOptions = [0, 15, 30, 45];
 
     <!-- Day of Week Headers -->
     <div class="grid grid-cols-7 gap-1 text-center">
-      <span
-        v-for="d in dayLabels"
-        :key="d"
-        class="py-1 text-[11px] font-bold uppercase tracking-wider text-text/40">
+      <span v-for="d in dayLabels" :key="d" class="py-1 text-[11px] font-bold uppercase tracking-wider text-text/40">
         {{ d }}
       </span>
     </div>
@@ -474,11 +460,7 @@ const minuteOptions = [0, 15, 30, 45];
           <button
             type="button"
             class="flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-bold transition-all cursor-pointer"
-            :class="
-              selectedPeriod === 'AM'
-                ? 'bg-accent text-white shadow-xs'
-                : 'text-text/60 hover:text-text'
-            "
+            :class="selectedPeriod === 'AM' ? 'bg-accent text-white shadow-xs' : 'text-text/60 hover:text-text'"
             @click="togglePeriod('AM')">
             <Sun class="h-3 w-3" />
             AM
@@ -486,11 +468,7 @@ const minuteOptions = [0, 15, 30, 45];
           <button
             type="button"
             class="flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-bold transition-all cursor-pointer"
-            :class="
-              selectedPeriod === 'PM'
-                ? 'bg-accent text-white shadow-xs'
-                : 'text-text/60 hover:text-text'
-            "
+            :class="selectedPeriod === 'PM' ? 'bg-accent text-white shadow-xs' : 'text-text/60 hover:text-text'"
             @click="togglePeriod('PM')">
             <Moon class="h-3 w-3" />
             PM

@@ -22,8 +22,8 @@ class ExamResource extends JsonResource
             'duration_minutes' => $this->duration_minutes,
             'composition' => $this->composition,
             'status' => $this->status,
-            'scheduled_start' => $this->scheduled_start?->format('M d,Y'),
-            'scheduled_end' => $this->scheduled_end?->format('M d,Y'),
+            'scheduled_start' => $this->scheduled_start?->format('M d, Y'),
+            'scheduled_end' => $this->scheduled_end?->format('M d, Y'),
             'review_cycle' => $this->review_cycle,
             'current_review_id' => $this->current_review_id,
             'grading_status' => $this->grading_status,
@@ -34,8 +34,8 @@ class ExamResource extends JsonResource
                 'name' => $this->creator->first_name,
                 'email' => $this->creator->email,
             ],
-            'created_at' => $this->created_at?->format('M d,Y'),
-            'updated_at' => $this->updated_at?->format('M d,Y'),
+            'created_at' => $this->created_at?->format('M d, Y'),
+            'updated_at' => $this->updated_at?->format('M d, Y'),
         ];
     }
 }
