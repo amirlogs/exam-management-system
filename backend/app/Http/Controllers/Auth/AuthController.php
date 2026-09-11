@@ -54,6 +54,20 @@ class AuthController extends Controller
         );
     }
 
+    public function updateProfile(Request $request)
+    {
+        $data = $request->validate([
+            'first_name' => 'required|string|max:100',
+            'last_name' => 'required|string|max:100',
+        ]);
+
+        $user = $request->user();
+        $user->update($data);
+
+        return $this->success(new UserResource($user->refresh()), 'Profile updated successfully');
+    }
+
+
     public function changePassword(ChangePasswordRequest $request)
     {
         $data = $request->validated();

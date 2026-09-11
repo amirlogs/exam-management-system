@@ -1,6 +1,7 @@
 <?php
 
 use App\Exceptions\ExceptionRegistrar;
+use App\Http\Middleware\CheckAiQuestionPermission;
 use App\Http\Middleware\CheckImportPermission;
 use App\Http\Middleware\CheckPermission;
 use Illuminate\Foundation\Application;
@@ -18,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'permission' => CheckPermission::class,
             'import.permission' => CheckImportPermission::class,
+            'ai.question.permission' => CheckAiQuestionPermission::class,
         ]);
 
     })

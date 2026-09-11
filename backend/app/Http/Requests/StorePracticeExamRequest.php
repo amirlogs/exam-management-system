@@ -2,14 +2,11 @@
 
 namespace App\Http\Requests;
 
-use App\Traits\RequiresAtLeastOneField;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateUserRequest extends FormRequest
+class StorePracticeExamRequest extends FormRequest
 {
-    use RequiresAtLeastOneField;
-
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -26,8 +23,10 @@ class UpdateUserRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'first_name' => ['sometimes', 'string', 'min:3', 'max:255'],
-            'last_name' => ['sometimes', 'string', 'min:3', 'max:255'],
+            'title' => ['required', 'string', 'max:255'],
+            'duration_minutes' => ['required', 'integer', 'min:1'],
+            'composition' => ['required', 'array'],
+            'composition.*.marks_each' => ['nullable', 'numeric', 'min:0.5'],
         ];
     }
 }

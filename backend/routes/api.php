@@ -13,6 +13,8 @@ use App\Http\Controllers\GradingController;
 use App\Http\Controllers\ImportController;
 use App\Http\Controllers\InstructorController;
 use App\Http\Controllers\PermissionController;
+use App\Http\Controllers\PracticeExamController;
+use App\Http\Controllers\PracticeExamQuestionController;
 use App\Http\Controllers\ProgramController;
 use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\QuestionFlagController;
@@ -31,6 +33,7 @@ use Illuminate\Support\Facades\Route;
 // ============ AUTH ============
 Route::middleware('auth:sanctum')->prefix('auth')->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
+    Route::patch('/profile', [AuthController::class, 'updateProfile']);
     Route::post('/change-password', [AuthController::class, 'changePassword']);
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/login', [AuthController::class, 'login'])->withoutMiddleware('auth:sanctum');
@@ -224,11 +227,30 @@ Route::middleware('auth:sanctum')->group(function () {
 
 
     // ------------------------- ai endpoints
-    Route::post('/ai/questions/generate', [ChatController::class, 'store']);
-    Route::get('/ai/questions/generate', [ChatController::class, 'index']);
-    Route::get('/ai/questions/{generatedQuestionsHistory}', [ChatController::class, 'show']);
-    Route::post('/ai/questions/{generatedQuestionsHistory}/confirm', [ChatController::class, 'confirm']);
-    Route::post('/ai/questions/{generatedQuestionsHistory}/cancel', [ChatController::class, 'cancel']);
+    Route::middleware('ai.question.permission')->group(function () {
+        Route::post('/ai/questions/generate', [ChatController::class, 'store']);
+        Route::get('/ai/questions/generate', [ChatController::class, 'index']);
+        Route::get('/ai/questions/{generatedQuestionsHistory}', [ChatController::class, 'show']);
+        Route::post('/ai/questions/{generatedQuestionsHistory}/confirm', [ChatController::class, 'confirm']);
+        Route::post('/ai/questions/{generatedQuestionsHistory}/cancel', [ChatController::class, 'cancel']);
+        Route::delete('/ai/questions/{generatedQuestionsHistory}/questions/{index}', [ChatController::class, 'destroyQuestion']);
+    });
+
+
+    // practice exam endpoints
+    Route::post('/practice-exams', [PracticeExamController::class, 'store']);
+    Route::get('/practice-exams', [PracticeExamController::class, 'index']);
+    Route::get('/practice-exams/{practiceExam}', [PracticeExamController::class, 'show']);
+    Route::patch('/practice-exams/{practiceExam}', [PracticeExamController::class, 'update']);
+
+    // practice exam questions
+    Route::post('/practice-exams/{practiceExam}/questions', [PracticeExamQuestionController::class, 'generate']);
+
+    // make all action after checking the user is authorized its him self
+    Route::get('/practice-exams-history/{practiceQuestionHistory}', [PracticeExamQuestionController::class, 'show']);
+    Route::delete('/practice-exams-history/{practiceQuestionHistory}/questions/{index}', [PracticeExamQuestionController::class, 'destroyQuestion']);
+    Route::get('/practice-exams-history', [PracticeExamQuestionController::class, 'index']);
+    Route::post('/practice-exams-history/{practiceQuestionHistory}/confirm', [PracticeExamQuestionController::class, 'confirm']);
 });
 
 // ======================= EXAMS (student) =======================

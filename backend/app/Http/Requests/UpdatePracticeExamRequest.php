@@ -6,7 +6,7 @@ use App\Traits\RequiresAtLeastOneField;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateUserRequest extends FormRequest
+class UpdatePracticeExamRequest extends FormRequest
 {
     use RequiresAtLeastOneField;
 
@@ -26,8 +26,10 @@ class UpdateUserRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'first_name' => ['sometimes', 'string', 'min:3', 'max:255'],
-            'last_name' => ['sometimes', 'string', 'min:3', 'max:255'],
+            'title' => ['sometimes', 'string', 'max:255'],
+            'duration_minutes' => ['sometimes', 'integer', 'min:1'],
+            'composition' => ['sometimes', 'array'],
+            'composition.*.marks_each' => ['nullable', 'numeric', 'min:0.5'],
         ];
     }
 }
