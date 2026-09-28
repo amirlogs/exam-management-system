@@ -274,6 +274,7 @@ Route::middleware('auth:sanctum')->prefix('student')->group(function () {
     Route::get('/exams', [StudentExamController::class, 'index']);
     Route::get('/exams/{exam}', [StudentExamController::class, 'show']);
     Route::get('/exams/{exam}/questions', [StudentExamController::class, 'questions']);
+    Route::get('/exams/{exam}/review', [StudentExamController::class, 'review']);
     Route::post('/exams/{exam}/start', [StudentExamController::class, 'start']);
     Route::post('/attempts/{attempt}/answers', [StudentExamController::class, 'saveAnswer']);
     Route::post('/attempts/{attempt}/submit', [StudentExamController::class, 'submit']);

@@ -15,6 +15,7 @@ export interface StudentExam {
   total_marks: number;
   total_questions: number;
   status: 'scheduled' | 'active' | 'completed' | string;
+  grading_status?: 'not_started' | 'in_progress' | 'completed' | 'published' | string;
   scheduled_start: string | null;
   scheduled_end: string | null;
   course: {
@@ -28,6 +29,39 @@ export interface StudentExam {
   } | null;
   attempt: StudentExamAttemptInfo | null;
   created_at?: string;
+}
+
+export interface ReviewOptionItem {
+  id: number;
+  option_text: string;
+  is_correct: boolean;
+}
+
+export interface ReviewQuestionItem {
+  id: number;
+  exam_question_id: number;
+  question_id: number;
+  order_number: number;
+  marks: number;
+  marks_awarded: number | null;
+  is_correct: boolean;
+  type: 'mcq' | 'true_false' | 'short_answer' | 'essay' | string;
+  content: string;
+  explanation: string | null;
+  options?: ReviewOptionItem[];
+  selected_answer_id?: number | null;
+  answer_text?: string | null;
+}
+
+export interface ExamReviewData {
+  attempt: {
+    id: number;
+    score: number | null;
+    total_marks: number;
+    status: string;
+    submitted_at: string | null;
+  };
+  questions: ReviewQuestionItem[];
 }
 
 export interface QuestionOptionItem {
