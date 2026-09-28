@@ -18,8 +18,8 @@ class StudentExamResource extends JsonResource
             return [
                 'id' => $latestAttempt->id,
                 'status' => $latestAttempt->status,
-                'started_at' => $latestAttempt->started_at?->format('M d, Y H:i'),
-                'submitted_at' => $latestAttempt->submitted_at?->format('M d, Y H:i'),
+                'started_at' => $latestAttempt->started_at?->toIso8601String(),
+                'submitted_at' => $latestAttempt->submitted_at?->toIso8601String(),
                 'score' => $latestAttempt->score,
             ];
         });
