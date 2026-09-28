@@ -1,5 +1,5 @@
 import { setWorkspace } from '@/api/auth';
-import type { WorkspaceState } from '@/modules/instructor/pages/question-bank/types';
+import type { WorkspaceState } from '@/shared/utils/trueCounter';
 import { getSingleRoute, trueCouter } from '@/shared/utils/trueCounter';
 import { defineStore } from 'pinia';
 import { ref } from 'vue';

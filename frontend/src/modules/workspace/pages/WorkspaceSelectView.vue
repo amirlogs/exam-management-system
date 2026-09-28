@@ -5,7 +5,7 @@ import BaseButton from '@/shared/components/ui/BaseButton.vue';
 import { usePermissionsStore } from '@/stores/permission';
 import { useAuthStore } from '@/stores/auth';
 import { useRouter } from 'vue-router';
-import type { WorkspaceState } from '@/modules/instructor/pages/question-bank/types';
+import type { WorkspaceState } from '@/shared/utils/trueCounter';
 
 const permissionsStore = usePermissionsStore();
 const authStore = useAuthStore();
