@@ -218,12 +218,18 @@ async function initializeExam() {
     answersState.value = map;
 
     // 5. Compute Remaining Time based on backend started_at & duration_minutes
-    const durationMinutes = exam.value.duration_minutes || 60;
+    const durationMinutes = exam.value?.duration_minutes || 60;
     const totalDurationSeconds = durationMinutes * 60;
-    const startedAtMs = attemptRes.data.started_at ? new Date(attemptRes.data.started_at).getTime() : Date.now();
+    const startedAtMs = parseUtcTimestamp(attemptRes.data.started_at);
     const elapsedSeconds = Math.max(0, Math.floor((Date.now() - startedAtMs) / 1000));
 
     remainingSeconds.value = Math.max(0, totalDurationSeconds - elapsedSeconds);
+
+    if (remainingSeconds.value <= 0) {
+      uiStore.showToast('The examination time limit has expired.', 'warning');
+      await submitFinalExam();
+      return;
+    }
 
     startTimer();
   } catch (err: any) {
@@ -232,6 +238,15 @@ async function initializeExam() {
   } finally {
     loading.value = false;
   }
+}
+
+function parseUtcTimestamp(dateStr?: string | null): number {
+  if (!dateStr) return Date.now();
+  if (/Z|[+-]\d{2}:?\d{2}$|UTC|GMT/i.test(dateStr)) {
+    return new Date(dateStr).getTime();
+  }
+  const parsed = new Date(dateStr + ' UTC').getTime();
+  return isNaN(parsed) ? new Date(dateStr).getTime() : parsed;
 }
 
 function startTimer() {
