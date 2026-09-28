@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Models\PracticeAnswers;
 use App\Models\QuestionGuidances;
 use App\Services\QuestionGuidanceGenerator;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -24,17 +25,36 @@ class QuestionGuidanceJob implements ShouldQueue
     {
         try {
             $question = $this->questionGuidances->practiceQuestion;
-            $history = QuestionGuidances::where('practice_exam_id', $this->questionGuidances->practice_exam_id)
-            ->where('practice_question_id', $this->questionGuidances->practice_question_id)
-            ->where('user_id', $this->questionGuidances->user_id)
-            -> latest()->limit(5)->get();
+            if ($question) {
+                $question->loadMissing('options');
+            }
 
-            $response =  $generator->generate(
+            // Retrieve the student's answer for this question if attempted
+            $studentAnswer = PracticeAnswers::where('practice_exam_id', $this->questionGuidances->practice_exam_id)
+                ->where('practice_question_id', $this->questionGuidances->practice_question_id)
+                ->where('user_id', $this->questionGuidances->user_id)
+                ->first();
+
+            // Retrieve previous completed guidance history in chronological order
+            $history = QuestionGuidances::where('practice_exam_id', $this->questionGuidances->practice_exam_id)
+                ->where('practice_question_id', $this->questionGuidances->practice_question_id)
+                ->where('user_id', $this->questionGuidances->user_id)
+                ->where('id', '<', $this->questionGuidances->id)
+                ->whereNotNull('response')
+                ->latest()
+                ->limit(5)
+                ->get()
+                ->reverse()
+                ->values();
+
+            $response = $generator->generate(
                 prompt: $this->questionGuidances->prompt,
                 question: $question,
                 history: $history,
+                studentAnswer: $studentAnswer,
             );
-            //store
+
+            // Store response
             $this->questionGuidances->update(['response' => $response]);
         } catch (Throwable $e) {
             throw $e;
