@@ -68,18 +68,17 @@ const { form, errors, validate, reset, applyServerErrors } = useResourceForm(use
   first_name: '',
   last_name: '',
   email: '',
-  password: '',
 });
 
 function openCreate() {
   selected.value = null;
-  reset({ first_name: '', last_name: '', email: '', password: '' });
+  reset({ first_name: '', last_name: '', email: '' });
   showFormModal.value = true;
 }
 
 function openEdit(user: User) {
   selected.value = user;
-  reset({ first_name: user.first_name, last_name: user.last_name, email: user.email, password: '' });
+  reset({ first_name: user.first_name, last_name: user.last_name, email: user.email });
   showFormModal.value = true;
   openMenuId.value = null;
 }
@@ -297,7 +296,6 @@ async function handleRefresh() {
       <BaseInput v-model="form.first_name" label="First name" :error="errors.first_name" />
       <BaseInput v-model="form.last_name" label="Last name" :error="errors.last_name" />
       <BaseInput v-if="!isEditing" v-model="form.email" type="email" label="Email" :error="errors.email" />
-      <BaseInput v-if="!isEditing" v-model="form.password" type="password" label="Temporary password" :error="errors.password" />
     </div>
     <template #footer>
       <div class="flex justify-end gap-2">

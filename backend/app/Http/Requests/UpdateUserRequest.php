@@ -9,6 +9,7 @@ use Illuminate\Foundation\Http\FormRequest;
 class UpdateUserRequest extends FormRequest
 {
     use RequiresAtLeastOneField;
+
     /**
      * Determine if the user is authorized to make this request.
      */

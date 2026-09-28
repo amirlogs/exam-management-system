@@ -4,7 +4,6 @@ namespace App\Validation;
 
 use Illuminate\Support\Facades\Validator;
 
-
 class SubmitOptionAnswerValidator
 {
     protected static array $optionsRules = [

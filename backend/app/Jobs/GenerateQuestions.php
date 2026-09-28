@@ -31,10 +31,10 @@ class GenerateQuestions implements ShouldQueue
 
             $this->generatedQuestionsHistory->update([
                 'validated_question' => $questions,
-                'total_rows'         => count($questions),
-                'valid_count'        => count($questions),
-                'error_count'        => 0,
-                'status'             => 'ready_for_review',
+                'total_rows' => count($questions),
+                'valid_count' => count($questions),
+                'error_count' => 0,
+                'status' => 'ready_for_review',
             ]);
         } catch (Throwable $e) {
             $this->generatedQuestionsHistory->update([

@@ -9,6 +9,7 @@ use App\Models\Student;
 use App\Models\User;
 use App\Models\UserRole;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class StudentCommitter
 {
@@ -24,11 +25,13 @@ class StudentCommitter
             ->where('name', $data['section_name'])
             ->firstOrFail();
 
+        $plainPassword = $data['password'] ?? ('Exam-' . strtoupper(Str::random(6)));
+
         $user = User::create([
             'first_name' => $data['first_name'],
             'last_name' => $data['last_name'],
             'email' => $data['email'],
-            'password' => Hash::make('password'),
+            'password' => Hash::make($plainPassword),
             'is_first_login' => true,
             'is_active' => true,
         ]);

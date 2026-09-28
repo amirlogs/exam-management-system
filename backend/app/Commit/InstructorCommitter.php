@@ -7,13 +7,22 @@ use App\Models\Role;
 use App\Models\User;
 use App\Models\UserRole;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class InstructorCommitter
 {
     public static function commit(array $data, $importHistory): void
     {
-        $user = User::create(
-            ['first_name' => $data['first_name'], 'last_name' => $data['last_name'], 'email' => $data['email'], 'password' => Hash::make('password'), 'is_first_login' => true, 'is_active' => true]);
+        $plainPassword = $data['password'] ?? ('Exam-' . strtoupper(Str::random(6)));
+
+        $user = User::create([
+            'first_name' => $data['first_name'],
+            'last_name' => $data['last_name'],
+            'email' => $data['email'],
+            'password' => Hash::make($plainPassword),
+            'is_first_login' => true,
+            'is_active' => true,
+        ]);
         $role = Role::where('name', 'instructor')->firstOrFail();
 
         UserRole::create([

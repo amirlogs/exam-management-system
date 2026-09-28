@@ -33,7 +33,7 @@ class StudentExamController extends Controller
             ->with([
                 'courseOffering.course',
                 'courseOffering.semester',
-                'attempts' => fn ($q) => $q->where('student_id', $student->id),
+                'attempts' => fn($q) => $q->where('student_id', $student->id),
             ]);
 
         RequestFilters::apply($query, $request, ['status', 'type']);
@@ -98,7 +98,7 @@ class StudentExamController extends Controller
         $exam->load([
             'courseOffering.course',
             'courseOffering.semester',
-            'attempts' => fn ($q) => $student ? $q->where('student_id', $student->id) : $q,
+            'attempts' => fn($q) => $student ? $q->where('student_id', $student->id) : $q,
         ]);
 
         return $this->success(new StudentExamResource($exam), 'Exam fetched successfully');
@@ -144,7 +144,7 @@ class StudentExamController extends Controller
                 'marks' => $eq->marks,
                 'type' => $question?->type,
                 'content' => $question?->content,
-                'options' => $question?->options->map(fn ($o) => [
+                'options' => $question?->options->map(fn($o) => [
                     'id' => $o->id,
                     'option_text' => $o->option_text,
                 ]),
@@ -168,6 +168,7 @@ class StudentExamController extends Controller
         $validatorClass = SubmitAnswerFactory::create($question->type);
 
         $errors = $validatorClass::validate($request->all());
+
         if ($errors) {
             return $this->error($errors, 'Validation errors', 422);
         }

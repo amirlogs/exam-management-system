@@ -84,4 +84,31 @@ class ChatController extends Controller
 
         return $this->success(new GeneratedQuestionsHistoryResource($generatedQuestionsHistory->fresh(['user'])), 'Questions confirmed and saved successfully');
     }
+
+    public function destroyQuestion(GeneratedQuestionsHistory $generatedQuestionsHistory, int $index)
+    {
+        if ($generatedQuestionsHistory->status === 'confirmed') {
+            return $this->error(null, 'Cannot modify questions of a confirmed generation', 400);
+        }
+
+        $questions = $generatedQuestionsHistory->validated_question ?? [];
+
+        if (! array_key_exists($index, $questions)) {
+            return $this->error(null, 'Generated question not found at this index', 404);
+        }
+
+        unset($questions[$index]);
+        $questions = array_values($questions);
+
+        $generatedQuestionsHistory->update([
+            'validated_question' => $questions,
+            'total_rows' => count($questions),
+            'valid_count' => count($questions),
+        ]);
+
+        return $this->success(
+            new GeneratedQuestionsHistoryResource($generatedQuestionsHistory->fresh(['user'])),
+            'Question deleted successfully from batch'
+        );
+    }
 }

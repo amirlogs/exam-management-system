@@ -12,7 +12,7 @@ export async function getUsers(page = 1, perPage = 12, search = ''): Promise<Lis
 
   return res.data;
 }
-export async function createUser(data: { first_name: string; last_name: string; email: string; password: string }) {
+export async function createUser(data: { first_name: string; last_name: string; email: string; password?: string }) {
   const res = await api.post('/users', data);
   return res.data.data as User;
 }

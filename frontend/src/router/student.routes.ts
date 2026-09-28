@@ -41,6 +41,16 @@ export default [
     },
   },
   {
+    path: 'practice',
+    name: 'student.practice.list',
+    component: () => import('@/modules/student/practice/pages/StudentPracticeExamsListView.vue'),
+  },
+  {
+    path: 'practice/:practiceExamId/take',
+    name: 'student.practice.take',
+    component: () => import('@/modules/student/practice/pages/StudentPracticeTakingView.vue'),
+  },
+  {
     path: 'results',
     name: 'student.results.list',
     component: () => import('@/modules/student/results/pages/StudentResultsListView.vue'),

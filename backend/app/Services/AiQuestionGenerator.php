@@ -39,10 +39,9 @@ class AiQuestionGenerator
             $systemPrompt .= "\n6. Base all questions ONLY on the provided context notes.";
         }
 
-
         //call the ai model
         $response = Prism::structured()
-            ->using(Provider::Gemini, 'gemini-2.5-flash-lite')
+            ->using(Provider::Gemini, 'gemini-3.5-flash-lite')
             ->withClientRetry(3, 1000)
             ->withSchema($this->questionsListSchema())
             ->withSystemPrompt($systemPrompt)
