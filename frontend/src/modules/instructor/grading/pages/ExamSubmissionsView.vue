@@ -12,19 +12,21 @@ import {
   Sparkles,
   ClipboardCheck,
   Eye,
+  Send,
 } from 'lucide-vue-next';
 
 import ResourceToolbar from '@/shared/components/ResourceToolbar.vue';
 import BaseButton from '@/shared/components/ui/BaseButton.vue';
 import BaseBadge from '@/shared/components/ui/BaseBadge.vue';
 import BaseSelect from '@/shared/components/ui/BaseSelect.vue';
+import ConfirmModal from '@/shared/components/ConfirmModal.vue';
 import AppPagination from '@/shared/components/AppPagination.vue';
 import ManualGradingModal from '../components/ManualGradingModal.vue';
 import { useUiStore } from '@/stores/ui';
 import { handleApiError } from '@/shared/utils/apiError';
 
 import { getExam } from '@/modules/instructor/exams/api/exams';
-import { listSubmissions, autoGradeExam } from '../api/grading';
+import { listSubmissions, autoGradeExam, publishGrades } from '../api/grading';
 import type { Exam } from '@/modules/instructor/exams/types/exam';
 import type { ExamAttemptSubmission } from '../types/grading';
 import type { Pagination } from '@/shared/composables/useCrudResource';
@@ -55,6 +57,8 @@ const submissions = ref<ExamAttemptSubmission[]>([]);
 const loading = ref(false);
 const refreshing = ref(false);
 const autoGrading = ref(false);
+const publishing = ref(false);
+const showPublishModal = ref(false);
 
 const search = ref('');
 const filterStatus = ref('');
@@ -199,6 +203,28 @@ async function handleTriggerAutoGrade() {
   }
 }
 
+async function handleConfirmPublish() {
+  if (!exam.value) return;
+  publishing.value = true;
+  try {
+    await publishGrades({
+      course_offering_id: exam.value.course_offering_id,
+      exam_id: exam.value.id,
+    });
+    uiStore.showToast('Exam grades published successfully. Students can now view their official results.', 'success');
+    showPublishModal.value = false;
+    if (exam.value) {
+      exam.value.grading_status = 'published';
+    }
+    await loadExamDetail();
+    await loadSubmissions(pagination.value.current_page);
+  } catch (err: any) {
+    handleApiError(err, uiStore, undefined, 'Failed to publish grades.');
+  } finally {
+    publishing.value = false;
+  }
+}
+
 function openGradingModal(sub: ExamAttemptSubmission) {
   selectedSubmission.value = sub;
   showGradingModal.value = true;
@@ -266,7 +292,13 @@ onBeforeUnmount(() => {
                 {{ exam.type }}
               </BaseBadge>
               <BaseBadge
-                v-if="exam.grading_status === 'completed'"
+                v-if="exam.grading_status === 'published'"
+                variant="success"
+              >
+                Published
+              </BaseBadge>
+              <BaseBadge
+                v-else-if="exam.grading_status === 'completed'"
                 variant="success"
               >
                 Graded
@@ -276,6 +308,12 @@ onBeforeUnmount(() => {
                 variant="warning"
               >
                 In Progress
+              </BaseBadge>
+              <BaseBadge
+                v-else
+                variant="neutral"
+              >
+                Not Graded
               </BaseBadge>
             </div>
 
@@ -303,14 +341,38 @@ onBeforeUnmount(() => {
           </BaseButton>
 
           <BaseButton
-            variant="primary"
+            variant="secondary"
             :loading="autoGrading"
             @click="handleTriggerAutoGrade"
           >
             <template #icon>
-              <Sparkles class="h-4 w-4 text-white" />
+              <Sparkles class="h-4 w-4 text-accent" />
             </template>
             Auto-grade all
+          </BaseButton>
+
+          <BaseButton
+            v-if="exam.grading_status === 'published'"
+            variant="secondary"
+            :loading="publishing"
+            @click="showPublishModal = true"
+          >
+            <template #icon>
+              <Send class="h-4 w-4 text-text/60" />
+            </template>
+            Re-publish Grades
+          </BaseButton>
+
+          <BaseButton
+            v-else
+            variant="primary"
+            :loading="publishing"
+            @click="showPublishModal = true"
+          >
+            <template #icon>
+              <Send class="h-4 w-4" />
+            </template>
+            Publish Grades
           </BaseButton>
         </div>
       </div>
@@ -573,6 +635,19 @@ onBeforeUnmount(() => {
       :submission="selectedSubmission"
       @close="showGradingModal = false"
       @graded="handleGraded"
+    />
+
+    <!-- Confirm Publish Modal -->
+    <ConfirmModal
+      :show="showPublishModal"
+      title="Publish Exam Grades"
+      :description="`Are you sure you want to publish the final grades for '${exam?.title}'? Students will immediately be able to view their final marks and evaluation breakdown.`"
+      confirm-text="Publish Grades"
+      variant="accent"
+      :icon="Send"
+      :loading="publishing"
+      @confirm="handleConfirmPublish"
+      @close="showPublishModal = false"
     />
   </div>
 </template>

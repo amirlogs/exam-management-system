@@ -33,6 +33,7 @@ class StudentExamResource extends JsonResource
             'total_marks' => $this->total_marks,
             'total_questions' => $this->total_questions,
             'status' => $this->status,
+            'grading_status' => $this->grading_status,
             'scheduled_start' => $this->scheduled_start?->format('M d, Y H:i'),
             'scheduled_end' => $this->scheduled_end?->format('M d, Y H:i'),
             'course' => $this->courseOffering?->course ? [

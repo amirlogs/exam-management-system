@@ -260,7 +260,7 @@ class GradingController extends Controller
     public function publish(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'course_offering_id' => 'required|exists:course_offerings,id',
+            'course_offering_id' => 'nullable|exists:course_offerings,id',
             'exam_id' => 'nullable|exists:exams,id',
         ]);
 
@@ -268,28 +268,56 @@ class GradingController extends Controller
             return $this->error($validator->errors(), 'Validation error', 422);
         }
 
-        $query = Grade::where('course_offering_id', $request->input('course_offering_id'));
+        $examId = $request->input('exam_id');
+        $courseOfferingId = $request->input('course_offering_id');
 
-        if ($request->filled('exam_id')) {
-            $query->where('exam_id', $request->input('exam_id'));
+        if ($examId && ! $courseOfferingId) {
+            $exam = Exam::find($examId);
+            $courseOfferingId = $exam?->course_offering_id;
         }
 
-        $unverifiedCount = (clone $query)->where('status', '!=', 'verified')->count();
-        if ($unverifiedCount > 0) {
-            return $this->error(null, "Cannot publish: {$unverifiedCount} grade(s) have not been verified yet.", 422);
+        if (! $courseOfferingId) {
+            return $this->error(
+                ['course_offering_id' => ['Course offering ID or Exam ID is required.']],
+                'Validation error',
+                422
+            );
+        }
+
+        $query = Grade::where('course_offering_id', $courseOfferingId);
+
+        if ($examId) {
+            $query->where('exam_id', $examId);
         }
 
         $grades = $query->get();
         if ($grades->isEmpty()) {
-            return $this->error(null, 'No verified grades found to publish.', 422);
+            return $this->error(null, 'No grades found to publish for this exam or course.', 422);
         }
 
-        DB::transaction(function () use ($grades, $request) {
+        DB::transaction(function () use ($grades, $courseOfferingId, $examId, $request) {
             foreach ($grades as $grade) {
                 $grade->update(['status' => 'published']);
+
+                // Record verification log if not already verified
+                if (! $grade->verifications()->where('status', 'verified')->exists()) {
+                    GradeVerification::create([
+                        'grade_id' => $grade->id,
+                        'verified_by' => $request->user()->id,
+                        'status' => 'verified',
+                        'comment' => 'Verified upon grade publishing.',
+                        'verified_at' => now(),
+                    ]);
+                }
             }
 
-            $courseOfferingId = $request->input('course_offering_id');
+            // Update exam grading_status to published
+            if ($examId) {
+                Exam::where('id', $examId)->update(['grading_status' => 'published']);
+            } else {
+                Exam::where('course_offering_id', $courseOfferingId)->update(['grading_status' => 'published']);
+            }
+
             $studentGrades = Grade::where('course_offering_id', $courseOfferingId)
                 ->where('status', 'published')
                 ->get()
