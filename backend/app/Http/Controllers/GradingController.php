@@ -83,8 +83,8 @@ class GradingController extends Controller
     }
     public function autoGrade(Exam $exam, Request $request)
     {
-        if ($exam->status !== 'completed') {
-            return $this->error(null, 'Exam must be completed to be graded.', 422);
+        if (! in_array($exam->status, ['completed', 'active'])) {
+            return $this->error(null, 'Exam must be active or completed to be graded.', 422);
         }
 
         $exam->update(['grading_status' => 'in_progress']);
