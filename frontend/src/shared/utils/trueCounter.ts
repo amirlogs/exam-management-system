@@ -1,4 +1,4 @@
-type WorkspaceState = {
+export type WorkspaceState = {
   admin: boolean;
   instructor: boolean;
   student: boolean;

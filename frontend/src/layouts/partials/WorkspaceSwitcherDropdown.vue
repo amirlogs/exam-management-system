@@ -3,7 +3,7 @@ import { computed, ref, onMounted, onUnmounted } from 'vue';
 import { ChevronDown, Check } from 'lucide-vue-next';
 import { useRoute, useRouter } from 'vue-router';
 import { usePermissionsStore } from '@/stores/permission';
-import type { WorkspaceState } from '@/modules/instructor/pages/question-bank/types';
+import type { WorkspaceState } from '@/shared/utils/trueCounter';
 
 const route = useRoute();
 const router = useRouter();
