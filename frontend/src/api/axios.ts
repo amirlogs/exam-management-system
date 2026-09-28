@@ -2,10 +2,12 @@ import type { AxiosInstance } from 'axios';
 import axios from 'axios';
 
 const api: AxiosInstance = axios.create({
-  baseURL: 'http://localhost:8000/api',
+  // baseURL: 'http://localhost:8000/api',
+  baseURL: 'https://exam-management-system-9fxu.onrender.com/api',
   timeout: 5000,
   headers: {
     'Content-Type': 'application/json',
+    'Accept': 'application/json',
   },
 });
 

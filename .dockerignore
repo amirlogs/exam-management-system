@@ -1,0 +1,13 @@
+.git
+.github
+node_modules
+frontend
+backend/vendor
+backend/tests
+backend/.env
+backend/.phpunit.cache
+backend/.php-cs-fixer.cache
+backend/storage/logs/*
+backend/storage/framework/cache/data/*
+backend/storage/framework/sessions/*
+backend/storage/framework/views/*
