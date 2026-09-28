@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\PracticeAnswers;
 use App\Models\PracticeQuestion;
 use Prism\Prism\Enums\Provider;
 use Prism\Prism\Facades\Prism;
@@ -12,31 +13,62 @@ class QuestionGuidanceGenerator
     public function generate(
         string $prompt,
         PracticeQuestion $question,
-        $history
+        $history,
+        ?PracticeAnswers $studentAnswer = null
     ): string {
-        $systemPrompt = "You are an educational assessment assistant. "
-            . "Guide the student toward understanding and solving the given question.\n"
-            . "1. Do not simply give the final answer unless explicitly requested.\n"
-            . "2. Explain the concept clearly and provide useful hints and reasoning steps.\n"
-            . "3. Adapt the guidance to the student's request.\n"
-            . "4. Do not invent information that is not present in the question.\n"
-            . "5. Use previous interactions when they are relevant to the student's request.\n"
-            . "6. Keep the guidance educational, clear, and concise.";
+        $systemPrompt = "You are an expert, supportive AI educational tutor helping a student learn and practice.\n"
+            ."You are provided with the full question stem, all available options labeled as Option A, Option B, Option C, Option D, etc. (including which is the official correct answer), and the student's submitted attempt.\n\n"
+            ."Instructions:\n"
+            ."1. If the student asks why a specific option (e.g. 'why not D?', 'why is B wrong?', 'why is A the answer?') is or is not the answer, directly analyze that option using the choices provided above. Explain why that specific option is incorrect or correct, and identify the underlying misunderstanding.\n"
+            ."2. Explain key concepts, definitions, and logic clearly, step by step, so the student genuinely understands.\n"
+            ."3. Be encouraging, concise, educational, and constructive.\n"
+            ."4. Use Markdown formatting (bolding, bullet points) to keep explanations easily readable.\n"
+            .'5. Do not invent options or contradict the given question context.';
+
+        // Format options / choices
+        $options = $question->options ? $question->options->sortBy('id')->values() : collect();
+        $optionsLines = [];
+        $chosenOptionText = null;
+
+        foreach ($options as $index => $option) {
+            $letter = chr(65 + $index);
+            $isCorrect = (bool) $option->is_correct;
+            $suffix = $isCorrect ? ' [Official Correct Answer]' : '';
+            $optionsLines[] = "Option {$letter}: {$option->option_text}{$suffix}";
+
+            if ($studentAnswer && $studentAnswer->selected_option_id === $option->id) {
+                $chosenOptionText = "Option {$letter} (\"{$option->option_text}\")";
+            }
+        }
+
+        $optionsBlock = ! empty($optionsLines) ? implode("\n", $optionsLines) : 'No multiple choice options (Written/Essay question).';
+
+        // Format student attempt
+        $attemptBlock = 'None (Not answered yet)';
+        if ($studentAnswer) {
+            if ($chosenOptionText) {
+                $statusStr = $studentAnswer->is_correct ? 'Correct' : 'Incorrect';
+                $attemptBlock = "Selected: {$chosenOptionText} ({$statusStr})";
+            } elseif (! empty($studentAnswer->answer_text)) {
+                $attemptBlock = "Written answer: \"{$studentAnswer->answer_text}\"";
+            }
+        }
 
         $historyText = $history
             ->map(function ($item) {
-                return "Question: {$item->practiceQuestion->content}\n"
-                    . "Student: {$item->prompt}\n"
-                    . "Assistant: {$item->response}";
+                return "Student: {$item->prompt}\n"
+                    ."Tutor: {$item->response}";
             })
-            ->implode("\n\n--- Previous Interaction ---\n\n");
+            ->implode("\n\n---\n\n");
 
-        $questionText = "Current question:\n{$question->content}\n\n"
-            . "Type: {$question->type}\n"
-            . "Difficulty: {$question->difficulty}\n\n"
-            . "Student request:\n{$prompt}\n\n"
-            . "Previous interactions:\n"
-            . ($historyText ?: 'None');
+        $questionText = "Question Stem:\n{$question->content}\n\n"
+            ."Question Type: {$question->type}\n"
+            ."Difficulty: {$question->difficulty}\n\n"
+            ."Choices / Options:\n{$optionsBlock}\n\n"
+            ."Student's Submitted Attempt:\n{$attemptBlock}\n\n"
+            ."Student's Inquiry:\n{$prompt}\n\n"
+            ."Previous Q&A Turns:\n"
+            .($historyText ?: 'None');
 
         $response = Prism::text()
             ->using(Provider::Gemini, 'gemini-3.5-flash-lite')
@@ -50,6 +82,7 @@ class QuestionGuidanceGenerator
         if ($guidance === '') {
             throw new RuntimeException('The AI model failed to generate question guidance.');
         }
+
         return $guidance;
     }
 }
