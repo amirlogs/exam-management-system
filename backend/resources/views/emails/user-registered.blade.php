@@ -152,7 +152,7 @@
                             </table>
 
                             <!-- First Login Notice Banner -->
-                            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #eff6ff; border-left: 4px solid #2563eb; border-radius: 0 8px 8px 0; margin-bottom: 28px;" role="presentation">
+                            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #eff6ff; border-left: 4px solid #2563eb; border-radius: 0 8px 8px 0; margin-bottom: 0;" role="presentation">
                                 <tr>
                                     <td style="padding: 14px 18px;">
                                         <div style="font-size: 13px; font-weight: 700; color: #1e40af; margin-bottom: 4px;">
@@ -164,39 +164,6 @@
                                     </td>
                                 </tr>
                             </table>
-
-                            <!-- Primary CTA Button -->
-                            <table border="0" cellpadding="0" cellspacing="0" width="100%" role="presentation" style="margin-bottom: 28px;">
-                                <tr>
-                                    <td align="center">
-                                        <table border="0" cellpadding="0" cellspacing="0" role="presentation">
-                                            <tr>
-                                                <td align="center" style="border-radius: 8px; background-color: #7a2731;">
-                                                    <a href="{{ $loginUrl }}" target="_blank" style="font-size: 15px; font-weight: 600; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; display: inline-block; letter-spacing: 0.02em;">
-                                                        Log In to Your Account &rarr;
-                                                    </a>
-                                                </td>
-                                            </tr>
-                                        </table>
-                                    </td>
-                                </tr>
-                            </table>
-
-                            <!-- Direct Link Fallback -->
-                            <p style="margin: 0 0 16px 0; font-size: 12px; line-height: 1.6; color: #71717a; text-align: center;">
-                                Having trouble with the button above? Copy and paste the link below into your web browser:
-                                <br>
-                                <a href="{{ $loginUrl }}" target="_blank" style="color: #7a2731; word-break: break-all; text-decoration: underline;">
-                                    {{ $loginUrl }}
-                                </a>
-                            </p>
-
-                            <div style="border-bottom: 1px solid #f4f4f5; margin: 24px 0;"></div>
-
-                            <!-- Security Advisory -->
-                            <p style="margin: 0; font-size: 12px; line-height: 1.5; color: #a1a1aa;">
-                                <strong>Security Reminder:</strong> University staff will never ask for your password via email or phone. Do not share your temporary credentials with anyone. If you did not expect this notification or believe it was sent in error, please notify your academic administrator or university IT support.
-                            </p>
                         </td>
                     </tr>
 

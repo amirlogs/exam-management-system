@@ -22,5 +22,7 @@ test('user registered mailable renders successfully with recipient details and t
         ->toContain('jane.doe@university.edu')
         ->toContain('SecretP@ssw0rd!')
         ->toContain('First-Time Login Security Requirement')
-        ->toContain('/login');
+        ->not->toContain('Log In to Your Account')
+        ->not->toContain('Having trouble with the button above')
+        ->not->toContain('Security Reminder');
 });
