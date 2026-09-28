@@ -176,9 +176,9 @@ onMounted(() => {
               </div>
               <div
                 v-else
-                class="w-12 h-12 rounded-full flex items-center justify-center shrink-0 bg-bg text-text/50 text-[11px] font-semibold border border-border font-mono text-center leading-tight"
+                class="w-12 h-12 rounded-full flex items-center justify-center shrink-0 bg-bg text-text/40 border border-border shadow-2xs"
               >
-                Pending
+                <Clock class="w-5 h-5" />
               </div>
 
               <div class="space-y-0.5 min-w-0">
