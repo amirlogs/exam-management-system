@@ -278,7 +278,7 @@ onBeforeUnmount(() => {
     <!-- Exam Header Summary Card -->
     <div v-if="exam" class="rounded-xl border border-border bg-surface p-6 shadow-sm">
       <div class="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-        <div class="flex min-w-0 items-start gap-4">
+        <div class="flex min-w-0 flex-1 items-start gap-4">
           <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-accent/10">
             <ClipboardCheck class="h-6 w-6 text-accent" />
           </div>
@@ -329,9 +329,10 @@ onBeforeUnmount(() => {
           </div>
         </div>
 
-        <div class="flex flex-wrap items-center gap-2">
+        <div class="flex items-center gap-2 sm:gap-2.5 shrink-0 flex-nowrap overflow-x-auto">
           <BaseButton
             variant="secondary"
+            class="whitespace-nowrap shrink-0"
             @click="openExamDetail"
           >
             <template #icon>
@@ -343,6 +344,7 @@ onBeforeUnmount(() => {
           <BaseButton
             variant="secondary"
             :loading="autoGrading"
+            class="whitespace-nowrap shrink-0"
             @click="handleTriggerAutoGrade"
           >
             <template #icon>
@@ -355,6 +357,7 @@ onBeforeUnmount(() => {
             v-if="exam.grading_status === 'published'"
             variant="secondary"
             :loading="publishing"
+            class="whitespace-nowrap shrink-0"
             @click="showPublishModal = true"
           >
             <template #icon>
@@ -367,6 +370,7 @@ onBeforeUnmount(() => {
             v-else
             variant="primary"
             :loading="publishing"
+            class="whitespace-nowrap shrink-0"
             @click="showPublishModal = true"
           >
             <template #icon>
