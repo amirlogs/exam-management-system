@@ -44,3 +44,9 @@ export async function submitVerification(courseOfferingId: number, examId?: numb
   );
   return response.data;
 }
+
+export async function publishGrades(payload: { course_offering_id?: number; exam_id?: number }) {
+  const response = await api.post<ApiResponse<null>>('/grades/publish', payload);
+  return response.data;
+}
+

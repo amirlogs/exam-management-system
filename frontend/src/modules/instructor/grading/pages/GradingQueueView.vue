@@ -16,11 +16,12 @@ import BaseSelect from '@/shared/components/ui/BaseSelect.vue';
 import AppPagination from '@/shared/components/AppPagination.vue';
 import ConfirmModal from '@/shared/components/ConfirmModal.vue';
 import { useUiStore } from '@/stores/ui';
+import { usePermissionsStore } from '@/stores/permission';
 import { handleApiError } from '@/shared/utils/apiError';
 
 import { getTeaching } from '@/modules/instructor/teaching/api/teaching';
 import { listExams } from '@/modules/instructor/exams/api/exams';
-import { autoGradeExam, submitVerification } from '../api/grading';
+import { autoGradeExam, submitVerification, publishGrades } from '../api/grading';
 import type { Exam } from '@/modules/instructor/exams/types/exam';
 import type { Pagination } from '@/shared/composables/useCrudResource';
 
@@ -43,11 +44,13 @@ interface ColumnConfig {
 
 const router = useRouter();
 const uiStore = useUiStore();
+const permissionsStore = usePermissionsStore();
 
 const loading = ref(false);
 const refreshing = ref(false);
 const autoGradingId = ref<number | null>(null);
 const submittingVerifyId = ref<number | null>(null);
+const publishingId = ref<number | null>(null);
 
 const teachings = ref<any[]>([]);
 const selectedTeachingId = ref<string>('');
@@ -59,6 +62,9 @@ const filterType = ref('');
 
 const showVerifyModal = ref(false);
 const examToVerify = ref<Exam | null>(null);
+
+const showPublishModal = ref(false);
+const examToPublish = ref<Exam | null>(null);
 
 const pagination = ref<Pagination>({
   current_page: 1,
@@ -121,6 +127,7 @@ function handleDocumentClick(event: MouseEvent) {
 
 const statusOptions = [
   { value: '', label: 'All Grading Statuses' },
+  { value: 'published', label: 'Published' },
   { value: 'needs_grading', label: 'Needs Grading / In Progress' },
   { value: 'completed', label: 'Graded (Completed)' },
   { value: 'not_started', label: 'Not Graded' },
@@ -167,8 +174,9 @@ const filteredExams = computed(() => {
     }
 
     if (filterStatus.value) {
-      if (filterStatus.value === 'completed' && exam.grading_status !== 'completed') return false;
-      if (filterStatus.value === 'needs_grading' && exam.grading_status === 'completed') return false;
+      if (filterStatus.value === 'published' && exam.grading_status !== 'published') return false;
+      if (filterStatus.value === 'completed' && exam.grading_status !== 'completed' && exam.grading_status !== 'published') return false;
+      if (filterStatus.value === 'needs_grading' && (exam.grading_status === 'completed' || exam.grading_status === 'published')) return false;
       if (filterStatus.value === 'not_started' && exam.grading_status && exam.grading_status !== 'not_started') return false;
     }
 
@@ -270,6 +278,29 @@ async function handleConfirmSubmitVerification() {
   }
 }
 
+function openPublishModal(exam: Exam) {
+  examToPublish.value = exam;
+  showPublishModal.value = true;
+}
+
+async function handleConfirmPublish() {
+  if (!examToPublish.value || !selectedTeachingId.value) return;
+  publishingId.value = examToPublish.value.id;
+  try {
+    await publishGrades({
+      course_offering_id: Number(selectedTeachingId.value),
+      exam_id: examToPublish.value.id,
+    });
+    uiStore.showToast(`Grades for "${examToPublish.value.title}" published successfully.`, 'success');
+    showPublishModal.value = false;
+    await loadExams(pagination.value.current_page);
+  } catch (err: any) {
+    handleApiError(err, uiStore, undefined, 'Failed to publish grades.');
+  } finally {
+    publishingId.value = null;
+  }
+}
+
 function navigateToSubmissions(exam: Exam) {
   router.push({
     name: 'instructor.grading.submissions',
@@ -304,6 +335,18 @@ function getRowExtraActions(exam: Exam) {
     },
   ];
 
+  const canPublish =
+    permissionsStore.hasPermission('grade.publish') ||
+    permissionsStore.hasPermission('grade.submit');
+
+  if (canPublish) {
+    actions.push({
+      key: 'publish',
+      label: exam.grading_status === 'published' ? 'Re-publish grades' : 'Publish grades',
+      icon: Send,
+    });
+  }
+
   if (exam.status === 'completed') {
     actions.push({
       key: 'verify',
@@ -325,6 +368,8 @@ function handleRowAction(key: string, exam: Exam) {
     handleAutoGrade(exam);
   } else if (key === 'verify') {
     openVerifyModal(exam);
+  } else if (key === 'publish') {
+    openPublishModal(exam);
   }
 }
 
@@ -518,7 +563,13 @@ onBeforeUnmount(() => {
               <!-- Grading Status -->
               <td v-if="isColumnVisible('grading_status')" class="px-6 py-4 whitespace-nowrap">
                 <BaseBadge
-                  v-if="exam.grading_status === 'completed'"
+                  v-if="exam.grading_status === 'published'"
+                  variant="success"
+                >
+                  Published
+                </BaseBadge>
+                <BaseBadge
+                  v-else-if="exam.grading_status === 'completed'"
                   variant="success"
                 >
                   Graded
@@ -604,6 +655,19 @@ onBeforeUnmount(() => {
       :loading="submittingVerifyId !== null"
       @confirm="handleConfirmSubmitVerification"
       @close="showVerifyModal = false"
+    />
+
+    <!-- Confirm Publish Grades Modal -->
+    <ConfirmModal
+      :show="showPublishModal"
+      title="Publish Exam Grades"
+      :description="`Are you sure you want to publish grades for '${examToPublish?.title}'? Students will immediately be able to view their final scores and official evaluations.`"
+      confirm-text="Publish Grades"
+      variant="accent"
+      :icon="Send"
+      :loading="publishingId !== null"
+      @confirm="handleConfirmPublish"
+      @close="showPublishModal = false"
     />
   </div>
 </template>

@@ -14,11 +14,12 @@ import {
 } from 'lucide-vue-next';
 
 import ResourceToolbar from '@/shared/components/ResourceToolbar.vue';
+import BaseButton from '@/shared/components/ui/BaseButton.vue';
 import BaseBadge from '@/shared/components/ui/BaseBadge.vue';
 import BaseSelect from '@/shared/components/ui/BaseSelect.vue';
 import AppPagination from '@/shared/components/AppPagination.vue';
 
-import { getResults, getResultDetail } from '../api/results';
+import { getResults, getResultDetail, publishResults } from '../api/results';
 import { getSemesters } from '@/modules/admin/semesters/api/semesters';
 
 import { handleApiError } from '@/shared/utils/apiError';
@@ -202,6 +203,24 @@ function openDetail(result: AdminResult) {
 function closeDetail() {
   isDetailOpen.value = false;
   selectedResult.value = null;
+}
+
+const publishing = ref(false);
+
+async function handlePublishResult(courseOfferingId: number) {
+  publishing.value = true;
+  try {
+    await publishResults(courseOfferingId);
+    uiStore.showToast('Course results published successfully.', 'success');
+    if (selectedResult.value && selectedResult.value.course_offering_id === courseOfferingId) {
+      selectedResult.value.status = 'published';
+    }
+    await load(pagination.value.current_page);
+  } catch (err: any) {
+    handleApiError(err, uiStore, undefined, 'Failed to publish results.');
+  } finally {
+    publishing.value = false;
+  }
 }
 
 function getGradeBadgeVariant(grade: string): 'success' | 'info' | 'warning' | 'error' | 'neutral' {
@@ -542,14 +561,25 @@ onUnmounted(() => {
 
               <!-- Actions -->
               <td v-if="isColumnVisible('actions')" class="px-4 py-3.5 text-right whitespace-nowrap" @click.stop>
-                <button
-                  type="button"
-                  class="inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-medium text-text/70 hover:bg-bg hover:text-accent border border-border/60 transition-colors cursor-pointer"
-                  @click="openDetail(item)"
-                >
-                  <Eye class="h-3.5 w-3.5" />
-                  View
-                </button>
+                <div class="inline-flex items-center gap-1.5">
+                  <button
+                    v-if="item.status !== 'published' && item.course_offering_id"
+                    type="button"
+                    class="inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-semibold text-accent hover:bg-accent/10 border border-accent/20 transition-colors cursor-pointer"
+                    :disabled="publishing"
+                    @click="handlePublishResult(item.course_offering_id)"
+                  >
+                    Publish
+                  </button>
+                  <button
+                    type="button"
+                    class="inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-medium text-text/70 hover:bg-bg hover:text-accent border border-border/60 transition-colors cursor-pointer"
+                    @click="openDetail(item)"
+                  >
+                    <Eye class="h-3.5 w-3.5" />
+                    View
+                  </button>
+                </div>
               </td>
             </tr>
           </tbody>
@@ -678,8 +708,19 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <!-- Close Button -->
-        <div class="pt-2 flex justify-end">
+        <!-- Action Buttons -->
+        <div class="pt-2 flex items-center justify-between">
+          <BaseButton
+            v-if="selectedResult.status !== 'published' && selectedResult.course_offering_id"
+            variant="primary"
+            size="sm"
+            :loading="publishing"
+            @click="handlePublishResult(selectedResult.course_offering_id)"
+          >
+            Publish Results
+          </BaseButton>
+          <div v-else />
+
           <button
             type="button"
             class="rounded-xl bg-accent px-4 py-2 text-xs font-semibold text-white hover:bg-accent/90 transition-colors cursor-pointer"

@@ -214,7 +214,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/answers/{answer}/grade', [GradingController::class, 'gradeAnswer'])->middleware('permission:grade.update');
     Route::post('/course-offerings/{courseOffering}/grades/submit-verification', [GradingController::class, 'submitVerification'])->middleware('permission:grade.submit');
     Route::post('/grades/{grade}/verify', [GradingController::class, 'verify'])->middleware('permission:grade.verify');
-    Route::post('/grades/publish', [GradingController::class, 'publish'])->middleware('permission:grade.publish');
+    Route::post('/grades/publish', [GradingController::class, 'publish'])->middleware('permission:grade.publish|grade.submit');
 
 
     // ======================== QUESTION FLAGS ========================

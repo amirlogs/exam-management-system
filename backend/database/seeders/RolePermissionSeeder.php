@@ -510,6 +510,7 @@ class RolePermissionSeeder extends Seeder
                     'exam.revert',
                     'exam.archive',
 
+                    'grade.publish',
                     'student.view',
                 ]
             ),
