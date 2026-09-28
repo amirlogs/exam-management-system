@@ -1,7 +1,6 @@
 <?php
 
 use App\Jobs\QuestionGuidanceJob;
-use App\Models\PracticeAnswers;
 use App\Models\PracticeExam;
 use App\Models\PracticeQuestion;
 use App\Models\PracticeQuestionHistory;
@@ -15,7 +14,7 @@ use Prism\Prism\Testing\TextResponseFake;
 
 uses(RefreshDatabase::class);
 
-test('question guidance generator includes all options and student attempt in prompt', function () {
+test('question guidance generator includes all options without student answer in prompt', function () {
     $user = User::create([
         'first_name' => 'John',
         'last_name' => 'Doe',
@@ -71,14 +70,6 @@ test('question guidance generator includes all options and student attempt in pr
         'is_correct' => false,
     ]);
 
-    $studentAnswer = PracticeAnswers::create([
-        'practice_exam_id' => $exam->id,
-        'practice_question_id' => $question->id,
-        'user_id' => $user->id,
-        'selected_option_id' => $optD->id,
-        'is_correct' => false,
-    ]);
-
     $fake = Prism::fake([
         TextResponseFake::make()->withText('Option D (Chloroplast) is found in plant cells for photosynthesis, whereas mitochondria is the powerhouse of the cell.'),
     ]);
@@ -88,7 +79,6 @@ test('question guidance generator includes all options and student attempt in pr
         prompt: 'why not the answer is not d',
         question: $question,
         history: collect(),
-        studentAnswer: $studentAnswer,
     );
 
     expect($response)->toContain('Chloroplast');
@@ -102,7 +92,8 @@ test('question guidance generator includes all options and student attempt in pr
             ->toContain('Option B: Mitochondria [Official Correct Answer]')
             ->toContain('Option D: Chloroplast')
             ->toContain('why not the answer is not d')
-            ->toContain('Selected: Option D ("Chloroplast") (Incorrect)');
+            ->not->toContain('Student\'s Submitted Attempt')
+            ->not->toContain('Selected:');
     });
 });
 
