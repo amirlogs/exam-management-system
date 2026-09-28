@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import {
   AlertCircle,
@@ -7,6 +7,7 @@ import {
   BookOpen,
   CalendarDays,
   CheckCircle2,
+  ChevronRight,
   Clock3,
   FileQuestion,
   GraduationCap,
@@ -19,6 +20,7 @@ import {
 } from 'lucide-vue-next';
 
 import BaseBadge from '@/shared/components/ui/BaseBadge.vue';
+import BaseButton from '@/shared/components/ui/BaseButton.vue';
 import ExamStatusBadge from '../exams/components/ExamStatusBadge.vue';
 
 import { useAuthStore } from '@/stores/auth';
@@ -45,6 +47,9 @@ const uiStore = useUiStore();
 const loading = ref(true);
 const refreshing = ref(false);
 const error = ref<string | null>(null);
+
+const currentDate = ref(new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }).format(new Date()));
+let timer: ReturnType<typeof setInterval>;
 
 const teachingList = ref<Teaching[]>([]);
 const allExams = ref<EnrichedExam[]>([]);
@@ -94,7 +99,7 @@ const uniquePrograms = computed(() => {
   return Array.from(programs.values());
 });
 
-// Overview resource cards
+// Unified overview resource cards
 const overviewItems = computed(() => [
   {
     label: 'Assigned Courses',
@@ -109,10 +114,22 @@ const overviewItems = computed(() => [
     icon: Users,
   },
   {
-    label: 'Total Assessments',
-    value: allExams.value.length,
+    label: 'Active Now',
+    value: activeExams.value.length,
     to: '/instructor/exams',
-    icon: Layers3,
+    icon: Sparkles,
+  },
+  {
+    label: 'Scheduled Exams',
+    value: scheduledExams.value.length,
+    to: '/instructor/exams',
+    icon: CalendarDays,
+  },
+  {
+    label: 'In Preparation',
+    value: draftExams.value.length,
+    to: '/instructor/exams',
+    icon: Clock3,
   },
   {
     label: 'Question Bank',
@@ -273,393 +290,274 @@ function retry() {
 
 onMounted(() => {
   loadDashboardData();
+  timer = setInterval(() => {
+    currentDate.value = new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }).format(new Date());
+  }, 60000);
+});
+
+onUnmounted(() => {
+  clearInterval(timer);
 });
 </script>
 
 <template>
-  <div class="mx-auto w-full max-w-7xl space-y-7 px-4 py-6 md:px-8">
-    <!-- Header -->
-    <div class="flex flex-col gap-4 border-b border-border pb-6 sm:flex-row sm:items-end sm:justify-between">
+  <div class="mx-auto w-full max-w-7xl px-4 py-6 md:px-8 space-y-8">
+    <!-- 1. Executive Header & Academic Term Command Strip -->
+    <header class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
       <div>
-        <p class="text-xs font-mono font-medium uppercase tracking-wider text-text/40">Instructor Workspace</p>
-        <h1 class="mt-1 text-2xl font-semibold tracking-tight text-text md:text-3xl">Dashboard</h1>
-        <p class="mt-1 max-w-2xl text-sm text-text/50">A current overview of your teaching load, active examinations, and assessment readiness.</p>
+        <p class="text-[11px] font-mono font-medium uppercase tracking-widest text-text/40 mb-1">Instructor Portal</p>
+        <h1 class="font-display text-2xl sm:text-3xl font-bold tracking-tight text-text">
+          Welcome back, {{ instructorName }}
+        </h1>
+        <p class="mt-1.5 text-sm text-text/50 font-medium">
+          {{ currentDate }}
+        </p>
       </div>
 
-      <div class="flex flex-wrap items-center gap-2.5">
-        <!-- Active Semester Pill -->
-        <div v-if="activeSemester" class="flex items-center gap-2.5 rounded-xl border border-border bg-surface px-3 py-2 text-xs shadow-2xs">
-          <CalendarDays class="h-4 w-4 text-text/50 shrink-0" />
-          <div class="min-w-0">
-            <p class="text-[10px] font-mono font-medium uppercase tracking-wide text-text/40">Active semester</p>
-            <p class="font-medium text-text truncate">{{ activeSemester.name }} · {{ activeSemester.academic_year }}</p>
-          </div>
-        </div>
+      <div class="flex items-center gap-3">
+        <!-- Active Semester -->
+        <span v-if="activeSemester" class="text-xs sm:text-sm text-text/60 font-medium">
+          {{ activeSemester.name }} ({{ activeSemester.academic_year }})
+        </span>
 
         <!-- Refresh Button -->
         <button
           type="button"
-          class="flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-surface text-text/60 transition-colors hover:border-text/30 hover:text-text cursor-pointer disabled:opacity-50"
-          title="Refresh dashboard"
-          :disabled="refreshing"
+          :disabled="refreshing || loading"
+          class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-surface text-text/60 transition-colors hover:border-accent/40 hover:text-accent disabled:opacity-50 cursor-pointer shadow-sm"
+          title="Refresh"
+          aria-label="Refresh"
           @click="retry">
-          <RefreshCw class="h-4 w-4" :class="refreshing ? 'animate-spin' : ''" />
+          <RefreshCw class="h-4 w-4" :class="{ 'animate-spin': refreshing }" />
         </button>
       </div>
-    </div>
+    </header>
 
     <!-- Error Banner -->
-    <div v-if="error" class="flex items-start gap-3 rounded-xl border border-error/30 bg-error/5 p-4 text-sm text-error">
+    <div v-if="error" class="flex items-start gap-3 rounded-xl border border-error/20 bg-error/5 p-4 text-sm text-error shadow-sm">
       <AlertCircle class="mt-0.5 h-4 w-4 shrink-0" />
       <div class="min-w-0 flex-1">
         <p class="font-medium">{{ error }}</p>
-        <button type="button" class="mt-1 text-xs font-semibold underline cursor-pointer" @click="retry">Try again</button>
+        <button type="button" class="mt-1 text-xs font-semibold underline cursor-pointer hover:text-error/80" @click="retry">Try again</button>
       </div>
     </div>
 
-    <!-- Quick Actions -->
-    <div class="flex flex-wrap items-center gap-2 pt-1">
-      <span class="text-xs font-mono uppercase text-text/40 tracking-wider mr-1">Quick Links:</span>
-      <router-link
-        to="/instructor/teaching"
-        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-surface text-xs font-medium text-text/75 hover:text-text hover:border-text/30 hover:bg-text/[0.02] transition-colors">
-        <BookOpen class="w-3.5 h-3.5 text-text/50" />
-        <span>Teaching Assignments</span>
+    <!-- Quick Tools / Shortcuts Bar -->
+    <div class="flex flex-wrap items-center gap-3">
+      <router-link to="/instructor/teaching" class="group flex items-center gap-2.5 rounded-full border border-border bg-surface px-4 py-2 text-xs font-medium text-text/70 transition-all hover:border-accent/30 hover:bg-accent/5 hover:text-accent shadow-sm">
+        <BookOpen class="w-3.5 h-3.5" />
+        Teaching Assignments
       </router-link>
-      <router-link
-        to="/instructor/exams"
-        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-surface text-xs font-medium text-text/75 hover:text-text hover:border-text/30 hover:bg-text/[0.02] transition-colors">
-        <Layers3 class="w-3.5 h-3.5 text-text/50" />
-        <span>Examinations</span>
+      <router-link to="/instructor/exams" class="group flex items-center gap-2.5 rounded-full border border-border bg-surface px-4 py-2 text-xs font-medium text-text/70 transition-all hover:border-accent/30 hover:bg-accent/5 hover:text-accent shadow-sm">
+        <Layers3 class="w-3.5 h-3.5" />
+        Examinations
       </router-link>
-      <router-link
-        to="/instructor/questions"
-        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-surface text-xs font-medium text-text/75 hover:text-text hover:border-text/30 hover:bg-text/[0.02] transition-colors">
-        <FileQuestion class="w-3.5 h-3.5 text-text/50" />
-        <span>Question Bank</span>
+      <router-link to="/instructor/questions" class="group flex items-center gap-2.5 rounded-full border border-border bg-surface px-4 py-2 text-xs font-medium text-text/70 transition-all hover:border-accent/30 hover:bg-accent/5 hover:text-accent shadow-sm">
+        <FileQuestion class="w-3.5 h-3.5" />
+        Question Bank
       </router-link>
-      <router-link
-        to="/instructor/exams/create"
-        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-surface text-xs font-medium text-text/75 hover:text-text hover:border-text/30 hover:bg-text/[0.02] transition-colors">
-        <Plus class="w-3.5 h-3.5 text-text/50" />
-        <span>Create Exam</span>
+      <router-link to="/instructor/grading" class="group flex items-center gap-2.5 rounded-full border border-border bg-surface px-4 py-2 text-xs font-medium text-text/70 transition-all hover:border-accent/30 hover:bg-accent/5 hover:text-accent shadow-sm">
+        <CheckCircle2 class="w-3.5 h-3.5" />
+        Grading Queue
+      </router-link>
+      <router-link to="/instructor/exams/create" class="group flex items-center gap-2.5 rounded-full border border-accent/30 bg-accent/10 px-4 py-2 text-xs font-semibold text-accent transition-all hover:bg-accent/15 shadow-sm">
+        <Plus class="w-3.5 h-3.5" />
+        Create Exam
       </router-link>
     </div>
 
-    <!-- 1. Teaching & Academic Overview (Clickable Resource Cards) -->
-    <section class="space-y-3">
-      <div>
-        <h2 class="text-sm font-semibold text-text">Teaching Overview</h2>
-        <p class="text-xs text-text/40">Your assigned courses, student sections, and authored repositories.</p>
-      </div>
-
-      <div class="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-4">
-        <router-link
-          v-for="item in overviewItems"
-          :key="item.label"
-          :to="item.to"
-          class="group relative flex flex-col justify-between rounded-xl border border-border bg-surface p-4 transition-all duration-150 hover:border-text/30 hover:shadow-2xs cursor-pointer">
-          <div class="flex items-center justify-between">
-            <component :is="item.icon" class="h-4 w-4 text-text/40 transition-colors group-hover:text-text" />
-            <ArrowRight class="h-3.5 w-3.5 text-text/25 opacity-0 transition-all group-hover:opacity-100 group-hover:translate-x-0.5" />
-          </div>
-
-          <div class="mt-4">
-            <div v-if="loading" class="h-7 w-12 animate-pulse rounded bg-text/5" />
-            <p v-else class="text-2xl font-semibold tracking-tight text-text tabular-nums">
-              {{ item.value }}
-            </p>
-            <p class="mt-0.5 text-xs font-medium text-text/50 group-hover:text-text/70 transition-colors">
-              {{ item.label }}
-            </p>
-          </div>
-        </router-link>
-      </div>
-    </section>
-
-    <!-- 2. Assessment Snapshot -->
-    <section class="space-y-3">
-      <div class="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h2 class="text-sm font-semibold text-text">Assessment Snapshot</h2>
-          <p class="text-xs text-text/40">Examination breakdown across your course offerings.</p>
-        </div>
-
-        <span v-if="activeSemester" class="text-xs font-mono text-text/40"> {{ formatDate(activeSemester.start_date) }} – {{ formatDate(activeSemester.end_date) }} </span>
-      </div>
-
-      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <!-- Active Exams -->
-        <div class="rounded-xl border border-border bg-surface p-4.5 shadow-2xs">
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-medium text-text/55">Active Session</span>
-            <Sparkles class="h-4 w-4 text-success" />
-          </div>
-          <p class="mt-3 text-2xl font-semibold text-text tabular-nums">
-            {{ loading ? '—' : activeExams.length }}
-          </p>
-          <p class="mt-1 text-xs text-text/40">Exams currently in progress</p>
-        </div>
-
-        <!-- Scheduled Exams -->
-        <div class="rounded-xl border border-border bg-surface p-4.5 shadow-2xs">
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-medium text-text/55">Scheduled</span>
-            <CalendarDays class="h-4 w-4 text-text/40" />
-          </div>
-          <p class="mt-3 text-2xl font-semibold text-text tabular-nums">
-            {{ loading ? '—' : scheduledExams.length }}
-          </p>
-          <p class="mt-1 text-xs text-text/40">Approved and on timetable</p>
-        </div>
-
-        <!-- Draft & In Preparation -->
-        <div class="rounded-xl border border-border bg-surface p-4.5 shadow-2xs">
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-medium text-text/55">In Preparation</span>
-            <Clock3 class="h-4 w-4 text-text/40" />
-          </div>
-          <p class="mt-3 text-2xl font-semibold text-text tabular-nums">
-            {{ loading ? '—' : draftExams.length }}
-          </p>
-          <p class="mt-1 text-xs text-text/40">Draft or awaiting submission</p>
-        </div>
-
-        <!-- Completed Exams -->
-        <div class="rounded-xl border border-border bg-surface p-4.5 shadow-2xs">
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-medium text-text/55">Completed</span>
-            <CheckCircle2 class="h-4 w-4 text-text/40" />
-          </div>
-          <p class="mt-3 text-2xl font-semibold text-text tabular-nums">
-            {{ loading ? '—' : completedExams.length }}
-          </p>
-          <p class="mt-1 text-xs text-text/40">Concluded examination sessions</p>
+    <!-- 2. Unified Teaching & Academic KPI Deck -->
+    <section>
+      <div class="rounded-2xl border border-border bg-surface shadow-sm overflow-hidden">
+        <div class="grid grid-cols-2 lg:grid-cols-6 divide-y lg:divide-y-0 lg:divide-x divide-border">
+          <router-link
+            v-for="item in overviewItems"
+            :key="item.label"
+            :to="item.to"
+            class="group relative flex flex-col p-5 transition-colors hover:bg-bg/50 focus:outline-none focus-visible:bg-bg/50">
+            <div class="flex items-center justify-between mb-4">
+              <span class="text-[10px] font-mono text-text/45 uppercase tracking-wider">{{ item.label }}</span>
+              <component :is="item.icon" class="h-4 w-4 text-text/30 group-hover:text-accent transition-colors" />
+            </div>
+            <div class="flex items-end justify-between">
+              <div v-if="loading" class="h-8 w-16 animate-pulse rounded bg-text/5" />
+              <span v-else class="font-display text-2xl sm:text-3xl font-bold tracking-tight text-text tabular-nums">{{ item.value }}</span>
+              <ChevronRight class="h-4 w-4 text-text/20 transition-all group-hover:text-accent group-hover:translate-x-0.5 mb-1" />
+            </div>
+          </router-link>
         </div>
       </div>
     </section>
 
-    <!-- 3. Operational Area (Needs Attention + Assessment Progress) -->
+    <!-- 3. Active Semester Operational Pulse -->
     <div class="grid grid-cols-1 gap-6 xl:grid-cols-5">
-      <!-- Needs Attention -->
-      <section class="flex flex-col justify-between overflow-hidden rounded-xl border border-border bg-surface shadow-2xs xl:col-span-3">
-        <div class="flex items-center justify-between border-b border-border/70 px-5 py-4">
+      <!-- Column A: Assessment Pipeline & Readiness -->
+      <section class="xl:col-span-3 rounded-2xl border border-border bg-surface shadow-sm overflow-hidden flex flex-col">
+        <div class="px-6 py-5 border-b border-border">
+          <h2 class="text-sm font-semibold text-text">Assessment Pipeline &amp; Readiness</h2>
+          <p class="text-xs text-text/50 mt-1">Lifecycle status and preparation readiness across your courses.</p>
+        </div>
+
+        <div class="p-6 flex-1 flex flex-col justify-between gap-8">
+          <!-- Pipeline Stages -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div class="flex flex-col gap-1">
+              <span class="text-[11px] font-mono uppercase text-text/50 tracking-wider">Total Papers</span>
+              <span class="text-2xl font-bold font-display text-text tabular-nums">{{ loading ? '—' : allExams.length }}</span>
+            </div>
+            <div class="flex flex-col gap-1">
+              <span class="text-[11px] font-mono uppercase text-warning tracking-wider">Draft / Prep</span>
+              <span class="text-2xl font-bold font-display text-text tabular-nums">{{ loading ? '—' : draftExams.length }}</span>
+            </div>
+            <div class="flex flex-col gap-1">
+              <span class="text-[11px] font-mono uppercase text-accent tracking-wider">Scheduled</span>
+              <span class="text-2xl font-bold font-display text-text tabular-nums">{{ loading ? '—' : scheduledExams.length }}</span>
+            </div>
+            <div class="flex flex-col gap-1">
+              <span class="text-[11px] font-mono uppercase text-success tracking-wider">Active / Done</span>
+              <span class="text-2xl font-bold font-display text-text tabular-nums">{{ loading ? '—' : activeExams.length + completedExams.length }}</span>
+            </div>
+          </div>
+
+          <!-- Multi-segment Progress Bar: Assessment Lifecycle -->
+          <div class="space-y-3">
+            <div class="flex items-center justify-between text-xs font-medium">
+              <span class="text-text/70">Assessment Lifecycle Status</span>
+              <span class="text-text/50 tabular-nums">100% Total</span>
+            </div>
+            <div class="h-2.5 w-full rounded-full bg-bg border border-border/50 flex overflow-hidden">
+              <div class="h-full bg-success transition-all duration-500" :style="{ width: allExams.length ? `${((activeExams.length + completedExams.length) / allExams.length) * 100}%` : '0%' }" title="Active / Completed"></div>
+              <div class="h-full bg-accent transition-all duration-500" :style="{ width: allExams.length ? `${(scheduledExams.length / allExams.length) * 100}%` : '0%' }" title="Scheduled"></div>
+              <div class="h-full bg-warning transition-all duration-500" :style="{ width: allExams.length ? `${(draftExams.length / allExams.length) * 100}%` : '0%' }" title="Draft / Prep"></div>
+            </div>
+          </div>
+
+          <!-- Question Bank Health -->
+          <div class="space-y-3">
+            <div class="flex items-center justify-between text-xs font-medium">
+              <span class="text-text/70">Question Bank Repository</span>
+              <span class="text-text tabular-nums font-mono">{{ totalQuestionsCount }} questions authored</span>
+            </div>
+            <div class="h-2.5 w-full rounded-full bg-bg border border-border/50 overflow-hidden">
+              <div class="h-full bg-accent transition-all duration-500" :style="{ width: `${Math.min(totalQuestionsCount * 5, 100)}%` }"></div>
+            </div>
+          </div>
+
+          <div class="pt-4 border-t border-border flex items-center justify-between text-xs text-text/60">
+            <span>Workload Coverage</span>
+            <span class="font-medium text-text tabular-nums bg-surface border border-border px-2.5 py-0.5 rounded-full font-mono">{{ totalSections }} Section{{ totalSections === 1 ? '' : 's' }} across {{ totalCourses }} Course{{ totalCourses === 1 ? '' : 's' }}</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Column B: Academic Action Queue -->
+      <section class="xl:col-span-2 rounded-2xl border border-border bg-surface shadow-sm overflow-hidden flex flex-col">
+        <div class="px-6 py-5 border-b border-border flex items-center justify-between">
           <div>
             <h2 class="text-sm font-semibold text-text">Needs Attention</h2>
-            <p class="text-xs text-text/40">Actionable items requiring your follow-up.</p>
+            <p class="text-xs text-text/50 mt-1">Actionable items requiring your follow-up.</p>
           </div>
-          <span v-if="attentionItems.length" class="px-2 py-0.5 rounded-full text-[11px] font-mono font-semibold bg-accent/10 text-accent border border-accent/20">
+          <span v-if="attentionItems.length" class="inline-flex items-center rounded-full bg-warning/10 px-2.5 py-0.5 text-xs font-semibold text-warning font-mono">
             {{ attentionItems.length }}
           </span>
-          <AlertCircle v-else class="h-4 w-4 text-text/40 shrink-0" />
-        </div>
-
-        <!-- Loading Skeletons -->
-        <div v-if="loading" class="divide-y divide-border/60">
-          <div v-for="item in 3" :key="item" class="p-5 space-y-2">
-            <div class="h-3.5 w-44 animate-pulse rounded bg-text/5" />
-            <div class="h-3 w-72 animate-pulse rounded bg-text/5" />
-          </div>
         </div>
 
         <!-- Attention Items List -->
-        <div v-else-if="attentionItems.length" class="divide-y divide-border/60 flex-1">
-          <div v-for="item in attentionItems" :key="`${item.label}-${item.title}`" class="flex items-start justify-between gap-4 p-4.5 transition-colors hover:bg-text/[0.02]">
-            <div class="flex items-start gap-3 min-w-0">
-              <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-text/[0.04] border border-border/70 text-text/70">
-                <component :is="item.icon" class="h-4 w-4" />
+        <div v-if="attentionItems.length" class="divide-y divide-border flex-1">
+          <div v-for="item in attentionItems" :key="`${item.label}-${item.title}`" class="flex items-start justify-between gap-4 p-5 transition-colors hover:bg-bg/50">
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-2 mb-1">
+                <BaseBadge :variant="item.icon === AlertCircle ? 'danger' : 'warning'" size="sm">
+                  {{ item.label }}
+                </BaseBadge>
+                <span class="font-mono text-xs text-text/50 truncate">{{ item.meta }}</span>
               </div>
-
-              <div class="min-w-0 flex-1">
-                <div class="flex flex-wrap items-center gap-2">
-                  <p class="text-sm font-medium text-text truncate">
-                    {{ item.title }}
-                  </p>
-                  <BaseBadge variant="neutral" class="text-[10px]">
-                    {{ item.label }}
-                  </BaseBadge>
-                </div>
-
-                <p class="mt-1 text-xs text-text/50 leading-relaxed">
-                  {{ item.description }}
-                </p>
-
-                <p class="mt-1 font-mono text-[11px] text-text/40">
-                  {{ item.meta }}
-                </p>
-              </div>
+              <p class="text-xs font-semibold text-text">{{ item.title }}</p>
+              <p class="text-xs text-text/60 mt-0.5 leading-relaxed">{{ item.description }}</p>
             </div>
-
-            <button
-              type="button"
-              class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-surface text-xs font-medium text-text hover:border-accent hover:text-accent transition-colors cursor-pointer shrink-0"
-              @click="router.push(item.to)">
-              <span>Review</span>
-              <ArrowRight class="w-3 h-3" />
-            </button>
+            <BaseButton variant="secondary" size="sm" class="shrink-0 text-xs" @click="router.push(item.to)">
+              Resolve
+              <template #icon>
+                <ArrowRight class="h-3 w-3" />
+              </template>
+            </BaseButton>
           </div>
         </div>
 
-        <!-- Empty State -->
-        <div v-else class="flex-1 px-5 py-12 text-center flex flex-col items-center justify-center">
-          <div class="w-10 h-10 rounded-full bg-text/[0.04] border border-border/60 flex items-center justify-center text-text/45 mb-3">
+        <!-- All Clear Empty State -->
+        <div v-else class="flex flex-1 flex-col items-center justify-center p-8 text-center">
+          <div class="flex h-10 w-10 items-center justify-center rounded-full bg-success/10 text-success mb-3">
             <CheckCircle2 class="h-5 w-5" />
           </div>
-          <p class="text-sm font-medium text-text">No action required</p>
-          <p class="mt-1 text-xs text-text/40 max-w-xs">All assigned courses and examination workflows are progressing normally.</p>
-        </div>
-      </section>
-
-      <!-- Workflow & Readiness Progress -->
-      <section class="overflow-hidden rounded-xl border border-border bg-surface shadow-2xs xl:col-span-2">
-        <div class="border-b border-border/70 px-5 py-4">
-          <h2 class="text-sm font-semibold text-text">Assessment Progress</h2>
-          <p class="text-xs text-text/40">Preparation rate and academic reach.</p>
-        </div>
-
-        <div class="p-5 space-y-5">
-          <!-- Readiness Progress Bar -->
-          <div>
-            <div class="mb-2 flex items-center justify-between text-xs">
-              <span class="font-medium text-text/60">Scheduled &amp; Concluded</span>
-              <span class="tabular-nums font-mono text-text/50"> {{ readyExamsCount }} / {{ allExams.length }} </span>
-            </div>
-            <div class="h-2 overflow-hidden rounded-full bg-text/5">
-              <div
-                class="h-full rounded-full bg-success transition-all duration-300"
-                :style="{
-                  width: allExams.length ? `${(readyExamsCount / allExams.length) * 100}%` : '0%',
-                }" />
-            </div>
-          </div>
-
-          <!-- Pending Composition Progress Bar -->
-          <div>
-            <div class="mb-2 flex items-center justify-between text-xs">
-              <span class="font-medium text-text/60">In Preparation / Draft</span>
-              <span class="tabular-nums font-mono text-text/50"> {{ draftExams.length }} / {{ allExams.length || 1 }} </span>
-            </div>
-            <div class="h-2 overflow-hidden rounded-full bg-text/5">
-              <div
-                class="h-full rounded-full bg-text/70 transition-all duration-300"
-                :style="{
-                  width: allExams.length ? `${Math.min((draftExams.length / allExams.length) * 100, 100)}%` : '0%',
-                }" />
-            </div>
-          </div>
-
-          <!-- Bottom Metric Tiles -->
-          <div class="grid grid-cols-2 gap-3 border-t border-border/70 pt-5">
-            <div class="rounded-lg bg-text/[0.02] border border-border/50 p-3">
-              <p class="text-[11px] font-mono uppercase text-text/40 tracking-wider">Sections Taught</p>
-              <p class="mt-1 text-xl font-semibold text-text tabular-nums">
-                {{ totalSections }}
-              </p>
-            </div>
-
-            <div class="rounded-lg bg-text/[0.02] border border-border/50 p-3">
-              <p class="text-[11px] font-mono uppercase text-text/40 tracking-wider">Degree Programs</p>
-              <p class="mt-1 text-xl font-semibold text-text tabular-nums">
-                {{ uniquePrograms.length }}
-              </p>
-            </div>
-          </div>
+          <p class="text-sm font-semibold text-text">All systems operational</p>
+          <p class="text-xs text-text/50 mt-1 max-w-[200px]">No pending instructor actions require your attention.</p>
         </div>
       </section>
     </div>
 
-    <!-- 4. Recent Examinations Table -->
-    <section class="overflow-hidden rounded-xl border border-border bg-surface shadow-2xs">
-      <div class="flex items-center justify-between border-b border-border/70 px-5 py-4">
+    <!-- 4. Recent Examinations Registry -->
+    <section class="rounded-2xl border border-border bg-surface shadow-sm overflow-hidden">
+      <div class="px-6 py-5 border-b border-border flex items-center justify-between">
         <div>
           <h2 class="text-sm font-semibold text-text">Recent Examinations</h2>
-          <p class="text-xs text-text/40">Latest assessment activity and scheduling.</p>
+          <p class="text-xs text-text/50 mt-1">Latest assessment activity, schedules, and grading status.</p>
         </div>
-
-        <router-link to="/instructor/exams" class="text-xs font-medium text-text/60 hover:text-text transition-colors flex items-center gap-1">
-          <span>View all</span>
-          <ArrowRight class="w-3.5 h-3.5" />
+        <router-link to="/instructor/exams" class="text-xs font-medium text-accent hover:text-accent/80 transition-colors flex items-center gap-1">
+          <span>View all examinations</span>
+          <ArrowRight class="h-3 w-3" />
         </router-link>
       </div>
 
-      <!-- Loading State -->
-      <div v-if="loading" class="divide-y divide-border/60">
-        <div v-for="item in 4" :key="item" class="flex items-center gap-4 px-5 py-4">
-          <div class="h-9 w-9 animate-pulse rounded-lg bg-text/5" />
-          <div class="flex-1 space-y-1.5">
-            <div class="h-3.5 w-48 animate-pulse rounded bg-text/5" />
-            <div class="h-3 w-32 animate-pulse rounded bg-text/5" />
+      <div v-if="loading" class="divide-y divide-border">
+        <div v-for="i in 3" :key="i" class="p-5 animate-pulse flex items-center gap-4">
+          <div class="h-8 w-8 rounded-lg bg-text/5" />
+          <div class="flex-1 space-y-2">
+            <div class="h-4 w-1/3 rounded bg-text/5" />
+            <div class="h-3 w-1/4 rounded bg-text/5" />
           </div>
         </div>
       </div>
 
-      <!-- Exams Rows -->
-      <div v-else-if="recentExams.length" class="divide-y divide-border/60">
+      <div v-else-if="recentExams.length" class="divide-y divide-border">
         <div
           v-for="exam in recentExams"
           :key="exam.id"
-          class="flex items-center gap-4 px-5 py-3.5 transition-colors hover:bg-text/[0.02] cursor-pointer"
+          class="group flex flex-col gap-4 p-5 transition-colors hover:bg-bg/50 sm:flex-row sm:items-center sm:justify-between cursor-pointer"
           @click="router.push({ name: 'instructor.exams.detail', params: { examId: exam.id } })">
-          <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border/80 bg-surface text-text/50">
-            <Layers3 class="h-4 w-4" />
+          <div class="flex items-start gap-4 min-w-0">
+            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent/10 border border-accent/20 text-accent">
+              <Layers3 class="h-5 w-5" />
+            </div>
+            <div class="min-w-0 space-y-1">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="font-mono text-xs font-bold text-accent">{{ exam.courseCode ?? 'EXAM' }}</span>
+                <span class="text-xs font-semibold text-text truncate max-w-xs sm:max-w-md">{{ exam.title }}</span>
+                <ExamStatusBadge :status="exam.status" />
+              </div>
+              <p class="text-xs text-text/50 font-mono">
+                {{ exam.type }} Assessment · {{ exam.duration_minutes }} mins · {{ exam.total_marks ?? 0 }} pts · {{ exam.total_questions ?? 0 }} questions
+              </p>
+            </div>
           </div>
 
-          <div class="min-w-0 flex-1">
-            <div class="flex flex-wrap items-center gap-2">
-              <p class="truncate text-sm font-medium text-text">
-                {{ exam.title }}
-              </p>
-              <ExamStatusBadge :status="exam.status" />
+          <div class="flex items-center gap-4 shrink-0 sm:text-right">
+            <div class="text-xs text-text/50 font-mono">
+              <span>{{ formatRelativeDate(exam.updated_at) }}</span>
             </div>
-
-            <p class="mt-0.5 font-mono text-xs text-text/40">{{ exam.courseCode ?? 'EXAM' }} · {{ exam.type }}</p>
-          </div>
-
-          <div class="hidden items-center gap-6 text-right sm:flex">
-            <div>
-              <p class="text-[11px] font-mono uppercase text-text/40">Duration</p>
-              <p class="text-sm font-medium text-text tabular-nums">{{ exam.duration_minutes }}m</p>
-            </div>
-
-            <div>
-              <p class="text-[11px] font-mono uppercase text-text/40">Questions</p>
-              <p class="text-sm font-medium text-text tabular-nums">
-                {{ exam.total_questions ?? 0 }}
-              </p>
-            </div>
-
-            <div>
-              <p class="text-[11px] font-mono uppercase text-text/40">Points</p>
-              <p class="text-sm font-medium text-text tabular-nums">
-                {{ exam.total_marks ?? 0 }}
-              </p>
-            </div>
-
-            <span class="w-16 text-xs text-text/40">
-              {{ formatRelativeDate(exam.updated_at) }}
-            </span>
-
-            <router-link
-              :to="{ name: 'instructor.exams.detail', params: { examId: exam.id } }"
-              class="text-text/30 hover:text-text transition-colors p-1"
-              title="View examination details"
-              @click.stop>
-              <ArrowRight class="h-4 w-4" />
-            </router-link>
+            <ChevronRight class="h-4 w-4 text-text/30 transition-transform group-hover:translate-x-0.5 group-hover:text-accent" />
           </div>
         </div>
       </div>
 
-      <!-- Empty State -->
-      <div v-else class="px-5 py-14 text-center">
-        <FileQuestion class="mx-auto h-7 w-7 text-text/25" />
-        <p class="mt-2 text-sm font-medium text-text">No examinations created yet</p>
-        <p class="mt-1 text-xs text-text/40">Create formal assessments associated with your assigned courses.</p>
+      <div v-else class="p-12 text-center text-text/40">
+        <FileQuestion class="mx-auto h-8 w-8 text-text/25 mb-2" />
+        <p class="text-sm font-medium text-text">No examinations created yet</p>
+        <p class="mt-0.5 text-xs text-text/40">Create formal assessments associated with your assigned courses.</p>
         <router-link
           to="/instructor/exams/create"
-          class="mt-4 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-border text-xs font-medium text-text hover:bg-text/[0.04] transition-colors">
+          class="mt-4 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-border text-xs font-medium text-text hover:bg-accent/10 hover:border-accent/30 hover:text-accent transition-colors">
+          <Plus class="w-3.5 h-3.5" />
           <span>Create Examination</span>
-          <ArrowRight class="w-3.5 h-3.5" />
         </router-link>
       </div>
     </section>
