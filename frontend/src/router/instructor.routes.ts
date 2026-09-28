@@ -160,4 +160,12 @@ export default [
     component: () => import('@/modules/instructor/grading/pages/ExamSubmissionsView.vue'),
     meta: { permissions: ['grade.create'], permissionMode: 'any' },
   },
+
+  // ==================== RESULTS ====================
+  {
+    path: 'results',
+    name: 'instructor.results.list',
+    component: () => import('@/modules/admin/results/pages/ResultsView.vue'),
+    meta: { permissions: ['result.view', 'result.view_archived'], permissionMode: 'any' },
+  },
 ];
