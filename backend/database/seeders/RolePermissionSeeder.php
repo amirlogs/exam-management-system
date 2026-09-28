@@ -264,6 +264,7 @@ class RolePermissionSeeder extends Seeder
             'grade.create',
             'grade.update',
             'grade.submit',
+            'grade.publish',
         ];
 
         /*

@@ -217,4 +217,66 @@ class StudentExamController extends Controller
 
         return $this->success(null, 'Exam attempt submitted successfully');
     }
+
+    public function review(Exam $exam, Request $request)
+    {
+        $this->authorize('viewAsStudent', $exam);
+
+        if ($exam->grading_status !== 'published') {
+            return $this->error(null, 'Exam results and question review are not published yet.', 403);
+        }
+
+        $student = $request->user()->student;
+        if (! $student) {
+            return $this->error(null, 'Student profile not found.', 403);
+        }
+
+        $attempt = $exam->attempts()->where('student_id', $student->id)->first();
+        if (! $attempt) {
+            return $this->error(null, 'No attempt found for this exam.', 404);
+        }
+
+        $examQuestions = $exam->examQuestions()
+            ->with(['question.options'])
+            ->orderBy('order_number')
+            ->get();
+
+        $attemptAnswers = $attempt->answers->keyBy('exam_question_id');
+
+        $questionsData = $examQuestions->map(function ($eq) use ($attemptAnswers) {
+            $question = $eq->question;
+            $ans = $attemptAnswers->get($eq->id);
+
+            return [
+                'id' => $eq->id,
+                'exam_question_id' => $eq->id,
+                'question_id' => $question?->id,
+                'order_number' => $eq->order_number,
+                'marks' => (float) $eq->marks,
+                'marks_awarded' => $ans?->marks_awarded !== null ? (float) $ans->marks_awarded : null,
+                'is_correct' => (bool) $ans?->is_correct,
+                'type' => $question?->type,
+                'content' => $question?->content,
+                'explanation' => $question?->explanation,
+                'options' => $question?->options->map(fn($o) => [
+                    'id' => $o->id,
+                    'option_text' => $o->option_text,
+                    'is_correct' => (bool) $o->is_correct,
+                ]),
+                'selected_answer_id' => $ans?->selected_option_id,
+                'answer_text' => $ans?->answer_text,
+            ];
+        });
+
+        return $this->success([
+            'attempt' => [
+                'id' => $attempt->id,
+                'score' => $attempt->score,
+                'total_marks' => $exam->total_marks,
+                'status' => $attempt->status,
+                'submitted_at' => $attempt->submitted_at?->toIso8601String(),
+            ],
+            'questions' => $questionsData,
+        ], 'Exam review fetched successfully');
+    }
 }

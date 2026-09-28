@@ -1,5 +1,5 @@
 import api from '@/api/axios';
-import type { StudentExam, StudentExamQuestion, SubmitAnswerPayload, ExamAttempt } from '../types/studentExam';
+import type { StudentExam, StudentExamQuestion, SubmitAnswerPayload, ExamAttempt, ExamReviewData } from '../types/studentExam';
 
 export interface Pagination {
   current_page: number;
@@ -66,5 +66,10 @@ export async function saveStudentAnswer(attemptId: number, payload: SubmitAnswer
 
 export async function submitStudentExam(attemptId: number) {
   const response = await api.post<ApiResponse<null>>(`/student/attempts/${attemptId}/submit`);
+  return response.data;
+}
+
+export async function getStudentExamReview(examId: number) {
+  const response = await api.get<ApiResponse<ExamReviewData>>(`/student/exams/${examId}/review`);
   return response.data;
 }

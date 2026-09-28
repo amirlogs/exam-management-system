@@ -15,12 +15,15 @@ class StudentExamResource extends JsonResource
                 return null;
             }
 
+            $isPublished = $this->grading_status === 'published';
+
             return [
                 'id' => $latestAttempt->id,
                 'status' => $latestAttempt->status,
                 'started_at' => $latestAttempt->started_at?->toIso8601String(),
                 'submitted_at' => $latestAttempt->submitted_at?->toIso8601String(),
-                'score' => $latestAttempt->score,
+                'score' => $isPublished ? $latestAttempt->score : null,
+                'is_published' => $isPublished,
             ];
         });
 

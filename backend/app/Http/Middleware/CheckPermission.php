@@ -15,11 +15,19 @@ class CheckPermission
             abort(401, 'Unauthenticated.');
         }
 
-        if (! $user->hasPermission($permission)) {
+        $permissions = explode('|', $permission);
+        $hasAny = false;
+        foreach ($permissions as $p) {
+            if ($user->hasPermission(trim($p))) {
+                $hasAny = true;
+                break;
+            }
+        }
+
+        if (! $hasAny) {
             abort(403, "Missing permission: {$permission}");
         }
 
-        logger('pass  the first check');
         return $next($request);
     }
 }
