@@ -17,7 +17,7 @@ return new class extends Migration {
             $table->json('composition')->nullable();
             $table->unsignedInteger('total_marks')->default(0);
             $table->unsignedInteger('total_questions')->default(0);
-            $table->string('status')->default('draft');
+            $table->string('status')->default('draft'); // draft active complete
             $table->foreignId('owned_by')->constrained('users');
             $table->timestamp('ended_at')->nullable();
 

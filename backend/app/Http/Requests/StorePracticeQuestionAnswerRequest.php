@@ -4,9 +4,8 @@ namespace App\Http\Requests;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rules\Password;
 
-class ChangePasswordRequest extends FormRequest
+class StorePracticeQuestionAnswerRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -24,9 +23,7 @@ class ChangePasswordRequest extends FormRequest
     public function rules(): array
     {
         return [
-            "email" => ["sometimes", "required", "email"],
-            "current_password" => ["required", "string", "min:8"],
-            "new_password" => ["required", "confirmed", Password::default()],
+            'option_id' => ['required', 'integer', 'exists:practice_question_options,id'],
         ];
     }
 }

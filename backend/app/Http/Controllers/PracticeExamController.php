@@ -7,7 +7,9 @@ use App\Http\Requests\StorePracticeExamRequest;
 use App\Http\Requests\UpdatePracticeExamRequest;
 use App\Http\Resources\PracticeExamResource;
 use App\Http\Search\RequestSearch;
+use App\Models\PracticeAnswers;
 use App\Models\PracticeExam;
+use App\Models\QuestionGuidances;
 use App\Validation\GetRequestsValidator;
 use Illuminate\Http\Request;
 
@@ -35,7 +37,7 @@ class PracticeExamController extends Controller
     public function index(Request $request)
     {
         $per_page = GetRequestsValidator::validate($request);
-        $query = PracticeExam::query();
+        $query = PracticeExam::query()->where('owned_by', $request->user()->id);
         RequestSearch::apply($query, $request, ['title']);
         RequestFilters::apply($query, $request, ['status']);
         $practice_exams = $query->paginate($per_page);
@@ -56,5 +58,47 @@ class PracticeExamController extends Controller
         ]);
 
         return $this->success(new PracticeExamResource($practiceExam->refresh()), 'Practice Exam updated successfully');
+    }
+
+    public function start(PracticeExam $practiceExam)
+    {
+        if ($practiceExam->status !== 'draft') {
+            return $this->error(null, 'Practice Exam is not in draft state', 422);
+        }
+        $practiceExam->update(['status' => 'active']);
+
+        return $this->success(new PracticeExamResource($practiceExam->refresh()), 'Practice Exam started successfully');
+    }
+
+    public function complete(PracticeExam $practiceExam)
+    {
+        if ($practiceExam->status !== 'active') {
+            return $this->error(null, 'Practice Exam is not in active state', 422);
+        }
+        $practiceExam->update(['status' => 'completed']);
+
+        return $this->success(new PracticeExamResource($practiceExam->refresh()), 'Practice Exam completed successfully');
+    }
+
+    public function retake(PracticeExam $practiceExam, Request $request)
+    {
+        PracticeAnswers::where('practice_exam_id', $practiceExam->id)
+            ->where('user_id', $request->user()->id)
+            ->delete();
+
+        QuestionGuidances::where('practice_exam_id', $practiceExam->id)
+            ->where('user_id', $request->user()->id)
+            ->delete();
+
+        $practiceExam->update(['status' => 'active']);
+
+        return $this->success(new PracticeExamResource($practiceExam->refresh()), 'Practice Exam reset for retake successfully');
+    }
+
+    public function destroy(PracticeExam $practiceExam)
+    {
+        $practiceExam->delete();
+
+        return $this->success(null, 'Practice Exam deleted successfully');
     }
 }

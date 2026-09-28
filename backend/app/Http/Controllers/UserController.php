@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Commit\UserCommitter;
 use App\Http\Filters\RequestFilters;
 use App\Http\Requests\AssignRoleRequest;
 use App\Http\Requests\SetWorkspaceRequest;
@@ -20,7 +21,8 @@ class UserController extends Controller
     public function store(StoreUserRequest $request)
     {
         $validated = $request->validated();
-        $user = User::create($validated);
+
+        $user = UserCommitter::commit([$validated]);
 
         return $this->success(new UserResource($user->refresh()), 'User created successfully', 201);
     }

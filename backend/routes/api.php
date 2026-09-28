@@ -14,6 +14,7 @@ use App\Http\Controllers\ImportController;
 use App\Http\Controllers\InstructorController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\PracticeExamController;
+use App\Http\Controllers\PracticeExamHistoryController;
 use App\Http\Controllers\PracticeExamQuestionController;
 use App\Http\Controllers\ProgramController;
 use App\Http\Controllers\QuestionController;
@@ -37,6 +38,7 @@ Route::middleware('auth:sanctum')->prefix('auth')->group(function () {
     Route::post('/change-password', [AuthController::class, 'changePassword']);
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/login', [AuthController::class, 'login'])->withoutMiddleware('auth:sanctum');
+    Route::post('/first-time-password', [AuthController::class, 'firstTimePassword'])->withoutMiddleware('auth:sanctum');
 });
 
 Route::middleware('auth:sanctum')->group(function () {
@@ -237,20 +239,34 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
 
-    // practice exam endpoints
-    Route::post('/practice-exams', [PracticeExamController::class, 'store']);
-    Route::get('/practice-exams', [PracticeExamController::class, 'index']);
-    Route::get('/practice-exams/{practiceExam}', [PracticeExamController::class, 'show']);
-    Route::patch('/practice-exams/{practiceExam}', [PracticeExamController::class, 'update']);
+    // ======================== PRACTICE EXAMS (owner only) ========================
+    Route::middleware('practice.owner')->group(function () {
+        // practice exam endpoints
+        Route::post('/practice-exams', [PracticeExamController::class, 'store']);
+        Route::get('/practice-exams', [PracticeExamController::class, 'index']);
+        Route::get('/practice-exams/{practiceExam}', [PracticeExamController::class, 'show']);
+        Route::patch('/practice-exams/{practiceExam}', [PracticeExamController::class, 'update']);
+        Route::delete('/practice-exams/{practiceExam}', [PracticeExamController::class, 'destroy']);
+        Route::post('/practice-exams/{practiceExam}/start', [PracticeExamController::class, 'start']);
+        Route::post('/practice-exams/{practiceExam}/complete', [PracticeExamController::class, 'complete']);
+        Route::post('/practice-exams/{practiceExam}/retake', [PracticeExamController::class, 'retake']);
 
-    // practice exam questions
-    Route::post('/practice-exams/{practiceExam}/questions', [PracticeExamQuestionController::class, 'generate']);
+        // practice exam questions | AI generation history
+        Route::post('/practice-exams/{practiceExam}/questions', [PracticeExamHistoryController::class, 'generate']);
+        Route::get('/practice-exams-history/{practiceQuestionHistory}', [PracticeExamHistoryController::class, 'show']);
+        Route::get('/practice-exams-history', [PracticeExamHistoryController::class, 'index']);
+        Route::post('/practice-exams-history/{practiceQuestionHistory}/confirm', [PracticeExamHistoryController::class, 'confirm']);
+        Route::delete('/practice-exams-history/{practiceQuestionHistory}/questions/{index}', [PracticeExamHistoryController::class, 'destroyQuestion']);
 
-    // make all action after checking the user is authorized its him self
-    Route::get('/practice-exams-history/{practiceQuestionHistory}', [PracticeExamQuestionController::class, 'show']);
-    Route::delete('/practice-exams-history/{practiceQuestionHistory}/questions/{index}', [PracticeExamQuestionController::class, 'destroyQuestion']);
-    Route::get('/practice-exams-history', [PracticeExamQuestionController::class, 'index']);
-    Route::post('/practice-exams-history/{practiceQuestionHistory}/confirm', [PracticeExamQuestionController::class, 'confirm']);
+        // practice exam questions & answers
+        Route::get('/practice-exams/{practiceExam}/questions', [PracticeExamQuestionController::class, 'index']);
+        Route::post('/practice-exams/{practiceExam}/questions/{practiceQuestion}/answers', [PracticeExamQuestionController::class, 'store']);
+        Route::delete('/practice-exams/{practiceExam}/questions/{practiceQuestion}', [PracticeExamQuestionController::class, 'destroy']);
+
+        // practice question guidance
+        Route::post('/practice-exams/{practiceExam}/questions/{practiceQuestion}/guidance', [PracticeExamQuestionController::class, 'storeGuidance']);
+        Route::get('/practice-exams/{practiceExam}/questions/{practiceQuestion}/guidance', [PracticeExamQuestionController::class, 'getGuidance']);
+    });
 });
 
 // ======================= EXAMS (student) =======================

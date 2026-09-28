@@ -3,21 +3,19 @@
 namespace App\Commit;
 
 use App\Models\PracticeQuestion;
+use App\Models\PracticeQuestionHistory;
 use App\Validation\QuestionValidator;
 
 class PracticeQuestionCommitter
 {
-    public static function commit(array $data, $practiceQuestionHistory): void
+    public static function commit(array $data, PracticeQuestionHistory $practiceQuestionHistory): void
     {
-        $context = $importHistory['context'] ?? [];
         $type = strtolower(trim((string) $data['type']));
-
         $question = PracticeQuestion::create([
-            'course_id' => $context['course_id'],
-            'created_by' => $context['uploaded_by'],
-            'import_history_id' => $importHistory->id,
+            'owned_by' => $practiceQuestionHistory->owned_by,
+            'practice_exam_id' => $practiceQuestionHistory->practice_exam_id,
+            'practice_question_histories_id' => $practiceQuestionHistory->id,
             'type' => $type,
-            'chapter' => $data['chapter'] ?? null,
             'content' => $data['content'],
             'difficulty' => $data['difficulty'],
             'status' => 'active',

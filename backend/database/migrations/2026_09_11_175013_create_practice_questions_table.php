@@ -14,6 +14,7 @@ return new class extends Migration {
             $table->id();
             $table->foreignid('owned_by')->constrained('users');
             $table->foreignid('practice_question_histories_id')->constrained('practice_question_histories');
+            $table->foreignId('practice_exam_id')->constrained('practice_exams')->cascadeOnDelete();
             $table->enum('type', ['mcq', 'true_false', 'essay', 'short_answer']);
             $table->text('content');
             $table->string('difficulty')->nullable();

@@ -2,25 +2,15 @@
 
 namespace App\Commit;
 
-use App\Models\ExamQuestion;
+use App\Models\PracticeExamQuestion;
 
 class PracticeExamQuestionCommitter
 {
-    public static function commit($question, $exam): void
+    public static function commit($question, $examId): void
     {
-
-        $typeConfig = $exam->composition[$question['type']] ?? null;
-
-        if (in_array($question->type, ['MCQ', 'TRUE_FALSE'])) {
-            $marks = $typeConfig['marks_each'];
-        } else {
-            $marks = 1;
-        }
-
-        $examQuestion =  ExamQuestion::create([
-            'question_id' => $question->id,
-            'exam_id' => $exam->id,
-            'marks' => $marks,
+        PracticeExamQuestion::create([
+            'practice_exam_id' => $examId,
+            'practice_question_id' => $question->id,
         ]);
     }
 }

@@ -12,14 +12,14 @@ return new class extends Migration {
     {
         Schema::create('practice_question_histories', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('uploaded_by')->constrained('users')->cascadeOnDelete();
+            $table->foreignId('owned_by')->constrained('users')->cascadeOnDelete();
+            $table->foreignId('practice_exam_id')->constrained('practice_exams')->cascadeOnDelete();
             $table->longText('input');
             $table->unsignedInteger('count')->default(3);
             $table->boolean('isNote')->default(false);
             $table->string('type');
             $table->string('difficulty');
             $table->string('file_path')->nullable();
-            $table->json('context')->nullable();
             $table->unsignedInteger('total_rows')->default(0);
             $table->unsignedInteger('valid_count')->default(0);
             $table->unsignedInteger('error_count')->default(0);

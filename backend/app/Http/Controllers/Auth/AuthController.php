@@ -16,6 +16,7 @@ class AuthController extends Controller
     public function login(LoginRequest $request)
     {
         $data = $request->validated();
+
         // check it the password match
         $user = User::where('email', $data['email'])->first();
         $permissions = $user->permissionNames();
@@ -23,6 +24,19 @@ class AuthController extends Controller
         if (! $user || ! Hash::check($data['password'], $user->password)) {
             return $this->error('', 'Invalid credentials', 422);
         }
+
+        // first time login
+        if ($user->is_first_login) {
+            return $this->success(
+                [
+                    'requires_password_change' => true,
+                    'email' => $user->email,
+                ],
+                'First-time login: Password change required before account activation.',
+                200,
+            );
+        }
+
         // generate toekn for the user
         $token = $user->createToken('auth_token')->plainTextToken;
 
@@ -71,17 +85,42 @@ class AuthController extends Controller
     public function changePassword(ChangePasswordRequest $request)
     {
         $data = $request->validated();
+
         // check if the previous password is correct
         $user = Auth::user();
         if (! Hash::check($data['current_password'], $user->password)) {
             return $this->error('', 'Invalid credentials', 422);
         }
 
-        // if so chnage the password
+        // if so change the password
         $user->password = Hash::make($data['new_password']);
+        $user->is_first_login = false;
         $user->save();
 
         return $this->success(null, 'Password changed successfully', 200);
+    }
+
+    public function firstTimePassword(ChangePasswordRequest $request)
+    {
+        $data = $request->validated();
+        if (empty($data['email'])) {
+            return $this->error('', 'Email is required.', 422);
+        }
+
+        $user = User::where('email', $data['email'])->first();
+        if (! $user || ! Hash::check($data['current_password'], $user->password)) {
+            return $this->error('', 'Invalid current credentials.', 422);
+        }
+
+        if (! $user->is_first_login) {
+            return $this->error('', 'First-time password change is not required for this account.', 400);
+        }
+
+        $user->password = Hash::make($data['new_password']);
+        $user->is_first_login = false;
+        $user->save();
+
+        return $this->success(null, 'Password updated successfully. You can now log in with your new password.', 200);
     }
 
     public function logout(Request $request)

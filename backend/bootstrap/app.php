@@ -4,6 +4,7 @@ use App\Exceptions\ExceptionRegistrar;
 use App\Http\Middleware\CheckAiQuestionPermission;
 use App\Http\Middleware\CheckImportPermission;
 use App\Http\Middleware\CheckPermission;
+use App\Http\Middleware\EnsurePracticeOwnership;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -20,6 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission' => CheckPermission::class,
             'import.permission' => CheckImportPermission::class,
             'ai.question.permission' => CheckAiQuestionPermission::class,
+            'practice.owner' => EnsurePracticeOwnership::class,
         ]);
 
     })

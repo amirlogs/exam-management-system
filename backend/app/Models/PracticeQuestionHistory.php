@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class PracticeQuestionHistory extends Model
 {
     protected $fillable = [
-        'uploaded_by',
+        'owned_by',
         'input',
         'count',
         'isNote',
@@ -21,6 +21,7 @@ class PracticeQuestionHistory extends Model
         'error_count',
         'validated_question',
         'status',
+        'practice_exam_id',
     ];
 
     protected $casts = [
@@ -35,6 +36,6 @@ class PracticeQuestionHistory extends Model
 
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'uploaded_by');
+        return $this->belongsTo(User::class, 'owned_by');
     }
 }
