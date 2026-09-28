@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { GraduationCap, Bell, Menu, X, LayoutDashboard, FileText, Award, Maximize, Minimize } from 'lucide-vue-next';
+import { GraduationCap, Bell, Menu, X, LayoutDashboard, FileText, Award, Maximize, Minimize, Sparkles } from 'lucide-vue-next';
 import ThemeSwitcherDropdown from '@/shared/components/ui/ThemeSwitcherDropdown.vue';
 import UserMenuDropdown from '@/shared/components/ui/UserMenuDropdown.vue';
 import WorkspaceSwitcherDropdown from './partials/WorkspaceSwitcherDropdown.vue';
@@ -48,7 +48,7 @@ const studentName = computed(() => {
 });
 
 const isExamTakingPage = computed(() => {
-  return route.name === 'student.exams.take';
+  return route.name === 'student.exams.take' || route.name === 'student.practice.take';
 });
 
 const isExamsSection = computed(() => route.name?.toString().startsWith('student.exams'));
@@ -104,6 +104,13 @@ function closeMobileMenu() {
             class="h-full flex items-center px-3 text-sm font-medium transition-colors border-b-2"
             :class="isExamsSection ? 'text-accent font-semibold border-accent' : 'text-text/60 hover:text-text hover:border-border border-transparent'">
             My Exams
+          </router-link>
+
+          <router-link
+            :to="{ name: 'student.practice.list' }"
+            class="h-full flex items-center px-3 text-sm font-medium transition-colors border-b-2"
+            :class="route.name?.toString().startsWith('student.practice') ? 'text-accent font-semibold border-accent' : 'text-text/60 hover:text-text hover:border-border border-transparent'">
+            Practice Hub
           </router-link>
 
           <router-link
@@ -176,6 +183,15 @@ function closeMobileMenu() {
         @click="closeMobileMenu">
         <FileText class="w-4 h-4" />
         <span>My Exams</span>
+      </router-link>
+
+      <router-link
+        :to="{ name: 'student.practice.list' }"
+        class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+        :class="route.name?.toString().startsWith('student.practice') ? 'bg-accent/10 text-accent font-semibold' : 'text-text/70 hover:bg-bg hover:text-text'"
+        @click="closeMobileMenu">
+        <Sparkles class="w-4 h-4" />
+        <span>Practice Hub</span>
       </router-link>
 
       <router-link

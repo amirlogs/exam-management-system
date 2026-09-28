@@ -28,3 +28,13 @@ export const changePassword = async (data: { current_password: string; new_passw
   return await api.post('/auth/change-password', data);
 };
 
+export const firstTimePassword = async (data: {
+  email: string;
+  current_password: string;
+  new_password: string;
+  new_password_confirmation: string;
+}) => {
+  return await api.post('/auth/first-time-password', data);
+};
+
+

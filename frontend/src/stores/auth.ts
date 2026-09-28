@@ -17,6 +17,11 @@ export const useAuthStore = defineStore('userAuth', () => {
     loading.value = true;
     try {
       const response = await authapi.login(email, password);
+
+      if (response.data.data?.requires_password_change) {
+        return { requiresPasswordChange: true, email: response.data.data.email };
+      }
+
       const { token: authToken, user: userData } = response.data.data;
       user.value = userData;
       token.value = authToken;
@@ -26,7 +31,7 @@ export const useAuthStore = defineStore('userAuth', () => {
       usePermissionsStore().setActiveWorkspace(response.data.data.user.default_workspace);
       localStorage.setItem('auth_token', authToken);
       return true;
-    } catch (err) {
+    } catch (err: any) {
       // error.value = 'Invalid email or password. Please try again.'
       error.value = err?.response?.data?.message || 'Something went wrong. Please try again.';
       console.error(err);
