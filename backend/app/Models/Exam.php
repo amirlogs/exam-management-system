@@ -23,6 +23,63 @@ class Exam extends Model
         'scheduled_end' => 'datetime',
     ];
 
+    public function recalculateTotals(): void
+    {
+        if ($this->id) {
+            $questions = $this->examQuestions()->get();
+            $totalQuestions = $questions->count();
+            $totalMarks = (int) $questions->sum('marks');
+
+            $this->attributes['total_questions'] = $totalQuestions;
+            $this->attributes['total_marks'] = $totalMarks;
+
+            static::where('id', $this->id)->update([
+                'total_questions' => $totalQuestions,
+                'total_marks' => $totalMarks,
+            ]);
+        }
+    }
+
+    public function getTotalQuestionsAttribute(): int
+    {
+        if ($this->relationLoaded('examQuestions')) {
+            return $this->examQuestions->count();
+        }
+
+        if (isset($this->attributes['exam_questions_count'])) {
+            return (int) $this->attributes['exam_questions_count'];
+        }
+
+        if ($this->id) {
+            $realCount = $this->examQuestions()->count();
+            if ($realCount > 0 && $realCount !== (int) ($this->attributes['total_questions'] ?? 0)) {
+                $this->recalculateTotals();
+
+                return $realCount;
+            }
+        }
+
+        return (int) ($this->attributes['total_questions'] ?? 0);
+    }
+
+    public function getTotalMarksAttribute(): int
+    {
+        if ($this->relationLoaded('examQuestions')) {
+            return (int) $this->examQuestions->sum('marks');
+        }
+
+        if ($this->id) {
+            $realMarks = (int) $this->examQuestions()->sum('marks');
+            if ($realMarks > 0 && $realMarks !== (int) ($this->attributes['total_marks'] ?? 0)) {
+                $this->recalculateTotals();
+
+                return $realMarks;
+            }
+        }
+
+        return (int) ($this->attributes['total_marks'] ?? 0);
+    }
+
     public function courseOffering()
     {
         return $this->belongsTo(CourseOffering::class);

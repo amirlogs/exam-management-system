@@ -121,6 +121,7 @@ class ExamController extends Controller
         }
 
         $examQuestion->delete();
+        $exam->recalculateTotals();
 
         return $this->success(null, 'Question removed successfully');
     }
@@ -344,6 +345,7 @@ class ExamController extends Controller
                 // Reject if already attached (mirrors the single-add unique constraint)
                 if ($exam->examQuestions()->where('question_id', $item['question_id'])->exists()) {
                     $errors[$index] = ['The selected question is already added to the exam'];
+
                     continue;
                 }
 
@@ -358,11 +360,13 @@ class ExamController extends Controller
                     $marks = $item['marks'] ?? $typeConfig['marks_each'] ?? null;
                     if (empty($marks)) {
                         $errors[$index] = ["No marks configured for type {$question->type} in this exam's composition."];
+
                         continue;
                     }
                 } else {
                     if (empty($item['marks'])) {
                         $errors[$index] = ["marks is required when adding a {$question->type} question."];
+
                         continue;
                     }
                     $marks = $item['marks'];
