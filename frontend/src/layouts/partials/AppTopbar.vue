@@ -67,13 +67,13 @@ onUnmounted(() => {
       </button>
 
       <!-- Notifications Button -->
-      <button
-        type="button"
-        class="relative w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-xl border border-border bg-surface hover:bg-bg hover:border-accent/40 shadow-2xs flex items-center justify-center text-text/70 hover:text-text transition-all cursor-pointer active:scale-95 shrink-0"
-        title="Notifications">
-        <Bell class="w-4 h-4 text-text/60 hover:text-text transition-colors" />
-        <span class="absolute top-2 right-2 w-1.5 h-1.5 bg-accent rounded-full" />
-      </button>
+      <!-- <button -->
+      <!--   type="button" -->
+      <!--   class="relative w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-xl border border-border bg-surface hover:bg-bg hover:border-accent/40 shadow-2xs flex items-center justify-center text-text/70 hover:text-text transition-all cursor-pointer active:scale-95 shrink-0" -->
+      <!--   title="Notifications"> -->
+      <!--   <Bell class="w-4 h-4 text-text/60 hover:text-text transition-colors" /> -->
+      <!--   <span class="absolute top-2 right-2 w-1.5 h-1.5 bg-accent rounded-full" /> -->
+      <!-- </button> -->
 
       <slot name="workspace-switcher" />
 

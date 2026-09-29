@@ -10,6 +10,11 @@ class ExamQuestion extends Model
 
     protected $fillable = ['exam_id', 'question_id', 'marks', 'order_number'];
 
+    protected $casts = [
+        'marks' => 'float',
+        'order_number' => 'integer',
+    ];
+
     protected static function booted(): void
     {
         static::saved(function (ExamQuestion $examQuestion) {

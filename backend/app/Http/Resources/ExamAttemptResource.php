@@ -19,7 +19,7 @@ class ExamAttemptResource extends JsonResource
             'exam_id' => $this->exam_id,
             'student_id' => $this->student_id,
             'status' => $this->status,
-            'score' => $this->score,
+            'score' => $this->score !== null ? (float) $this->score : null,
             'started_at' => $this->started_at?->toIso8601String(),
             'submitted_at' => $this->submitted_at?->toIso8601String(),
             'answers_count' => $this->answers_count,

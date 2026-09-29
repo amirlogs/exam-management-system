@@ -62,8 +62,15 @@ async function loadSubmissionDetail() {
 }
 
 const currentScore = computed(() => {
-  if (!detail.value?.answers) return detail.value?.score ?? 0;
-  return detail.value.answers.reduce((acc, ans) => acc + (ans.marks_awarded ?? 0), 0);
+  if (!detail.value?.answers || detail.value.answers.length === 0) {
+    const s = Number(detail.value?.score ?? 0);
+    return isNaN(s) ? 0 : Math.round(s * 100) / 100;
+  }
+  const total = detail.value.answers.reduce((acc, ans) => {
+    const mark = ans.marks_awarded !== null && ans.marks_awarded !== undefined ? Number(ans.marks_awarded) : 0;
+    return acc + (isNaN(mark) ? 0 : mark);
+  }, 0);
+  return Math.round(total * 100) / 100;
 });
 
 const totalMarks = computed(() => props.exam?.total_marks ?? 100);
