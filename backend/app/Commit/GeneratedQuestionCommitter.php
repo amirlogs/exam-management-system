@@ -32,13 +32,13 @@ class GeneratedQuestionCommitter
 
                 // 1. Create Question
                 $question = Question::create([
-                    'course_id'   => $courseId,
-                    'created_by'  => $history->uploaded_by,
-                    'type'        => $type,
-                    'chapter'     => $data['chapter'] ?? null,
-                    'content'     => $data['content'],
-                    'difficulty'  => $data['difficulty'] ?? 'medium',
-                    'status'      => 'active',
+                    'course_id' => $courseId,
+                    'created_by' => $history->uploaded_by,
+                    'type' => $type,
+                    'chapter' => $data['chapter'] ?? null,
+                    'content' => $data['content'],
+                    'difficulty' => $data['difficulty'] ?? 'medium',
+                    'status' => 'active',
                 ]);
 
                 // 2. Create Options if MCQ or True/False
@@ -56,6 +56,10 @@ class GeneratedQuestionCommitter
                 if ($exam) {
                     self::linkToExam($question, $exam);
                 }
+            }
+
+            if ($exam) {
+                $exam->recalculateTotals();
             }
 
             $history->update([
@@ -78,8 +82,8 @@ class GeneratedQuestionCommitter
 
         return ExamQuestion::create([
             'question_id' => $question->id,
-            'exam_id'     => $exam->id,
-            'marks'       => $marks,
+            'exam_id' => $exam->id,
+            'marks' => $marks,
         ]);
     }
 }
