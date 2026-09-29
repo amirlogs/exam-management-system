@@ -8,6 +8,10 @@ class Grade extends Model
 {
     protected $fillable = ['student_id', 'course_offering_id', 'exam_id', 'score', 'graded_by', 'status'];
 
+    protected $casts = [
+        'score' => 'float',
+    ];
+
     public function student()
     {
         return $this->belongsTo(Student::class);

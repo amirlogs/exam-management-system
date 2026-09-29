@@ -18,6 +18,12 @@ class Answer extends Model
         'graded_at',
     ];
 
+    protected $casts = [
+        'marks_awarded' => 'float',
+        'is_correct' => 'boolean',
+        'graded_at' => 'datetime',
+    ];
+
     public function examAttempt()
     {
         return $this->belongsTo(ExamAttempt::class);
