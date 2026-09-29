@@ -376,162 +376,210 @@ onUnmounted(() => {
     </div>
 
     <!-- Main Question View -->
-    <div v-else class="flex-1 flex flex-col md:flex-row overflow-hidden">
-      <!-- Left Sidebar: Question Palette & Navigation (w-72) -->
-      <aside class="w-full md:w-72 lg:w-80 border-b md:border-b-0 md:border-r border-border bg-surface p-4 flex flex-col shrink-0 overflow-y-auto">
-        <!-- Real-time Score Tally -->
-        <div class="bg-bg border border-border rounded-xl p-3.5 space-y-2 mb-4">
-          <div class="flex items-center justify-between text-xs font-mono">
-            <span class="text-text/60">Session Accuracy</span>
-            <span class="font-bold text-text">{{ progressPercentage }}% Completed</span>
-          </div>
-
-          <div class="grid grid-cols-2 gap-2 text-xs font-mono">
-            <div class="bg-surface border border-border/80 rounded-lg p-2 flex items-center gap-2">
-              <CheckCircle2 class="w-3.5 h-3.5 text-success shrink-0" />
-              <div>
-                <span class="text-[10px] text-text/50 block">Correct</span>
-                <span class="font-bold text-success text-sm">{{ correctCount }}</span>
-              </div>
+    <div v-else class="flex-1 flex flex-col md:flex-row w-full min-h-[calc(100vh-4rem)]">
+      <!-- Left Sidebar: Question Palette & Navigation -->
+      <aside class="w-full md:w-72 lg:w-80 shrink-0 bg-surface border-b md:border-b-0 md:border-r border-border flex flex-col justify-between select-none">
+        <div class="p-5 space-y-5 flex-1 overflow-y-auto">
+          <!-- Real-time Score Tally & Progress -->
+          <div class="bg-bg border border-border rounded-xl p-3.5 space-y-3">
+            <div class="flex items-center justify-between text-xs font-mono">
+              <span class="text-text/60">Session Accuracy</span>
+              <span class="font-bold text-text">{{ progressPercentage }}% Completed</span>
             </div>
 
-            <div class="bg-surface border border-border/80 rounded-lg p-2 flex items-center gap-2">
-              <XCircle class="w-3.5 h-3.5 text-error shrink-0" />
-              <div>
-                <span class="text-[10px] text-text/50 block">Incorrect</span>
-                <span class="font-bold text-error text-sm">{{ incorrectCount }}</span>
+            <div class="w-full bg-surface border border-border rounded-full h-1.5 overflow-hidden">
+              <div class="bg-accent h-full transition-all duration-300 rounded-full" :style="{ width: `${progressPercentage}%` }" />
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 text-xs font-mono">
+              <div class="bg-surface border border-border/80 rounded-lg p-2 flex items-center gap-2">
+                <CheckCircle2 class="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                <div>
+                  <span class="text-[10px] text-text/50 block">Correct</span>
+                  <span class="font-bold text-emerald-600 dark:text-emerald-400 text-sm">{{ correctCount }}</span>
+                </div>
+              </div>
+
+              <div class="bg-surface border border-border/80 rounded-lg p-2 flex items-center gap-2">
+                <XCircle class="w-3.5 h-3.5 text-rose-500 shrink-0" />
+                <div>
+                  <span class="text-[10px] text-text/50 block">Incorrect</span>
+                  <span class="font-bold text-rose-600 dark:text-rose-400 text-sm">{{ incorrectCount }}</span>
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- Palette Filter Tabs -->
-        <div class="flex items-center gap-1 bg-bg p-1 rounded-lg border border-border text-[11px] font-mono mb-3">
-          <button
-            v-for="tab in [
-              { key: 'all', label: 'All' },
-              { key: 'unanswered', label: 'Unanswered' },
-              { key: 'answered', label: 'Answered' },
-            ]"
-            :key="tab.key"
-            type="button"
-            class="flex-1 py-1 rounded text-center transition-colors cursor-pointer"
-            :class="sidebarFilter === tab.key ? 'bg-surface text-accent font-semibold shadow-2xs' : 'text-text/60 hover:text-text'"
-            @click="sidebarFilter = tab.key as any">
-            {{ tab.label }}
-          </button>
-        </div>
+          <!-- Palette Filter Tabs (Underline tabs matching real exam) -->
+          <div class="flex items-center gap-4 border-b border-border pb-2 text-xs font-mono">
+            <button
+              type="button"
+              class="relative pb-1 transition-colors cursor-pointer"
+              :class="
+                sidebarFilter === 'all'
+                  ? 'text-text font-bold after:absolute after:-bottom-[9px] after:left-0 after:right-0 after:h-[2px] after:bg-text'
+                  : 'text-text/50 hover:text-text'
+              "
+              @click="sidebarFilter = 'all'">
+              All ({{ totalQuestions }})
+            </button>
+            <button
+              type="button"
+              class="relative pb-1 transition-colors cursor-pointer"
+              :class="
+                sidebarFilter === 'unanswered'
+                  ? 'text-text font-bold after:absolute after:-bottom-[9px] after:left-0 after:right-0 after:h-[2px] after:bg-text'
+                  : 'text-text/50 hover:text-text'
+              "
+              @click="sidebarFilter = 'unanswered'">
+              Unanswered ({{ totalQuestions - answeredCount }})
+            </button>
+            <button
+              type="button"
+              class="relative pb-1 transition-colors cursor-pointer"
+              :class="
+                sidebarFilter === 'answered'
+                  ? 'text-text font-bold after:absolute after:-bottom-[9px] after:left-0 after:right-0 after:h-[2px] after:bg-text'
+                  : 'text-text/50 hover:text-text'
+              "
+              @click="sidebarFilter = 'answered'">
+              Answered ({{ answeredCount }})
+            </button>
+          </div>
 
-        <!-- Question Jump Palette Grid (Zero Jitter, Solid Borders) -->
-        <div class="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-4 gap-2 overflow-y-auto max-h-64 md:max-h-none flex-1">
-          <button
-            v-for="(q, idx) in questions"
-            :key="q.id"
-            type="button"
-            class="h-10 rounded-xl border-2 text-xs font-mono font-bold flex items-center justify-center transition-colors relative cursor-pointer"
-            :class="[
-              currentIndex === idx
-                ? 'border-accent text-accent bg-accent/5'
-                : userAnswers[q.id]?.is_correct
-                  ? 'bg-success/15 border-success/50 text-success'
-                  : userAnswers[q.id]
-                    ? 'bg-error/15 border-error/50 text-error'
-                    : 'bg-surface border-border text-text/60 hover:border-text/40 hover:bg-bg',
-            ]"
-            @click="jumpToQuestion(idx)">
-            <span>Q{{ idx + 1 }}</span>
-            <span
-              v-if="userAnswers[q.id]?.is_correct"
-              class="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-success" />
-            <span
-              v-else-if="userAnswers[q.id]"
-              class="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-error" />
-          </button>
+          <!-- Question Grid (4 Columns, compact, no flex-1 stretching) -->
+          <div class="grid grid-cols-4 gap-2 content-start">
+            <template v-for="(q, idx) in questions" :key="q.id">
+              <button
+                v-if="
+                  sidebarFilter === 'all' ||
+                  (sidebarFilter === 'unanswered' && !userAnswers[q.id]) ||
+                  (sidebarFilter === 'answered' && !!userAnswers[q.id])
+                "
+                type="button"
+                class="relative h-10 rounded-md font-mono text-xs flex items-center justify-center transition-all cursor-pointer select-none"
+                :class="[
+                  currentIndex === idx
+                    ? 'bg-surface text-accent font-bold ring-2 ring-accent shadow-xs'
+                    : userAnswers[q.id]?.is_correct
+                      ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 font-semibold hover:bg-emerald-500/25'
+                      : userAnswers[q.id]
+                        ? 'bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30 font-semibold hover:bg-rose-500/25'
+                        : 'bg-surface text-text/70 border border-border hover:border-text/40',
+                ]"
+                @click="jumpToQuestion(idx)">
+                {{ idx + 1 }}
+                <span
+                  v-if="userAnswers[q.id]?.is_correct"
+                  class="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                <span
+                  v-else-if="userAnswers[q.id]"
+                  class="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-rose-500" />
+              </button>
+            </template>
+          </div>
+
+          <!-- Empty filter state -->
+          <div
+            v-if="sidebarFilter === 'unanswered' && totalQuestions - answeredCount === 0"
+            class="py-3 px-2 text-center text-xs text-text/60 bg-bg border border-border rounded-md font-mono">
+            All questions answered
+          </div>
+          <div
+            v-else-if="sidebarFilter === 'answered' && answeredCount === 0"
+            class="py-3 px-2 text-center text-xs text-text/50 bg-bg border border-border rounded-md font-mono">
+            No questions answered yet
+          </div>
         </div>
 
         <!-- Bottom Legend -->
-        <div class="mt-4 pt-3 border-t border-border/60 flex items-center justify-between text-[10px] font-mono text-text/50">
-          <span class="flex items-center gap-1">
-            <span class="w-2 h-2 rounded-full bg-success" /> Correct
-          </span>
-          <span class="flex items-center gap-1">
-            <span class="w-2 h-2 rounded-full bg-error" /> Incorrect
-          </span>
-          <span class="flex items-center gap-1">
-            <span class="w-2 h-2 rounded-full border border-border" /> Open
-          </span>
+        <div class="p-4 border-t border-border bg-surface">
+          <div class="flex items-center justify-between text-[11px] font-mono text-text/50">
+            <span class="flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-emerald-500" /> Correct
+            </span>
+            <span class="flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-rose-500" /> Incorrect
+            </span>
+            <span class="flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full border border-border" /> Open
+            </span>
+          </div>
         </div>
       </aside>
 
-      <!-- Center Main Question Canvas -->
-      <main class="flex-1 flex flex-col justify-between overflow-y-auto bg-bg p-4 sm:p-6 lg:p-10">
-        <div class="max-w-3xl w-full mx-auto space-y-6">
-          <!-- Question Header Row -->
-          <div class="flex items-center justify-between text-xs font-mono border-b border-border pb-3">
-            <div class="flex items-center gap-2">
-              <span class="px-2.5 py-0.5 rounded-md bg-surface border border-border font-bold text-accent">
-                Question {{ currentIndex + 1 }}
-              </span>
-              <span class="text-border">·</span>
-              <span class="uppercase text-text/50">{{ currentQuestion?.type }}</span>
-              <span class="text-border">·</span>
-              <span class="capitalize text-text/50">{{ currentQuestion?.difficulty }}</span>
+      <!-- Main Question Workspace -->
+      <section class="flex-1 flex flex-col min-h-0 bg-bg overflow-y-auto">
+        <div v-if="currentQuestion" class="flex-1 px-6 sm:px-12 lg:px-16 py-8 max-w-3xl mx-auto w-full space-y-6">
+          <!-- Metadata Bar: Question Index • Type & Difficulty / Points -->
+          <div class="flex items-center justify-between pb-3 border-b border-border">
+            <div class="flex items-center gap-2 text-xs font-mono text-text/60">
+              <span class="font-bold text-text text-sm">Question {{ currentIndex + 1 }}</span>
+              <span>·</span>
+              <span class="uppercase">{{ currentQuestion.type?.replace('_', ' ') }}</span>
+              <span>·</span>
+              <span class="capitalize">{{ currentQuestion.difficulty }}</span>
             </div>
 
-            <div class="text-text/60">
+            <div class="text-xs font-mono text-text/60">
               <span>1 Mark</span>
             </div>
           </div>
 
-          <!-- Question Content Stem -->
-          <div class="space-y-3">
-            <h2 class="text-lg sm:text-xl md:text-2xl font-semibold font-display text-text leading-snug">
-              {{ currentQuestion?.content }}
+          <!-- Question Prompt / Content -->
+          <div class="py-2">
+            <h2 class="text-xl lg:text-2xl font-semibold text-text leading-snug tracking-tight font-display whitespace-pre-line">
+              {{ currentQuestion.content }}
             </h2>
           </div>
 
-          <!-- Option Cards (Solid 2px border, zero layout shift on hover or selection) -->
-          <div class="space-y-3 pt-2">
+          <!-- Options -->
+          <fieldset class="space-y-3">
+            <legend class="sr-only">Available Answers</legend>
             <div
-              v-for="(option, optIdx) in currentQuestion?.options || []"
+              v-for="(option, optIdx) in currentQuestion.options || []"
               :key="option.id"
-              class="relative p-4 rounded-xl border-2 transition-colors cursor-pointer select-none flex items-center justify-between"
+              role="button"
+              tabindex="0"
+              class="group relative flex items-center justify-between p-4 sm:p-5 rounded-xl border transition-all cursor-pointer select-none overflow-hidden"
               :class="[
                 // Unanswered state
                 !isCurrentAnswered
-                  ? 'bg-surface border-border hover:border-accent/40 hover:bg-surface/90'
+                  ? 'border-border bg-surface hover:border-text/30 hover:bg-bg/40'
                   // User selected this and it is CORRECT
                   : currentAnswer?.option_id === option.id && currentAnswer?.is_correct
-                    ? 'border-success bg-success/10 text-success font-semibold shadow-2xs'
+                    ? 'border-emerald-500/50 border-l-4 border-l-emerald-500 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 font-semibold shadow-2xs'
                     // User selected this and it is WRONG
                     : currentAnswer?.option_id === option.id && !currentAnswer?.is_correct
-                      ? 'border-error bg-error/10 text-error font-semibold shadow-2xs'
+                      ? 'border-rose-500/50 border-l-4 border-l-rose-500 bg-rose-500/10 text-rose-700 dark:text-rose-300 font-semibold shadow-2xs'
                       // Correct answer revealed
                       : option.is_correct || currentAnswer?.correct_option_id === option.id
-                        ? 'border-success/60 bg-success/5 text-success font-semibold'
+                        ? 'border-emerald-500/40 bg-emerald-500/5 text-emerald-700 dark:text-emerald-300 font-semibold'
                         // Other distractors
-                        : 'bg-surface/50 border-border/40 opacity-40 pointer-events-none'
+                        : 'border-border/40 bg-surface/40 opacity-40 pointer-events-none'
               ]"
               @click="handleSelectOption(option)">
               <!-- Option Left: Badge & Text -->
-              <div class="flex items-center gap-3.5 pr-4">
+              <div class="flex items-center gap-3.5 min-w-0 pr-4">
                 <span
-                  class="w-7 h-7 rounded-lg border flex items-center justify-center text-xs font-bold font-mono shrink-0 transition-colors"
+                  class="w-7 h-7 rounded-md flex items-center justify-center font-mono text-xs font-semibold transition-colors shrink-0"
                   :class="[
                     !isCurrentAnswered
-                      ? 'bg-bg border-border text-text/70'
+                      ? 'border border-border bg-bg text-text/70 group-hover:border-text/30'
                       : currentAnswer?.option_id === option.id && currentAnswer?.is_correct
-                        ? 'bg-success text-white border-success'
+                        ? 'bg-emerald-500 text-white shadow-2xs'
                         : currentAnswer?.option_id === option.id && !currentAnswer?.is_correct
-                          ? 'bg-error text-white border-error'
+                          ? 'bg-rose-500 text-white shadow-2xs'
                           : option.is_correct || currentAnswer?.correct_option_id === option.id
-                            ? 'bg-success text-white border-success'
-                            : 'bg-bg border-border text-text/40'
+                            ? 'bg-emerald-500 text-white shadow-2xs'
+                            : 'border border-border/40 bg-bg text-text/40'
                   ]">
                   {{ String.fromCharCode(65 + optIdx) }}
                 </span>
 
-                <span class="text-sm font-medium leading-relaxed">
+                <span
+                  class="text-sm sm:text-base leading-relaxed text-text font-normal"
+                  :class="{ 'font-semibold': currentAnswer?.option_id === option.id }">
                   {{ option.option_text }}
                 </span>
               </div>
@@ -540,39 +588,42 @@ onUnmounted(() => {
               <div class="shrink-0 flex items-center gap-2">
                 <div
                   v-if="currentAnswer?.option_id === option.id && currentAnswer?.is_correct"
-                  class="flex items-center gap-1.5 text-xs font-mono font-bold text-success">
-                  <CheckCircle2 class="w-4 h-4 text-success" />
+                  class="flex items-center gap-1.5 text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                  <CheckCircle2 class="w-4.5 h-4.5 text-emerald-500" />
                   <span class="hidden sm:inline">Correct</span>
                 </div>
 
                 <div
                   v-else-if="currentAnswer?.option_id === option.id && !currentAnswer?.is_correct"
-                  class="flex items-center gap-1.5 text-xs font-mono font-bold text-error">
-                  <XCircle class="w-4 h-4 text-error" />
+                  class="flex items-center gap-1.5 text-xs font-mono font-bold text-rose-600 dark:text-rose-400">
+                  <XCircle class="w-4.5 h-4.5 text-rose-500" />
                   <span class="hidden sm:inline">Your Selection</span>
                 </div>
 
                 <div
                   v-else-if="isCurrentAnswered && (option.is_correct || currentAnswer?.correct_option_id === option.id)"
-                  class="flex items-center gap-1.5 text-xs font-mono font-bold text-success">
-                  <Check class="w-4 h-4 text-success" />
+                  class="flex items-center gap-1.5 text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                  <Check class="w-4.5 h-4.5 text-emerald-500" />
                   <span class="hidden sm:inline">Correct Answer</span>
                 </div>
+
+                <span
+                  v-else
+                  class="w-5 h-5 rounded-full flex items-center justify-center border-2 border-border group-hover:border-text/40 transition-colors" />
               </div>
             </div>
-          </div>
+          </fieldset>
 
-          <!-- Clean Feedback & Pedagogical Note (No fake static text!) -->
+          <!-- Feedback & Pedagogical Note -->
           <div
             v-if="isCurrentAnswered"
-            class="rounded-xl border p-4 transition-all duration-200 mt-6 space-y-3"
-            :class="currentAnswer?.is_correct ? 'border-success/30 bg-success/5' : 'border-error/30 bg-error/5'">
-            <!-- Status Row -->
+            class="rounded-xl border p-4 sm:p-5 transition-all duration-200 space-y-3"
+            :class="currentAnswer?.is_correct ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-rose-500/30 bg-rose-500/5'">
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-2.5">
                 <div
                   class="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
-                  :class="currentAnswer?.is_correct ? 'bg-success/20 text-success' : 'bg-error/20 text-error'">
+                  :class="currentAnswer?.is_correct ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' : 'bg-rose-500/20 text-rose-600 dark:text-rose-400'">
                   <CheckCircle2 v-if="currentAnswer?.is_correct" class="w-4 h-4" />
                   <XCircle v-else class="w-4 h-4" />
                 </div>
@@ -587,7 +638,7 @@ onUnmounted(() => {
               </div>
             </div>
 
-            <!-- Authentic Explanation (Rendered ONLY if genuine explanation exists from curriculum data) -->
+            <!-- Authentic Explanation -->
             <div
               v-if="currentQuestion?.explanation"
               class="p-3 bg-surface/90 rounded-lg border border-border/60 text-xs text-text/80 leading-relaxed space-y-1">
@@ -599,7 +650,7 @@ onUnmounted(() => {
             </div>
           </div>
 
-          <!-- Inline AI Guidance & Follow-up (at the bottom of each question) -->
+          <!-- Inline AI Guidance -->
           <QuestionInlineGuidance
             v-if="currentQuestion"
             :exam-id="examId"
@@ -608,27 +659,30 @@ onUnmounted(() => {
             :is-answered="isCurrentAnswered" />
         </div>
 
-        <!-- Sticky Bottom Navigation Bar -->
-        <div class="max-w-3xl w-full mx-auto pt-6 border-t border-border mt-8 flex items-center justify-between shrink-0">
-          <BaseButton
-            variant="secondary"
-            class="text-xs font-semibold flex items-center gap-1.5"
-            :disabled="currentIndex === 0"
-            @click="handlePrevious">
-            <ArrowLeft class="w-3.5 h-3.5" />
-            <span>Previous</span>
-          </BaseButton>
+        <!-- Sticky Footer Navigation Bar -->
+        <div class="sticky bottom-0 bg-surface/95 backdrop-blur-md border-t border-border px-6 sm:px-12 lg:px-16 py-3.5 shadow-xs">
+          <div class="max-w-3xl mx-auto flex items-center justify-between gap-4">
+            <BaseButton
+              variant="secondary"
+              :disabled="currentIndex === 0"
+              class="flex items-center gap-1.5"
+              @click="handlePrevious">
+              <ArrowLeft class="w-4 h-4" />
+              <span>Previous</span>
+            </BaseButton>
 
-          <BaseButton
-            variant="primary"
-            class="text-xs font-semibold flex items-center gap-1.5 shadow-xs"
-            @click="handleNext">
-            <span>{{ currentIndex === totalQuestions - 1 ? 'Finish & Review Results' : 'Next Question' }}</span>
-            <ArrowRight class="w-3.5 h-3.5" />
-          </BaseButton>
+            <BaseButton
+              variant="primary"
+              class="flex items-center gap-1.5 shadow-xs"
+              @click="handleNext">
+              <span>{{ currentIndex === totalQuestions - 1 ? 'Finish & Review Results' : 'Next Question' }}</span>
+              <ArrowRight class="w-4 h-4" />
+            </BaseButton>
+          </div>
         </div>
-      </main>
+      </section>
     </div>
+
 
     <!-- Score Summary Modal -->
     <PracticeScoreSummaryModal
