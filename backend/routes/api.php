@@ -238,7 +238,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/ai/questions/{generatedQuestionsHistory}/questions/{index}', [ChatController::class, 'destroyQuestion']);
     });
 
-
     // ======================== PRACTICE EXAMS (owner only) ========================
     Route::middleware('practice.owner')->group(function () {
         // practice exam endpoints
@@ -279,4 +278,11 @@ Route::middleware('auth:sanctum')->prefix('student')->group(function () {
     Route::post('/attempts/{attempt}/answers', [StudentExamController::class, 'saveAnswer']);
     Route::post('/attempts/{attempt}/submit', [StudentExamController::class, 'submit']);
     // Route::get('/results', [StudentResultController::class, 'index']); // result.view_own logic, filtered to auth()->user()->student
+});
+
+
+
+// ======================= Public API ==========================
+Route::get('/health', function () {
+    return response()->json(['status' => 'ok']);
 });

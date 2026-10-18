@@ -17,6 +17,7 @@ class AiQuestionGenerator
     public function generate(string $input, int $count = 3, bool $isNote = false, string $type = 'mcq', string $difficulty = 'medium', array $context = []): array
     {
         $courseId = $context['course_id'] ?? null;
+
         if ($courseId && ! isset($context['existing_contents'])) {
             $context['existing_contents'] = Question::where('course_id', $courseId)
                 ->pluck('content')
