@@ -93,9 +93,37 @@ flowchart TD
 
 The RBAC system in UEMS is built for strict university hierarchies where users frequently occupy multiple responsibilities simultaneously (e.g., a Professor who is also a Department Head or College Coordinator).
 
-### Role Hierarchy
+### Role Hierarchy & Delegation Flow
 
-The platform defines eight distinct role tiers with defined boundaries:
+The platform defines eight distinct role tiers with defined jurisdictional boundaries:
+
+```mermaid
+graph TD
+    classDef global fill:#1e1b4b,stroke:#6366f1,stroke-width:2px,color:#fff
+    classDef univ fill:#0f172a,stroke:#38bdf8,stroke-width:2px,color:#fff
+    classDef college fill:#14532d,stroke:#22c55e,stroke-width:2px,color:#fff
+    classDef dept fill:#713f12,stroke:#eab308,stroke-width:2px,color:#fff
+    classDef course fill:#831843,stroke:#ec4899,stroke-width:2px,color:#fff
+    classDef student fill:#312e81,stroke:#a855f7,stroke-width:2px,color:#fff
+
+    SA["🌐 Super Admin<br/><code>super_admin</code><br/>Global Platform & Multi-Tenant Scope"]:::global
+    UA["🏛️ University Admin<br/><code>university_admin</code><br/>University-wide Governance & Term Schedules"]:::univ
+    CA["🏫 College Admin<br/><code>college_admin</code><br/>College Programs, Departments & Curricula"]:::college
+    DH["⚖️ Department Head<br/><code>dept_head</code><br/>Course Offerings, Staffing & Approvals"]:::dept
+    EA["📋 Exam Admin<br/><code>exam_admin</code><br/>Exam Scheduling, Halls & Lifecycle Controls"]:::dept
+    LI["👑 Lead Instructor<br/><code>lead_instructor</code><br/>Official Exam Assembly & Pool Coordination"]:::course
+    INS["👨‍🏫 Section Instructor<br/><code>instructor</code><br/>Question Authoring & Section Grading"]:::course
+    STU["🎓 Student Candidate<br/><code>student</code><br/>Exam Taking, Practice Hub & Gradebook"]:::student
+
+    SA --> UA
+    UA --> CA
+    CA --> DH
+    CA --> EA
+    DH --> LI
+    EA -.->|Schedules Sessions| LI
+    LI --> INS
+    INS -.->|Assesses & Grades| STU
+```
 
 | Role Name | Authority Scope | Primary Responsibilities |
 | :--- | :--- | :--- |
@@ -108,6 +136,42 @@ The platform defines eight distinct role tiers with defined boundaries:
 | `instructor` | Section Instructor | Question authoring, section grading, roster review. |
 | `student` | Candidate | Taking proctored exams, viewing published results, practice hub. |
 
+---
+
+### Multi-Role & Workspace Context Switching Workflow
+
+In academic institutions, a professor frequently acts as an **Instructor** for their assigned courses while simultaneously serving as a **Department Head** with supervisory administrative oversight. UEMS handles this through dynamic workspace context switching without requiring multiple accounts or re-authentication:
+
+```mermaid
+flowchart TD
+    subgraph Auth["1. Single Authentication"]
+        Login["User Credentials<br/>(e.g., Prof. Ahmed)"] --> Sanctum["Laravel Sanctum<br/>Issue Stateful Bearer Token"]
+    end
+
+    subgraph State["2. Role & Permission Resolution"]
+        Sanctum --> UserRoles["Assigned Roles:<br/><code>['dept_head', 'instructor']</code>"]
+        UserRoles --> PermMatrix["Compute Active Permission Set<br/>(120+ Granular Permissions)"]
+        PermMatrix --> Pinia["Client Store<br/><code>usePermissionsStore()</code>"]
+    end
+
+    subgraph Switcher["3. Dynamic Workspace Context Switcher"]
+        Pinia --> Topbar["Topbar Workspace Switcher"]
+        Topbar -->|Switch Context| ModeAdmin["Admin Workspace<br/>(Acting as Department Head)"]
+        Topbar -->|Switch Context| ModeInst["Instructor Workspace<br/>(Acting as Course Instructor)"]
+    end
+
+    subgraph Enforcement["4. Defense-in-Depth Enforcement Pipeline"]
+        ModeAdmin --> Guard["Route Guard<br/><code>router/guards.ts</code>"]
+        ModeInst --> Guard
+        Guard --> UIAction["Component Action Guard<br/><code>v-if='hasPermission(\"exam.approve\")'</code>"]
+        UIAction --> API["API Request + Bearer Token"]
+        API --> PolicyGate["Backend Policy / Gate<br/><code>$user->hasPermission(...)</code>"]
+        PolicyGate --> ScopedQuery["Eloquent Data Scoping<br/><code>Question::forUser($user)</code>"]
+    end
+```
+
+---
+
 ### Granular Permission Domains
 
 Rather than relying on coarse role checks, the backend enforces **120+ granular permissions** divided into functional domains:
@@ -118,15 +182,6 @@ Rather than relying on coarse role checks, the backend enforces **120+ granular 
 - **Grading & Results**: `grade.autograde`, `grade.create`, `grade.verify`, `grade.publish`, `result.view_own`, `result.export`
 - **Identity & Access**: `user.create`, `role.assign`, `permission.view`, `import.view`
 
-### Multi-Role & Workspace Context Switching
-
-In many institutions, a faculty member acts as an **Instructor** for their own courses while simultaneously holding **Department Head** administrative duties. 
-
-- **Unified Identity**: A user authenticates once via `POST /api/auth/login`.
-- **Role Detection**: The backend returns all assigned roles and active permission sets in the user session.
-- **Dynamic Workspace Switcher**: The top navigation bar features an instant workspace switcher (`Admin`, `Instructor`, `Student`), letting the user seamlessly transition their active UI context without re-authenticating.
-- **API Guarding**: Controllers check `$user->hasPermission(...)` and apply Eloquent scopes (such as `Question::forUser($user)` which limits standard instructors to their assigned course offerings while allowing department heads broader oversight).
-
 ### Frontend Action & Route Guards
 
 Permissions are enforced at three defense layers in the Vue application:
@@ -134,6 +189,7 @@ Permissions are enforced at three defense layers in the Vue application:
 1. **Route Level (`router/guards.ts`)**: Navigation to `/admin/*`, `/instructor/*`, or `/student/*` verifies role membership and required route permissions (`meta.permissions`).
 2. **Component Level (`usePermissionsStore`)**: Buttons, action menus, and edit triggers dynamically display or disable depending on `hasPermission(...)` or `hasAnyPermission(...)`.
 3. **API Level (Laravel Policies & Requests)**: Unauthorized requests are rejected with `403 Forbidden` and handled gracefully by the global error interceptor.
+
 
 ---
 
