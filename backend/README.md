@@ -1,17 +1,12 @@
-### University Exam Management System
+# 🛠️ UEMS Backend API
 
-This project is a comprehensive University Exam Management System designed to streamline and automate various aspects of exam administration. The system is built using Python and leverages the Tkinter library for the graphical user interface (GUI). It includes features for managing students, courses, exams, and results, providing a user-friendly interface for both administrators and students.
+The RESTful API service powering the University Exam Management System, developed with **Laravel 11 / 12** and **PHP 8.3+**.
 
-#### Features
+## Core Responsibilities
+- **Authentication & RBAC**: Laravel Sanctum stateful API tokens and permission-based gates.
+- **Generative AI Assessment Engine**: Unified LLM abstraction via Prism PHP (Gemini, Claude, OpenAI).
+- **Asynchronous Processing**: Background queue workers for AI question generation and student practice tutoring.
+- **Data Ingestion**: Multi-tenant Excel/CSV imports with preview and validation via Maatwebsite Excel.
+- **Automated API Documentation**: Scramble interactive OpenAPI schema generated at `/docs/api`.
 
-1. **Student Management:**
-    - Add, update, and delete student records.
-    - View a list of all registered students.
-
-2. **Course Management:**
-    - Add, update, and delete course details.
-    - View a list of all available courses.
-
-3. **Exam Management:**
-    - Schedule and manage exams.
-    - Assign courses to exams and specify exam dates
+For complete system architecture, installation, seed accounts, and testing guides, refer to the [Root README.md](../README.md).
